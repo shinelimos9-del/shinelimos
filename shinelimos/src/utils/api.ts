@@ -31,4 +31,10 @@ export const sendOtpToAdmin = async (email: string) => {
   return response.data;
 };
 
+// Verify OTP and get token
+export const verifyOtp = async (email: string, otp: string) => {
+  const response = await axios.post('http://localhost:60000/verifyOtp', { email, otp }, { withCredentials: true });
+  return response.data;
+};
+
 export default api;
