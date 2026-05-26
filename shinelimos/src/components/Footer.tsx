@@ -29,10 +29,7 @@ export default function Footer() {
             </div>
             <div className="flex items-center gap-3 pt-2">
               {[
-                { label: "IG", href: "https://www.instagram.com/shinelimos/" },
-                { label: "FB", href: "#" },
-                { label: "X", href: "#" },
-                { label: "in", href: "#" }
+                { label: "IG", href: "https://www.instagram.com/shinelimos/" }
               ].map((item, i) => (
                 <a key={i} href={item.href} target="_blank" rel="noreferrer" aria-label={item.label} className="glass-gold w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition-transform text-gold text-xs font-medium">
                   {item.label}

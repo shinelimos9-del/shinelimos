@@ -26,6 +26,7 @@ import AdminLayout from "./layouts/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminVehicles from "./pages/admin/AdminVehicles";
 import AdminBookings from "./pages/admin/AdminBookings";
+import AdminNotifications from "./pages/admin/AdminNotifications";
 
 function AppContent() {
   const location = useLocation();
@@ -62,6 +63,7 @@ function AppContent() {
             <Route index element={<AdminDashboard />} />
             <Route path="vehicles" element={<AdminVehicles />} />
             <Route path="bookings" element={<AdminBookings />} />
+            <Route path="notifications" element={<AdminNotifications />} />
             <Route path="*" element={<div className="text-white text-center py-20 text-xl font-light">Page under construction</div>} />
           </Route>
 
