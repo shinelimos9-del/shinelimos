@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { verifyOtp } from "../../utils/api";
 
+
 export default function VerifyOtp() {
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,7 +16,7 @@ export default function VerifyOtp() {
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!otp || otp.length !== 6) {
+    if (!otp || otp.length !== 4) {
       setError("Please enter a valid 6-digit OTP.");
       return;
     }
