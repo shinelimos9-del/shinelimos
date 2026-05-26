@@ -34,7 +34,7 @@ function AppContent() {
   return (
     <>
       <Background />
-      {!isAdminRoute && <Navbar />}
+      <Navbar />
       
       <main className={isAdminRoute ? "" : "relative"}>
         <Routes>

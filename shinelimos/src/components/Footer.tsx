@@ -84,7 +84,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/45">
-          <div>© {new Date().getFullYear()} {COMPANY.name}. All rights reserved.</div>
+          <div>© {new Date().getFullYear()} {COMPANY.name}. All rights reserved. | Built by RizeWorld</div>
           <div className="flex gap-6">
             <Link to="/privacy" className="hover:text-gold">Privacy</Link>
             <Link to="/terms" className="hover:text-gold">Terms</Link>

@@ -23,7 +23,7 @@ export default function AdminLayout() {
   ];
 
   return (
-    <div className="min-h-screen bg-transparent text-white flex overflow-hidden selection:bg-gold/30">
+    <div className="min-h-screen pt-[88px] bg-transparent text-white flex overflow-hidden selection:bg-gold/30">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
