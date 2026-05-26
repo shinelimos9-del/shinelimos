@@ -1,12 +1,37 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { LayoutDashboard, CarFront, LogOut, Bell, Search, Menu, X, CheckSquare } from "lucide-react";
 import Logo from "../../components/Logo";
+import { mockNotifications } from "../../data/mockNotifications";
 
 export default function AdminLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
+  const [notifications, setNotifications] = useState(mockNotifications);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleNotificationClick = (id: number) => {
+    setShowNotifications(false);
+    navigate(`/admin-dashboard/notifications?id=${id}`);
+  };
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(n => ({ ...n, read: true })));
+  };
 
   const handleLogout = () => {
     // Clear any authentication tokens or session data
@@ -91,10 +116,51 @@ export default function AdminLayout() {
           </div>
 
           <div className="flex items-center gap-5">
-            <button className="relative text-white/70 hover:text-white transition-colors">
-              <Bell size={20} />
-              <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#0a0a0a]"></span>
-            </button>
+            <div className="relative" ref={notificationRef}>
+              <button 
+                className="relative text-white/70 hover:text-white transition-colors"
+                onClick={() => setShowNotifications(!showNotifications)}
+              >
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#0a0a0a] animate-pulse"></span>
+                )}
+              </button>
+              
+              {showNotifications && (
+                <div className="absolute right-0 mt-6 w-80 bg-[#111]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
+                  <div className="p-4 border-b border-white/5 flex justify-between items-center">
+                    <h3 className="text-white font-medium">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <button onClick={markAllAsRead} className="text-xs text-gold hover:text-gold/80 transition-colors">
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+                  <div className="max-h-80 overflow-y-auto no-scrollbar">
+                    {notifications.length > 0 ? (
+                      notifications.map(notification => (
+                        <div 
+                          key={notification.id} 
+                          onClick={() => handleNotificationClick(notification.id)}
+                          className={`p-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors cursor-pointer ${!notification.read ? 'bg-white/3' : ''}`}
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className={`text-sm ${!notification.read ? 'text-white font-medium' : 'text-white/70'}`}>{notification.title}</h4>
+                            <span className="text-[10px] text-white/40">{notification.time}</span>
+                          </div>
+                          <p className="text-xs text-white/50 line-clamp-2">{notification.message}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-sm text-white/50">
+                        No new notifications
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
             <div className="flex items-center gap-3 border-l border-white/10 pl-5">
               <div className="text-right hidden sm:block">
                 <div className="text-sm font-medium text-white">Admin User</div>

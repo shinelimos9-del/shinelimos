@@ -1,0 +1,47 @@
+export const mockNotifications = [
+  { 
+    id: 1, 
+    type: 'booking',
+    title: 'New Booking Request', 
+    userName: 'John Doe',
+    vehicleName: 'Rolls Royce Phantom',
+    source: 'JFK Airport',
+    destination: 'Times Square, Manhattan',
+    paymentStatus: 'Paid',
+    amount: '$450',
+    time: '5 min ago', 
+    date: '18 Jul 2025, 10:30 AM',
+    read: false,
+    message: 'A new booking request has been submitted by John Doe for a transfer from JFK Airport to Times Square.'
+  },
+  { 
+    id: 2, 
+    type: 'booking',
+    title: 'Payment Received', 
+    userName: 'Emma Smith',
+    vehicleName: 'Mercedes Maybach S-Class',
+    source: 'Los Angeles International Airport (LAX)',
+    destination: 'Beverly Hills Hotel',
+    paymentStatus: 'Paid',
+    amount: '$300',
+    time: '1 hr ago', 
+    date: '18 Jul 2025, 09:15 AM',
+    read: false,
+    message: 'Payment for booking #4023 has been successfully processed.'
+  },
+  { 
+    id: 3, 
+    type: 'alert',
+    title: 'Vehicle Alert', 
+    userName: 'System',
+    vehicleName: 'Cadillac Escalade',
+    source: 'N/A',
+    destination: 'N/A',
+    paymentStatus: 'N/A',
+    amount: 'N/A',
+    time: '2 hrs ago', 
+    date: '18 Jul 2025, 08:00 AM',
+    read: true,
+    message: 'Vehicle #102 is due for routine maintenance next week.'
+  },
+];
