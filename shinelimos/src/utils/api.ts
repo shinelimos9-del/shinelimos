@@ -19,4 +19,10 @@ export const finalizeBooking = async (bookingData: any) => {
   return response.data;
 };
 
+// Admin login uses the root backend path (not /api)
+export const adminLogin = async (email: string, password: string) => {
+  const response = await axios.post('http://localhost:60000/admin_login', { email, password }, { withCredentials: true });
+  return response.data;
+};
+
 export default api;

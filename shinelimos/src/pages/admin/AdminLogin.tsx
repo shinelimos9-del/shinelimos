@@ -1,17 +1,33 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { adminLogin } from "../../utils/api";
 
 export default function AdminLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password) {
-      // Set a mock authentication token
-      localStorage.setItem("adminToken", "mock-token-123");
+    setError(null);
+    if (!email || !password) return setError("Email and password are required.");
+    setLoading(true);
+    try {
+      const res = await adminLogin(email, password);
+      if (!res || !res.success) {
+        setError(res?.message || "Login failed");
+        setLoading(false);
+        return;
+      }
+      // store token and navigate
+      if (res.token) localStorage.setItem("adminToken", res.token);
       navigate("/admin-dashboard");
+    } catch (err: any) {
+      setError(err?.message || "Network error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,10 +75,12 @@ export default function AdminLogin() {
 
             <button 
               type="submit"
-              className="w-full mt-2 bg-white hover:bg-gray-200 text-black px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5"
+              disabled={loading}
+              className={`w-full mt-2 ${loading ? 'opacity-60 cursor-wait' : 'bg-white hover:bg-gray-200'} text-black px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5`}
             >
-              Sign In
+              {loading ? 'Signing in…' : 'Sign In'}
             </button>
+            {error && <div className="mt-3 text-sm text-red-400">{error}</div>}
           </form>
         </div>
       </div>
