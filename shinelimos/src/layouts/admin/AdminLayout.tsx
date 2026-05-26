@@ -9,7 +9,11 @@ export default function AdminLayout() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    navigate("/admin-login");
+    // Clear any authentication tokens or session data
+    localStorage.removeItem("adminToken");
+    sessionStorage.clear();
+    // Redirect to login page and prevent going back
+    navigate("/admin-login", { replace: true });
   };
 
   const navItems = [

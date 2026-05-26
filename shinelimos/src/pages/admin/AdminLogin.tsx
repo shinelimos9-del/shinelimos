@@ -9,6 +9,8 @@ export default function AdminLogin() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (email && password) {
+      // Set a mock authentication token
+      localStorage.setItem("adminToken", "mock-token-123");
       navigate("/admin-dashboard");
     }
   };

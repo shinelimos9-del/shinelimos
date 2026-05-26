@@ -48,7 +48,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop nav */}
-          <ul className="hidden lg:flex items-center gap-8">
+          <ul className="hidden lg:flex items-center gap-8 ml-4 xl:ml-12">
             <li>
               <NavLink to="/" className={({ isActive }) => `${navLinkBase} ${isActive ? "active text-gold" : ""}`}>
                 Home
@@ -146,22 +146,15 @@ export default function Navbar() {
 
           {/* Right CTAs */}
           <div className="hidden lg:flex items-center gap-4">
-            <a
-              href={`tel:${COMPANY.phoneRaw}`}
-              className="flex items-center gap-2 text-sm text-white/80 hover:text-gold transition-colors"
-            >
-              <Phone className="h-4 w-4" />
-              <span className="font-light tracking-wide">{COMPANY.phone}</span>
-            </a>
             <Link
               to="/admin-login"
-              className="relative overflow-hidden rounded-full border border-white bg-black/50 px-5 py-2 text-xs font-medium tracking-widest text-white transition-all hover:bg-white/20 hover:shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+              className="relative flex h-[42px] items-center justify-center rounded-full border border-white/20 bg-black/50 px-6 text-xs font-medium tracking-[0.15em] uppercase text-white transition-all hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
             >
               Admin Login
             </Link>
             <Link
               to="/booking"
-              className="relative overflow-hidden rounded-full bg-white px-6 py-2.5 text-sm font-medium tracking-[0.15em] uppercase text-black transition-transform hover:scale-105 pulse-gold"
+              className="relative flex h-[42px] items-center justify-center rounded-full bg-white px-6 text-xs font-medium tracking-[0.15em] uppercase text-black transition-transform hover:scale-105 pulse-gold"
             >
               Book Now
             </Link>
