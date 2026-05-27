@@ -1,10 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHero, GoldButton, GoldDivider } from "../components/ui";
 import SectionBackground from "../components/SectionBackground";
 import TimePicker from "../components/TimePicker";
 import { initiateBooking, finalizeBooking, ADMIN_BASE_URL } from "../utils/api";
 import { LOCATIONS } from "../components/BookingWidget";
+
+declare global {
+  interface Window {
+    google: any;
+  }
+}
 
 const BG = "https://images.pexels.com/photos/8605325/pexels-photo-8605325.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400";
 import { CheckCircle, ArrowRight, ArrowLeft, MapPin, Calendar, Users, Car, User, Mail, Phone, Clock, Trash2, Plus, Briefcase, Download } from "lucide-react";
@@ -146,12 +152,6 @@ export default function Booking() {
         const seg = data.segments[i];
         if (!seg.date || !seg.time || !seg.pickup || !seg.dropoff) {
           setError(`Please fill in Date, Start Time, Pick-up, and Drop-off for Segment ${i + 1}.`);
-          return;
-        }
-
-        const isValid = (val: string) => LOCATIONS.some(loc => val.toLowerCase().includes(loc.toLowerCase()));
-        if (!isValid(seg.pickup) || !isValid(seg.dropoff)) {
-          setError(`Segment ${i + 1}: We only provide service in specific areas (e.g. Washington, Arlington, Alexandria, Dulles Airport, etc.). Please ensure your address includes one of our supported cities/airports.`);
           return;
         }
       }
@@ -503,6 +503,57 @@ function inputCls() {
   return "w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-gold/60 focus:bg-gold/5 transition-all";
 }
 
+function LocationInput({ value, onChange, placeholder, icon: Icon, label }: { value: string; onChange: (val: string) => void; placeholder: string; icon: any; label: string }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!window.google || !inputRef.current) return;
+
+    const autocomplete = new window.google.maps.places.Autocomplete(inputRef.current, {
+      types: ["address"],
+      componentRestrictions: { country: "us" }, // Optional: restrict to US
+    });
+
+    autocomplete.addListener("place_changed", () => {
+      const place = autocomplete.getPlace();
+      if (place.formatted_address) {
+        onChange(place.formatted_address);
+      } else if (place.name) {
+        onChange(place.name);
+      }
+    });
+
+    // Prevent form submission on enter
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+      }
+    };
+    inputRef.current.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      if (inputRef.current) {
+        inputRef.current.removeEventListener("keydown", handleKeyDown);
+      }
+      window.google.maps.event.clearInstanceListeners(autocomplete);
+    };
+  }, [onChange]);
+
+  return (
+    <Field icon={Icon} label={label}>
+      <input
+        ref={inputRef}
+        type="text"
+        className={inputCls()}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        required
+      />
+    </Field>
+  );
+}
+
 function Step1({ data, update }: { data: BookingData; update: (k: keyof BookingData, v: any) => void }) {
   const addSegment = () => {
     update("segments", [
@@ -579,12 +630,13 @@ function Step1({ data, update }: { data: BookingData; update: (k: keyof BookingD
                     {index + 1}A
                   </div>
                   <div className="flex-1">
-                    <Field icon={MapPin} label="Address (Pick-up) *">
-                      <select className={inputCls()} value={seg.pickup} onChange={(e) => updateSegment(seg.id, "pickup", e.target.value)} required>
-                        <option value="" disabled className="bg-[#1a1a1a]">Select pickup location</option>
-                        {LOCATIONS.map(loc => <option key={loc} value={loc} className="bg-[#1a1a1a]">{loc}</option>)}
-                      </select>
-                    </Field>
+                    <LocationInput
+                      label="Address (Pick-up) *"
+                      icon={MapPin}
+                      placeholder="Enter pickup address..."
+                      value={seg.pickup}
+                      onChange={(v) => updateSegment(seg.id, "pickup", v)}
+                    />
                   </div>
                 </div>
                 
@@ -593,12 +645,13 @@ function Step1({ data, update }: { data: BookingData; update: (k: keyof BookingD
                     {index + 1}B
                   </div>
                   <div className="flex-1">
-                    <Field icon={MapPin} label="Address (Drop-off) *">
-                      <select className={inputCls()} value={seg.dropoff} onChange={(e) => updateSegment(seg.id, "dropoff", e.target.value)} required>
-                        <option value="" disabled className="bg-[#1a1a1a]">Select drop-off location</option>
-                        {LOCATIONS.map(loc => <option key={loc} value={loc} className="bg-[#1a1a1a]">{loc}</option>)}
-                      </select>
-                    </Field>
+                    <LocationInput
+                      label="Address (Drop-off) *"
+                      icon={MapPin}
+                      placeholder="Enter drop-off address..."
+                      value={seg.dropoff}
+                      onChange={(v) => updateSegment(seg.id, "dropoff", v)}
+                    />
                     {(seg.pickup && seg.dropoff) ? (
                       <a href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(seg.pickup)}&destination=${encodeURIComponent(seg.dropoff)}`} target="_blank" rel="noreferrer" className="text-xs text-blue-400 hover:text-blue-300 hover:underline inline-flex items-center gap-1 mt-2">
                         <MapPin className="w-3 h-3 inline" /> Preview on Google Maps

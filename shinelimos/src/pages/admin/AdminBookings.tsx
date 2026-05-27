@@ -163,12 +163,19 @@ export default function AdminBookings() {
                     <td className="p-4 text-white">{b.trip_details[0]?.trip_type || "N/A"}</td>
                     <td className="p-4 text-white">{moment(b.created_at).format("DD MMM YYYY")}</td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${b.booking_status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white'}`}>
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${b.booking_status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                         {b.booking_status === 'completed' ? 'Complete' : 'Pending'}
                       </span>
                     </td>
                     <td className="p-4 text-right">
-                      {b.booking_status !== 'completed' && (
+                      {b.booking_status === 'completed' ? (
+                        <button 
+                          onClick={() => handleUpdateStatus(b._id, 'pending')}
+                          className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 border border-yellow-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                        >
+                          Pending
+                        </button>
+                      ) : (
                         <button 
                           onClick={() => handleUpdateStatus(b._id, 'completed')}
                           className="bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
