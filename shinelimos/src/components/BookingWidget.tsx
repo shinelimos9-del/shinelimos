@@ -5,6 +5,21 @@ import TimePicker from "./TimePicker";
 import { FLEET } from "../data";
 import { useNavigate } from "react-router-dom";
 
+export const LOCATIONS = [
+  "Washington",
+  "Arlington",
+  "Alexandria",
+  "Tysons",
+  "Fairfax",
+  "Reston",
+  "Herndon",
+  "Bethesda",
+  "Rockville",
+  "Silver Spring",
+  "Dulles International Airport",
+  "Ronald Reagan Washington National Airport"
+];
+
 export default function BookingWidget({ compact = false }: { compact?: boolean }) {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"one-way" | "round-trip" | "hourly">("one-way");
@@ -17,6 +32,14 @@ export default function BookingWidget({ compact = false }: { compact?: boolean }
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    const isValid = (val: string) => LOCATIONS.some(loc => val.toLowerCase().includes(loc.toLowerCase()));
+    
+    if (!isValid(pickup) || !isValid(dropoff)) {
+      alert("We only provide service in specific areas (e.g. Washington, Arlington, Alexandria, Dulles Airport, etc.). Please ensure your address includes one of our supported cities/airports.");
+      return;
+    }
+
     const q = new URLSearchParams({
       type: tab,
       pickup,
@@ -48,10 +71,16 @@ export default function BookingWidget({ compact = false }: { compact?: boolean }
 
       <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
         <Field icon={<MapPin />} label="Pickup Location">
-          <input value={pickup} onChange={(e) => setPickup(e.target.value)} required placeholder="Enter pickup address" className="field" />
+          <select value={pickup} onChange={(e) => setPickup(e.target.value)} required className="field">
+            <option value="" disabled>Select pickup location</option>
+            {LOCATIONS.map(loc => <option key={loc} value={loc} className="bg-[#1a1a1a]">{loc}</option>)}
+          </select>
         </Field>
         <Field icon={<MapPin />} label="Drop-off Location">
-          <input value={dropoff} onChange={(e) => setDropoff(e.target.value)} required placeholder="Enter drop-off address" className="field" />
+          <select value={dropoff} onChange={(e) => setDropoff(e.target.value)} required className="field">
+            <option value="" disabled>Select drop-off location</option>
+            {LOCATIONS.map(loc => <option key={loc} value={loc} className="bg-[#1a1a1a]">{loc}</option>)}
+          </select>
         </Field>
         <Field icon={<Calendar />} label="Date">
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="field" />

@@ -4,9 +4,10 @@ import { PageHero, GoldButton, GoldDivider } from "../components/ui";
 import SectionBackground from "../components/SectionBackground";
 import TimePicker from "../components/TimePicker";
 import { initiateBooking, finalizeBooking, ADMIN_BASE_URL } from "../utils/api";
+import { LOCATIONS } from "../components/BookingWidget";
 
 const BG = "https://images.pexels.com/photos/8605325/pexels-photo-8605325.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400";
-import { CheckCircle, ArrowRight, ArrowLeft, MapPin, Calendar, Users, Car, User, Mail, Phone, Clock, Trash2, Plus, Briefcase } from "lucide-react";
+import { CheckCircle, ArrowRight, ArrowLeft, MapPin, Calendar, Users, Car, User, Mail, Phone, Clock, Trash2, Plus, Briefcase, Download } from "lucide-react";
 
 const STEPS = ["Trip Itinerary", "Vehicle Selection", "Summary", "Contact Info"];
 
@@ -53,6 +54,9 @@ interface BookingData {
   passengerLastName: string;
   passengerEmail: string;
   passengerPhone: string;
+  passengerPrimaryPhoneType: string;
+  passengerSecondaryPhone: string;
+  passengerSecondaryPhoneType: string;
   notes: string;
   userLocation: string;
 }
@@ -105,6 +109,9 @@ export default function Booking() {
     passengerLastName: "",
     passengerEmail: "",
     passengerPhone: "",
+    passengerPrimaryPhoneType: "Cellular",
+    passengerSecondaryPhone: "",
+    passengerSecondaryPhoneType: "Home",
     notes: "",
     userLocation: "",
   };
@@ -139,6 +146,12 @@ export default function Booking() {
         const seg = data.segments[i];
         if (!seg.date || !seg.time || !seg.pickup || !seg.dropoff) {
           setError(`Please fill in Date, Start Time, Pick-up, and Drop-off for Segment ${i + 1}.`);
+          return;
+        }
+
+        const isValid = (val: string) => LOCATIONS.some(loc => val.toLowerCase().includes(loc.toLowerCase()));
+        if (!isValid(seg.pickup) || !isValid(seg.dropoff)) {
+          setError(`Segment ${i + 1}: We only provide service in specific areas (e.g. Washington, Arlington, Alexandria, Dulles Airport, etc.). Please ensure your address includes one of our supported cities/airports.`);
           return;
         }
       }
@@ -206,6 +219,10 @@ export default function Booking() {
       setError("Please enter your name, email, and primary phone number.");
       return;
     }
+    if (!data.isPassenger && (!data.passengerFirstName || !data.passengerPhone)) {
+      setError("Please enter the passenger's first name and phone number.");
+      return;
+    }
     if (!data.vehicle_details) {
       setError("Please select a vehicle before confirming.");
       return;
@@ -250,11 +267,11 @@ export default function Booking() {
               email: data.passengerEmail,
               primary_phone: {
                 number: data.passengerPhone,
-                type: "Cellular",
+                type: data.passengerPrimaryPhoneType,
               },
               secondary_phone: {
-                number: "",
-                type: "",
+                number: data.passengerSecondaryPhone,
+                type: data.passengerSecondaryPhoneType,
               },
             },
       };
@@ -276,6 +293,96 @@ export default function Booking() {
       setError(err?.message || "Booking confirmation failed.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = () => {
+    const html = `
+      <html>
+        <head>
+          <title>Invoice - CN-${bookingId || 'PENDING'}</title>
+          <style>
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; max-width: 800px; margin: auto; }
+            h1 { color: #d4af37; margin-bottom: 5px; }
+            .header { border-bottom: 2px solid #d4af37; padding-bottom: 20px; margin-bottom: 20px; text-align: center; }
+            .section { margin-bottom: 30px; }
+            .section h2 { font-size: 18px; border-bottom: 1px solid #eee; padding-bottom: 10px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
+            .row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+            .label { font-weight: bold; width: 35%; color: #666; }
+            .val { width: 65%; font-weight: 500; }
+            .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; font-size: 12px; color: #888; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>ShineLimos LLC</h1>
+            <p style="margin:0; color:#666;">Premium Chauffeur Service</p>
+            <h3 style="margin-top:20px;">Booking Invoice</h3>
+            <p><strong>Confirmation Number:</strong> CN-${bookingId || Math.floor(100000 + Math.random() * 900000)}</p>
+            <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+          </div>
+          
+          <div class="section">
+            <h2>Contact Information</h2>
+            <div class="row"><div class="label">Booker Name:</div><div class="val">${data.firstName} ${data.lastName}</div></div>
+            <div class="row"><div class="label">Email:</div><div class="val">${data.email}</div></div>
+            <div class="row"><div class="label">Primary Phone:</div><div class="val">+1 ${data.primaryPhone} (${data.primaryPhoneType})</div></div>
+            ${data.secondaryPhone ? `<div class="row"><div class="label">Secondary Phone:</div><div class="val">+1 ${data.secondaryPhone} (${data.secondaryPhoneType})</div></div>` : ''}
+          </div>
+
+          <div class="section">
+            <h2>Passenger Information</h2>
+            <div class="row"><div class="label">Passenger Name:</div><div class="val">${data.isPassenger ? `${data.firstName} ${data.lastName}` : `${data.passengerFirstName} ${data.passengerLastName}`}</div></div>
+            ${!data.isPassenger && data.passengerEmail ? `<div class="row"><div class="label">Passenger Email:</div><div class="val">${data.passengerEmail}</div></div>` : ''}
+            <div class="row"><div class="label">Passenger Phone:</div><div class="val">+1 ${data.isPassenger ? data.primaryPhone : data.passengerPhone}</div></div>
+          </div>
+
+          <div class="section">
+            <h2>Trip Details</h2>
+            <div class="row"><div class="label">Service Type:</div><div class="val">${data.type === "one-way" ? "Point-to-Point" : data.type === "hourly" ? "By the Hour" : "Round Trip"}</div></div>
+            <div class="row"><div class="label">Vehicle:</div><div class="val">${selectedVehicle?.vehicle_name || "Not selected"}</div></div>
+            <div class="row"><div class="label">Total Passengers:</div><div class="val">${data.pax}</div></div>
+            <div class="row"><div class="label">Total Luggage:</div><div class="val">${data.bags > 0 ? `${data.bags} ${data.bagSize ? `(${data.bagSize})` : ""}` : "None"}</div></div>
+            <div class="row"><div class="label">Occasion:</div><div class="val">${data.occasion || "Not specified"}</div></div>
+          </div>
+
+          <div class="section">
+            <h2>Itinerary</h2>
+            ${data.segments.map((seg, idx) => `
+              <div style="margin-bottom: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
+                <h4 style="margin-top:0; color:#d4af37;">Segment ${idx + 1}</h4>
+                <div class="row"><div class="label">Date:</div><div class="val">${seg.date}</div></div>
+                <div class="row"><div class="label">Time:</div><div class="val">${seg.time}</div></div>
+                <div class="row"><div class="label">Pickup Location:</div><div class="val">${seg.pickup}</div></div>
+                <div class="row"><div class="label">Drop-off Location:</div><div class="val">${seg.dropoff}</div></div>
+                ${seg.duration ? `<div class="row"><div class="label">Duration:</div><div class="val">${seg.duration}</div></div>` : ''}
+                ${seg.comments ? `<div class="row"><div class="label">Comments:</div><div class="val">${seg.comments}</div></div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="section">
+            <h2>Estimated Price</h2>
+            <div class="row"><div class="label">Vehicle Estimate:</div><div class="val" style="font-weight:bold; color:#d4af37; font-size:18px;">$${selectedVehicle?.estimated_price || "0.00"}</div></div>
+            <p style="font-size:12px; color:#888; margin-top:10px;">* Includes tolls, gratuity, fuel surcharges and 15 minutes of complimentary wait time. Final charges may vary based on actual trip duration and additional stops.</p>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for choosing ShineLimos LLC. We look forward to serving you.</p>
+            <p>For support, contact us at info@shinelimos.com</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    const printWindow = window.open('', '', 'height=800,width=800');
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.focus();
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
     }
   };
 
@@ -303,7 +410,10 @@ export default function Booking() {
               <Detail label="Date" value={data.segments[0]?.date} />
               <Detail label="Time" value={data.segments[0]?.time} />
             </div>
-            <div className="mt-8">
+            <div className="mt-8 flex flex-wrap justify-center gap-4">
+              <button onClick={handleDownloadInvoice} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full text-sm font-medium transition-all border border-white/20">
+                <Download className="w-4 h-4" /> Download Invoice
+              </button>
               <GoldButton to="/">Return Home</GoldButton>
             </div>
           </div>
@@ -470,7 +580,10 @@ function Step1({ data, update }: { data: BookingData; update: (k: keyof BookingD
                   </div>
                   <div className="flex-1">
                     <Field icon={MapPin} label="Address (Pick-up) *">
-                      <input className={inputCls()} value={seg.pickup} onChange={(e) => updateSegment(seg.id, "pickup", e.target.value)} placeholder="Enter a location" />
+                      <select className={inputCls()} value={seg.pickup} onChange={(e) => updateSegment(seg.id, "pickup", e.target.value)} required>
+                        <option value="" disabled className="bg-[#1a1a1a]">Select pickup location</option>
+                        {LOCATIONS.map(loc => <option key={loc} value={loc} className="bg-[#1a1a1a]">{loc}</option>)}
+                      </select>
                     </Field>
                   </div>
                 </div>
@@ -481,7 +594,10 @@ function Step1({ data, update }: { data: BookingData; update: (k: keyof BookingD
                   </div>
                   <div className="flex-1">
                     <Field icon={MapPin} label="Address (Drop-off) *">
-                      <input className={inputCls()} value={seg.dropoff} onChange={(e) => updateSegment(seg.id, "dropoff", e.target.value)} placeholder="Enter a location" />
+                      <select className={inputCls()} value={seg.dropoff} onChange={(e) => updateSegment(seg.id, "dropoff", e.target.value)} required>
+                        <option value="" disabled className="bg-[#1a1a1a]">Select drop-off location</option>
+                        {LOCATIONS.map(loc => <option key={loc} value={loc} className="bg-[#1a1a1a]">{loc}</option>)}
+                      </select>
                     </Field>
                     {(seg.pickup && seg.dropoff) ? (
                       <a href={`https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(seg.pickup)}&destination=${encodeURIComponent(seg.dropoff)}`} target="_blank" rel="noreferrer" className="text-xs text-blue-400 hover:text-blue-300 hover:underline inline-flex items-center gap-1 mt-2">
@@ -518,7 +634,7 @@ function Step1({ data, update }: { data: BookingData; update: (k: keyof BookingD
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <Field icon={Car} label="Trip Type *">
             <select className={inputCls()} value={data.type} onChange={(e) => update("type", e.target.value)}>
-              <option className="bg-[#1a1a1a]" value="one-way">— Trip Type —</option>
+              <option className="bg-[#1a1a1a]" value="">— Trip Type —</option>
               <option className="bg-[#1a1a1a]" value="one-way">One Way</option>
               <option className="bg-[#1a1a1a]" value="round-trip">Round Trip</option>
               <option className="bg-[#1a1a1a]" value="hourly">As Directed/Hourly</option>
@@ -659,16 +775,25 @@ function Step4Contact({ data, update }: { data: BookingData; update: (k: keyof B
           <Field icon={User} label="Last Name">
             <input className={inputCls()} value={data.lastName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("lastName", e.target.value)} placeholder="Last name" />
           </Field>
-          <Field icon={Briefcase} label="Company Name">
-            <input className={inputCls()} value={data.company} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("company", e.target.value)} placeholder="Company name" />
-          </Field>
           <Field icon={Mail} label="Email Address *">
             <input type="email" className={inputCls()} value={data.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("email", e.target.value)} placeholder="you@example.com" />
           </Field>
           
-          <Field icon={Phone} label="Primary Phone Number">
+          <Field icon={Phone} label="Primary Phone Number *">
             <div className="flex gap-2">
-              <input type="tel" className={`${inputCls()} flex-1 min-w-0`} value={data.primaryPhone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("primaryPhone", e.target.value)} placeholder="(202) 555-0000" />
+              <div className="relative flex-1 min-w-0">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-white/50 text-sm">🇺🇸 +1</span>
+                </div>
+                <input 
+                  type="tel" 
+                  className={`${inputCls()} pl-[60px] w-full`} 
+                  value={data.primaryPhone} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("primaryPhone", e.target.value.replace(/[^0-9\s()-]/g, ''))} 
+                  placeholder="(202) 555-0000" 
+                  maxLength={14}
+                />
+              </div>
               <div className="relative w-28 shrink-0">
                 <span className="absolute -top-4 left-0 text-[9px] uppercase tracking-wider text-white/40">Type</span>
                 <select className={`${inputCls()} w-full px-2 text-xs`} value={data.primaryPhoneType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => update("primaryPhoneType", e.target.value)}>
@@ -682,7 +807,19 @@ function Step4Contact({ data, update }: { data: BookingData; update: (k: keyof B
 
           <Field icon={Phone} label="Secondary Phone Number">
             <div className="flex gap-2">
-              <input type="tel" className={`${inputCls()} flex-1 min-w-0`} value={data.secondaryPhone} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("secondaryPhone", e.target.value)} placeholder="(Optional)" />
+              <div className="relative flex-1 min-w-0">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <span className="text-white/50 text-sm">🇺🇸 +1</span>
+                </div>
+                <input 
+                  type="tel" 
+                  className={`${inputCls()} pl-[60px] w-full`} 
+                  value={data.secondaryPhone} 
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("secondaryPhone", e.target.value.replace(/[^0-9\s()-]/g, ''))} 
+                  placeholder="(Optional)" 
+                  maxLength={14}
+                />
+              </div>
               <div className="relative w-28 shrink-0">
                 <span className="absolute -top-4 left-0 text-[9px] uppercase tracking-wider text-white/40">Type</span>
                 <select className={`${inputCls()} w-full px-2 text-xs`} value={data.secondaryPhoneType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => update("secondaryPhoneType", e.target.value)}>
@@ -714,6 +851,74 @@ function Step4Contact({ data, update }: { data: BookingData; update: (k: keyof B
             </button>
           </div>
         </div>
+
+        {!data.isPassenger && (
+          <div className="mt-8 pt-6 border-t border-white/10 animate-in fade-in slide-in-from-top-4">
+            <h4 className="text-gold text-[11px] tracking-widest uppercase font-semibold mb-5">Passenger Information</h4>
+            <div className="grid gap-5 md:grid-cols-2">
+              <Field icon={User} label="Passenger First Name *">
+                <input className={inputCls()} value={data.passengerFirstName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("passengerFirstName", e.target.value)} placeholder="Passenger first name" />
+              </Field>
+              <Field icon={User} label="Passenger Last Name">
+                <input className={inputCls()} value={data.passengerLastName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("passengerLastName", e.target.value)} placeholder="Passenger last name" />
+              </Field>
+              <Field icon={Mail} label="Passenger Email">
+                <input type="email" className={inputCls()} value={data.passengerEmail} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("passengerEmail", e.target.value)} placeholder="passenger@example.com" />
+              </Field>
+              <Field icon={Phone} label="Primary Phone Number *">
+                <div className="flex gap-2">
+                  <div className="relative flex-1 min-w-0">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-white/50 text-sm">🇺🇸 +1</span>
+                    </div>
+                    <input 
+                      type="tel" 
+                      className={`${inputCls()} pl-[60px] w-full`} 
+                      value={data.passengerPhone} 
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("passengerPhone", e.target.value.replace(/[^0-9\s()-]/g, ''))} 
+                      placeholder="(202) 555-0000" 
+                      maxLength={14}
+                    />
+                  </div>
+                  <div className="relative w-28 shrink-0">
+                    <span className="absolute -top-4 left-0 text-[9px] uppercase tracking-wider text-white/40">Type</span>
+                    <select className={`${inputCls()} w-full px-2 text-xs`} value={data.passengerPrimaryPhoneType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => update("passengerPrimaryPhoneType", e.target.value)}>
+                      <option className="bg-[#1a1a1a]" value="Cellular">Cellular</option>
+                      <option className="bg-[#1a1a1a]" value="Home">Home</option>
+                      <option className="bg-[#1a1a1a]" value="Work">Work</option>
+                    </select>
+                  </div>
+                </div>
+              </Field>
+
+              <Field icon={Phone} label="Secondary Phone Number">
+                <div className="flex gap-2">
+                  <div className="relative flex-1 min-w-0">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-white/50 text-sm">🇺🇸 +1</span>
+                    </div>
+                    <input 
+                      type="tel" 
+                      className={`${inputCls()} pl-[60px] w-full`} 
+                      value={data.passengerSecondaryPhone} 
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("passengerSecondaryPhone", e.target.value.replace(/[^0-9\s()-]/g, ''))} 
+                      placeholder="(Optional)" 
+                      maxLength={14}
+                    />
+                  </div>
+                  <div className="relative w-28 shrink-0">
+                    <span className="absolute -top-4 left-0 text-[9px] uppercase tracking-wider text-white/40">Type</span>
+                    <select className={`${inputCls()} w-full px-2 text-xs`} value={data.passengerSecondaryPhoneType} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => update("passengerSecondaryPhoneType", e.target.value)}>
+                      <option className="bg-[#1a1a1a]" value="Home">Home</option>
+                      <option className="bg-[#1a1a1a]" value="Cellular">Cellular</option>
+                      <option className="bg-[#1a1a1a]" value="Work">Work</option>
+                    </select>
+                  </div>
+                </div>
+              </Field>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="text-[10px] tracking-[0.25em] text-gold uppercase py-3 px-5 rounded-t-2xl border border-white/10 border-b-0 bg-white/5 font-medium mt-6">Comments</div>

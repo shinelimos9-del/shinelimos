@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { getAllBookings } from "../../utils/api";
+import { getAllBookings, updateBookingStatus } from "../../utils/api";
 import moment from "moment";
 
 export default function AdminBookings() {
@@ -30,6 +30,20 @@ export default function AdminBookings() {
       setError("An unexpected error occurred while fetching bookings.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleUpdateStatus = async (id: string, status: string) => {
+    try {
+      const response = await updateBookingStatus(id, status);
+      if (response.success) {
+        fetchBookings();
+      } else {
+        alert("Failed to update status");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error updating status");
     }
   };
 
@@ -121,6 +135,7 @@ export default function AdminBookings() {
                 <th className="p-4 font-medium">Trip Type</th>
                 <th className="p-4 font-medium">Enquiry Date</th>
                 <th className="p-4 font-medium">Status</th>
+                <th className="p-4 font-medium text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-white">
@@ -148,15 +163,25 @@ export default function AdminBookings() {
                     <td className="p-4 text-white">{b.trip_details[0]?.trip_type || "N/A"}</td>
                     <td className="p-4 text-white">{moment(b.created_at).format("DD MMM YYYY")}</td>
                     <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-white/10 text-white`}>
-                        {b.booking_status || "Pending"}
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${b.booking_status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white'}`}>
+                        {b.booking_status === 'completed' ? 'Complete' : 'Pending'}
                       </span>
+                    </td>
+                    <td className="p-4 text-right">
+                      {b.booking_status !== 'completed' && (
+                        <button 
+                          onClick={() => handleUpdateStatus(b._id, 'completed')}
+                          className="bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                        >
+                          Complete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="p-10 text-center text-white/50">
+                  <td colSpan={8} className="p-10 text-center text-white/50">
                     No bookings found
                   </td>
                 </tr>

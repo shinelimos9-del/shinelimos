@@ -21,7 +21,7 @@ export default function Logo({ className = "" }: { className?: string }) {
       className={`flex items-center cursor-pointer select-none ${className}`}
     >
       <img
-        src="/logo/limos%20logo.png"
+        src="/logo/logo.png"
         alt="Limos Brand Icon"
         className="h-10 w-auto object-contain rounded-xl"
       />

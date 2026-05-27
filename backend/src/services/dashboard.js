@@ -35,11 +35,10 @@ exports.getDashboardStats = async () => {
         ]);
 
         // 3. Total Trips Status
-        const doneTrips = await Booking.countDocuments({ booking_status: "completed" });
-        const bookedTrips = await Booking.countDocuments({ booking_status: "confirmed" });
-        const cancelledTrips = await Booking.countDocuments({ booking_status: "cancelled" });
+        const completeTrips = await Booking.countDocuments({ booking_status: "completed" });
+        const pendingTrips = await Booking.countDocuments({ booking_status: "confirmed" });
         
-        const totalStatus = doneTrips + bookedTrips + cancelledTrips || 1; // avoid div by zero
+        const totalStatus = completeTrips + pendingTrips || 1; // avoid div by zero
 
         // 4. Top Destinations
         const topDestinations = await Booking.aggregate([
@@ -71,21 +70,22 @@ exports.getDashboardStats = async () => {
                 last_year: revenueOverview.filter(r => r._id.year === now.year() - 1).map(r => ({ month: moment().month(r._id.month - 1).format("MMM"), revenue: r.revenue }))
             },
             trip_summary: [
-                { name: "Done Trips", sales: ((doneTrips / totalStatus) * 100).toFixed(0), count: doneTrips },
-                { name: "Booked", sales: ((bookedTrips / totalStatus) * 100).toFixed(0), count: bookedTrips },
-                { name: "Cancelled", sales: ((cancelledTrips / totalStatus) * 100).toFixed(0), count: cancelledTrips }
+                { name: "Complete", sales: ((completeTrips / totalStatus) * 100).toFixed(0), count: completeTrips },
+                { name: "Pending", sales: ((pendingTrips / totalStatus) * 100).toFixed(0), count: pendingTrips }
             ],
             top_destinations: topDestinations.map(d => ({
                 name: d._id,
                 percentage: ((d.count / totalBookings) * 100).toFixed(1)
             })),
             recent_bookings: recentBookings.map(b => ({
+                id: b._id,
                 name: b.contact_details?.booker ? `${b.contact_details.booker.first_name || ""} ${b.contact_details.booker.last_name || ""}`.trim() || "Unknown" : "Unknown",
                 email: b.contact_details?.booker?.email || "N/A",
                 trip: b.trip_details?.[0]?.trip_type || "N/A",
                 date: moment(b.created_at).format("DD MMM YYYY"),
                 price: b.vehicle_details?.estimated_price ? `$${b.vehicle_details.estimated_price}` : "N/A",
-                phone: b.contact_details?.booker?.primary_phone?.number || "N/A"
+                phone: b.contact_details?.booker?.primary_phone?.number || "N/A",
+                status: b.booking_status || "confirmed"
             }))
         };
     } catch (error) {

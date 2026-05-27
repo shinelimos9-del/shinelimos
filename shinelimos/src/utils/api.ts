@@ -114,4 +114,9 @@ export const getAllBookings = async () => {
   return response.data;
 };
 
+export const updateBookingStatus = async (id: string, status: string) => {
+  const response = await api.patch(`/bookings/${encodeURIComponent(id)}/status`, { status });
+  return response.data;
+};
+
 export default api;
