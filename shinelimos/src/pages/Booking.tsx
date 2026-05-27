@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { PageHero, GoldButton, GoldDivider } from "../components/ui";
 import SectionBackground from "../components/SectionBackground";
 import TimePicker from "../components/TimePicker";
-import { initiateBooking, finalizeBooking } from "../utils/api";
+import { initiateBooking, finalizeBooking, ADMIN_BASE_URL } from "../utils/api";
 
 const BG = "https://images.pexels.com/photos/8605325/pexels-photo-8605325.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400";
 import { CheckCircle, ArrowRight, ArrowLeft, MapPin, Calendar, Users, Car, User, Mail, Phone, Clock, Trash2, Plus, Briefcase } from "lucide-react";
@@ -589,7 +589,12 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
                 }`}
               >
                 <div className="flex gap-4 p-4">
-                  <img src={v.image} alt={v.vehicle_name} className="w-28 h-20 object-cover rounded-lg shrink-0" loading="lazy" />
+                  <img 
+                    src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`} 
+                    alt={v.vehicle_name} 
+                    className="w-28 h-20 object-cover rounded-lg shrink-0" 
+                    loading="lazy" 
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] tracking-[0.25em] text-gold uppercase">Vehicle</div>
                     <div className="font-serif-lux text-lg text-white mt-0.5">{v.vehicle_name}</div>

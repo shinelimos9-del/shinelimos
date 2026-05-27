@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { ArrowRight, Plane, Heart, Briefcase, Crown, Wine, Star, MapPin, X } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
@@ -11,6 +11,7 @@ import Carousel from "../components/Carousel";
 import Parallax from "../components/Parallax";
 import FleetCarousel3D from "../components/FleetCarousel3D";
 import SectionBackground from "../components/SectionBackground";
+import { getVehicles } from "../utils/api";
 import { SERVICES, LOCATIONS, TESTIMONIALS, COMPANY } from "../data";
 
 const SECONDARY_VIDEO =
@@ -81,6 +82,22 @@ gsap.registerPlugin(useGSAP);
 export default function Home() {
   const heroRef = useRef<HTMLElement>(null);
   const [showBooking, setShowBooking] = useState(false);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchHomeVehicles();
+  }, []);
+
+  const fetchHomeVehicles = async () => {
+    try {
+      const response = await getVehicles();
+      if (response.success) {
+        setVehicles(response.vehicles);
+      }
+    } catch (error) {
+      console.error("Error fetching vehicles for home carousel:", error);
+    }
+  };
 
   useGSAP(
     () => {
@@ -267,7 +284,7 @@ export default function Home() {
             />
           </Reveal>
           <Reveal variant="3d" delay={150} className="mt-14">
-            <FleetCarousel3D />
+            <FleetCarousel3D vehicles={vehicles} />
           </Reveal>
           <div className="mt-8 text-center">
             <GoldButton to="/fleet" variant="outline">

@@ -118,13 +118,13 @@ const bookingSchema = new mongoose.Schema({
   special_requests: String,
   booking_status: {
     type: String,
-    default: "requested",
+    default: "panding",
   },
   transaction_id: {
     type: mongoose.Schema.Types.ObjectId,
     required: false,
   },
-  created_at: {
+  created_at: { 
     type: Date,
     default: Date.now,
   },

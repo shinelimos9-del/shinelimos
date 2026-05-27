@@ -2,21 +2,28 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Users, Briefcase } from "lucide-react";
 import { Link } from "react-router-dom";
-import { FLEET } from "../data";
+import { ADMIN_BASE_URL } from "../utils/api";
 
-export default function FleetCarousel3D() {
+interface FleetCarousel3DProps {
+  vehicles?: any[];
+}
+
+export default function FleetCarousel3D({ vehicles = [] }: FleetCarousel3DProps) {
   const [active, setActive] = useState(0);
-  const N = FLEET.length;
-  const angle = 360 / N;
+  const N = vehicles.length;
+  const angle = 360 / Math.max(N, 1);
   const ref = useRef<HTMLDivElement>(null);
 
   // auto-rotate
   useEffect(() => {
+    if (N <= 1) return;
     const t = setInterval(() => setActive((a) => (a + 1) % N), 4500);
     return () => clearInterval(t);
   }, [N]);
 
-  const item = FLEET[active];
+  if (N === 0) return null;
+
+  const item = vehicles[active];
 
   return (
     <div className="relative">
@@ -30,11 +37,11 @@ export default function FleetCarousel3D() {
             transitionTimingFunction: "cubic-bezier(.2,.8,.2,1)",
           }}
         >
-          {FLEET.map((v, i) => {
+          {vehicles.map((v, i) => {
             const isActive = i === active;
             return (
               <div
-                key={v.slug}
+                key={v._id || i}
                 className="absolute inset-0 rounded-2xl overflow-hidden glass"
                 style={{
                   transform: `rotateY(${i * angle}deg) translateZ(450px)`,
@@ -47,15 +54,15 @@ export default function FleetCarousel3D() {
                 }}
               >
                 <img
-                  src={v.image}
-                  alt={v.name}
+                  src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`}
+                  alt={v.vehicle_name}
                   loading={i === 0 ? "eager" : "lazy"}
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent" />
                 <div className="absolute bottom-0 inset-x-0 p-4">
-                  <div className="text-[10px] tracking-[0.3em] text-white/80 uppercase">{v.category}</div>
-                  <div className="font-serif-lux text-xl text-white leading-tight">{v.name}</div>
+                  <div className="text-[10px] tracking-[0.3em] text-white/80 uppercase">{v.vehicle_class_name || "Luxury Class"}</div>
+                  <div className="font-serif-lux text-xl text-white leading-tight">{v.vehicle_name}</div>
                 </div>
               </div>
             );
@@ -66,50 +73,52 @@ export default function FleetCarousel3D() {
       {/* Active card info */}
       <div className="mt-6 max-w-2xl mx-auto text-center" key={active}>
         <div className="fade-up">
-          <h3 className="font-serif-lux text-3xl md:text-4xl text-white">{item.name}</h3>
-          <p className="text-white/65 mt-2">{item.blurb}</p>
+          <h3 className="font-serif-lux text-3xl md:text-4xl text-white">{item.vehicle_name}</h3>
+          <p className="text-white/65 mt-2 line-clamp-2">{item.discription || "Experience the pinnacle of luxury transit."}</p>
           <div className="flex items-center justify-center gap-6 mt-4 text-sm text-white/70">
-            <span className="flex items-center gap-2"><Users className="h-4 w-4" /> {item.passengers} pax</span>
-            <span className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> {item.luggage} bags</span>
+            <span className="flex items-center gap-2"><Users className="h-4 w-4" /> {item.passenger_capacity} pax</span>
+            <span className="flex items-center gap-2"><Briefcase className="h-4 w-4" /> {item.luggage_capacity} bags</span>
           </div>
           <div className="mt-6">
             <Link
-              to={`/booking?vehicle=${item.slug}`}
+              to={`/booking?vehicle=${item._id}`}
               className="inline-block bg-white text-black text-xs tracking-[0.2em] uppercase px-6 py-3 rounded-full hover:scale-105 transition-transform"
             >
-              Reserve {item.category}
+              Reserve {item.vehicle_class_name || "Vehicle"}
             </Link>
           </div>
         </div>
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-center gap-4 mt-6">
-        <button
-          onClick={() => setActive((a) => (a - 1 + N) % N)}
-          aria-label="Previous vehicle"
-          className="w-11 h-11 rounded-full glass border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-all"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <div className="flex gap-2">
-          {FLEET.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setActive(i)}
-              aria-label={`Vehicle ${i + 1}`}
-              className={`transition-all rounded-full ${i === active ? "w-8 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/30"}`}
-            />
-          ))}
+      {N > 1 && (
+        <div className="flex items-center justify-center gap-4 mt-6">
+          <button
+            onClick={() => setActive((a) => (a - 1 + N) % N)}
+            aria-label="Previous vehicle"
+            className="w-11 h-11 rounded-full glass border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-all"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <div className="flex gap-2">
+            {vehicles.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActive(i)}
+                aria-label={`Vehicle ${i + 1}`}
+                className={`w-1.5 h-1.5 rounded-full transition-all ${active === i ? "bg-white w-4" : "bg-white/20"}`}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() => setActive((a) => (a + 1) % N)}
+            aria-label="Next vehicle"
+            className="w-11 h-11 rounded-full glass border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-all"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
         </div>
-        <button
-          onClick={() => setActive((a) => (a + 1) % N)}
-          aria-label="Next vehicle"
-          className="w-11 h-11 rounded-full glass border border-white/20 flex items-center justify-center hover:bg-white hover:text-black transition-all"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
-      </div>
+      )}
     </div>
   );
 }

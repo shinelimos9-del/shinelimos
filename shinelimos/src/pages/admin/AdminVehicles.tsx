@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Plus, X, Trash2, Loader2, Upload } from "lucide-react";
-import { getVehicles, addVehicle, updateVehicle, deleteVehicle } from "../../utils/api";
+import { getVehicles, addVehicle, updateVehicle, deleteVehicle, ADMIN_BASE_URL } from "../../utils/api";
 
 interface VehiclePrice {
   base_price: string;
@@ -12,6 +12,9 @@ interface VehiclePrice {
 interface Vehicle {
   _id: string;
   vehicle_name: string;
+  vehicle_class_name: string;
+  discription: string;
+  features: string[];
   price: VehiclePrice;
   unites: string;
   passenger_capacity: string;
@@ -33,14 +36,24 @@ export default function AdminVehicles() {
 
   const [formData, setFormData] = useState({
     vehicle_name: "",
+    vehicle_class_name: "",
+    discription: "",
+    features: [] as string[],
     base_price: "",
     price_per_minute: "",
     price_per_mile: "",
     price_per_hour: "",
-    unites: "per hour",
+    unites: "",
     passenger_capacity: "",
     luggage_capacity: "",
   });
+
+  const availableFeatures = [
+    "Perfect Position Seats", "Revel® Audio", "ActiveMotion Massage", "Ambient Lighting",
+    "Stand-Up Cabin", "LED Mood Lighting", "Dance Floor", "Laser Lighting",
+    "Premium Bar", "Subwoofer Audio", "Under-Coach Luggage", "Reclining Seats",
+    "Overhead Storage", "PA System"
+  ];
 
   useEffect(() => {
     fetchVehicles();
@@ -69,6 +82,9 @@ export default function AdminVehicles() {
       setEditingVehicle(vehicle);
       setFormData({
         vehicle_name: vehicle.vehicle_name,
+        vehicle_class_name: vehicle.vehicle_class_name || "",
+        discription: vehicle.discription || "",
+        features: vehicle.features || [],
         base_price: vehicle.price.base_price,
         price_per_minute: vehicle.price.price_per_minute,
         price_per_mile: vehicle.price.price_per_mile,
@@ -77,16 +93,19 @@ export default function AdminVehicles() {
         passenger_capacity: vehicle.passenger_capacity,
         luggage_capacity: vehicle.luggage_capacity,
       });
-      setImagePreview(vehicle.image.startsWith('http') ? vehicle.image : `http://localhost:60000${vehicle.image}`);
+      setImagePreview(vehicle.image.startsWith('http') ? vehicle.image : `${ADMIN_BASE_URL}${vehicle.image}`);
     } else {
       setEditingVehicle(null);
       setFormData({
         vehicle_name: "",
+        vehicle_class_name: "",
+        discription: "",
+        features: [],
         base_price: "",
         price_per_minute: "",
         price_per_mile: "",
         price_per_hour: "",
-        unites: "per hour",
+        unites: "",
         passenger_capacity: "",
         luggage_capacity: "",
       });
@@ -141,6 +160,9 @@ export default function AdminVehicles() {
     try {
       const data = new FormData();
       data.append("vehicle_name", formData.vehicle_name);
+      data.append("vehicle_class_name", formData.vehicle_class_name);
+      data.append("discription", formData.discription);
+      data.append("features", JSON.stringify(formData.features));
       data.append("unites", formData.unites);
       data.append("passenger_capacity", formData.passenger_capacity);
       data.append("luggage_capacity", formData.luggage_capacity);
@@ -225,7 +247,7 @@ export default function AdminVehicles() {
             <div key={v._id} className="glass-dark rounded-2xl border border-white/5 p-4 hover:border-white/10 transition-all hover:scale-[1.02] group flex flex-col relative">
               <div className="bg-white rounded-xl aspect-4/3 flex items-center justify-center p-4 mb-4 overflow-hidden relative group/img">
                  <img 
-                   src={v.image.startsWith('http') ? v.image : `http://localhost:60000${v.image}`} 
+                   src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`} 
                    alt={v.vehicle_name} 
                    className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" 
                  />
@@ -241,8 +263,13 @@ export default function AdminVehicles() {
               </div>
               <div className="text-center flex-1 flex flex-col">
                 <h3 className="text-white font-medium text-sm mb-2 leading-tight">{v.vehicle_name}</h3>
-                <div className="inline-block mx-auto px-4 py-1 rounded-full bg-white/10 text-xs text-white mb-4">
-                  {v.unites} ${v.price?.base_price || 0}
+                <div className="flex flex-col gap-1 mb-4">
+                  <div className="inline-block mx-auto px-4 py-1 rounded-full bg-white/10 text-xs text-white">
+                    Base Price: ${v.price?.base_price || 0}
+                  </div>
+                  <div className="inline-block mx-auto px-4 py-1 rounded-full bg-white/5 text-[10px] text-white/60">
+                    Unit: {v.unites || "N/A"}
+                  </div>
                 </div>
                 <div className="mt-auto pt-2">
                   <button 
@@ -313,6 +340,59 @@ export default function AdminVehicles() {
                       className="w-full bg-black border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm focus:border-white/20 focus:outline-none transition-colors placeholder:text-white/20" 
                     />
                   </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-white mb-2 uppercase tracking-wider">Vehicle Class</label>
+                    <input 
+                      type="text" 
+                      name="vehicle_class_name"
+                      value={formData.vehicle_class_name}
+                      onChange={handleInputChange}
+                      placeholder="e.g. Executive Sedan" 
+                      required
+                      className="w-full bg-black border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm focus:border-white/20 focus:outline-none transition-colors placeholder:text-white/20" 
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-white mb-2 uppercase tracking-wider">Description</label>
+                    <textarea 
+                      name="discription"
+                      value={formData.discription}
+                      onChange={(e) => setFormData(prev => ({ ...prev, discription: e.target.value }))}
+                      placeholder="Enter vehicle description..." 
+                      required
+                      rows={3}
+                      className="w-full bg-black border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm focus:border-white/20 focus:outline-none transition-colors placeholder:text-white/20 resize-none" 
+                    />
+                  </div>
+
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-bold text-white mb-2 uppercase tracking-wider">Features</label>
+                    <div className="flex flex-wrap gap-2 p-3 bg-black border border-white/5 rounded-xl min-h-[50px]">
+                      {availableFeatures.map(feature => (
+                        <button
+                          key={feature}
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              features: prev.features.includes(feature)
+                                ? prev.features.filter(f => f !== feature)
+                                : [...prev.features, feature]
+                            }));
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            formData.features.includes(feature)
+                              ? "bg-white text-black"
+                              : "bg-white/5 text-white/60 hover:bg-white/10"
+                          }`}
+                        >
+                          {feature}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   
                   <div>
                     <label className="block text-xs font-bold text-white mb-2 uppercase tracking-wider">Base Price ($)</label>
@@ -368,19 +448,15 @@ export default function AdminVehicles() {
 
                   <div className="relative">
                     <label className="block text-xs font-bold text-white mb-2 uppercase tracking-wider">Units</label>
-                    <select 
+                    <input 
+                      type="text" 
                       name="unites"
                       value={formData.unites}
                       onChange={handleInputChange}
-                      className="w-full bg-black border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm focus:border-white/20 focus:outline-none transition-colors appearance-none cursor-pointer"
-                    >
-                      <option value="per hour">Per Hour</option>
-                      <option value="per day">Per Day</option>
-                      <option value="flat rate">Flat Rate</option>
-                    </select>
-                    <div className="absolute right-4 bottom-3.5 pointer-events-none text-white/40">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                    </div>
+                      placeholder="enter total unit" 
+                      required
+                      className="w-full bg-black border border-white/5 rounded-xl px-4 py-3.5 text-white text-sm focus:border-white/20 focus:outline-none transition-colors placeholder:text-white/20" 
+                    />
                   </div>
                   
                   <div className="relative">

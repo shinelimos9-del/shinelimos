@@ -6,6 +6,18 @@ const vehicleSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  vehicle_class_name: {
+    type: String,
+    required: true,
+  },
+  discription: {
+    type: String,
+    required: true,
+  },
+  features: {
+    type: Array,
+    required: true,
+  },
 
   price: {
     base_price: {

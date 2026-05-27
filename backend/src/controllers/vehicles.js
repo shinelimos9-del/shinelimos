@@ -10,7 +10,7 @@ exports.add_newVehicle = async (req, res) => {
 		}
 
 		// Basic validation
-		const required = ["vehicle_name", "price", "unites", "passenger_capacity", "luggage_capacity", "image"];
+		const required = ["vehicle_name", "vehicle_class_name", "discription", "features", "price", "unites", "passenger_capacity", "luggage_capacity", "image"];
 		const missing = required.filter((k) => !payload || payload[k] === undefined || payload[k] === "");
 		if (missing.length) {
 			return res.status(400).json({ success: false, message: `Missing fields: ${missing.join(", ")}` });
@@ -22,6 +22,15 @@ exports.add_newVehicle = async (req, res) => {
 				payload.price = JSON.parse(payload.price);
 			} catch (e) {
 				return res.status(400).json({ success: false, message: "Invalid price format. Expected an object or JSON string." });
+			}
+		}
+
+		// Features validation/parsing
+		if (typeof payload.features === 'string') {
+			try {
+				payload.features = JSON.parse(payload.features);
+			} catch (e) {
+				payload.features = []; // Fallback to empty array if parsing fails
 			}
 		}
 
@@ -64,6 +73,15 @@ exports.updateVehicle_details = async (req, res) => {
 				}
 			}
 			// Optional: you could validate specific pricing fields here if they are required for update
+		}
+
+		// Features validation/parsing if features are being updated
+		if (payload.features && typeof payload.features === 'string') {
+			try {
+				payload.features = JSON.parse(payload.features);
+			} catch (e) {
+				// Keep as is or handle error
+			}
 		}
 
 		const result = await vehicleService.updateVehicleDetails(_id, payload);
