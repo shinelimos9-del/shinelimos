@@ -1,46 +1,44 @@
-import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import { verifyOtp } from "../../utils/api";
-
+import { verifyAdminOtp } from "../../utils/api";
 
 export default function VerifyOtp() {
   const [otp, setOtp] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
   const navigate = useNavigate();
-  const location = useLocation();
-  const email = (location.state as { email: string } | null)?.email || "";
+
+  useEffect(() => {
+    const storedEmail = localStorage.getItem("adminResetEmail");
+    if (!storedEmail) {
+      navigate("/forgot-password");
+      return;
+    }
+    setEmail(storedEmail);
+  }, [navigate]);
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    if (!otp || otp.length !== 4) {
-      setError("Please enter a valid 6-digit OTP.");
+    setError("");
+    setStatus("");
+
+    if (!otp) {
+      setError("Please enter the OTP.");
       return;
     }
-    if (!email) {
-      setError("Email not found. Please go back and re-enter your email.");
-      return;
-    }
-    setLoading(true);
+
     try {
-      const res = await verifyOtp(email, otp);
-      if (!res || !res.success) {
-        setError(res?.message || "Invalid OTP");
-        return;
+      const data = await verifyAdminOtp(email, otp);
+      if (data.success) {
+        setStatus("OTP verified. Please reset your password.");
+        navigate("/reset-password");
+      } else {
+        setError(data.message || "OTP verification failed.");
       }
-      setSuccess(true);
-      // Store token for password reset
-      if (res.token) {
-        localStorage.setItem('resetToken', res.token);
-      }
-      setTimeout(() => navigate("/reset-password", { state: { email } }), 1500);
     } catch (err: any) {
-      setError(err?.response?.data?.message || err?.message || "Verification failed");
-    } finally {
-      setLoading(false);
+      setError(err?.response?.data?.message || "Unable to verify OTP. Please try again.");
     }
   };
 
@@ -60,6 +58,16 @@ export default function VerifyOtp() {
 
         <div className="glass-dark rounded-3xl p-8 border border-white/10 shadow-2xl backdrop-blur-xl">
           <form onSubmit={handleVerify} className="space-y-6">
+            {error && (
+              <div className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 p-3 rounded-lg text-center">
+                {error}
+              </div>
+            )}
+            {status && (
+              <div className="text-emerald-300 text-xs bg-emerald-300/10 border border-emerald-300/20 p-3 rounded-lg text-center">
+                {status}
+              </div>
+            )}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-white/60 mb-2">6-Digit Code</label>
               <input 
@@ -75,13 +83,10 @@ export default function VerifyOtp() {
             
             <button 
               type="submit"
-              disabled={loading || success}
-              className={`w-full mt-2 ${success ? 'bg-green-500 hover:bg-green-600' : loading ? 'opacity-60 cursor-wait' : 'bg-white hover:bg-gray-200'} ${success ? 'text-white' : 'text-black'} px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5`}
+              className="w-full mt-2 bg-white hover:bg-gray-200 text-black px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5"
             >
-              {success ? '✓ Verified!' : loading ? 'Verifying…' : 'Confirm OTP'}
+              Confirm OTP
             </button>
-            {error && <div className="mt-3 text-sm text-red-400 text-center">{error}</div>}
-            {success && <div className="mt-3 text-sm text-green-400 text-center">OTP verified successfully. Redirecting…</div>}
           </form>
         </div>
       </div>

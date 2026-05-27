@@ -38,6 +38,17 @@ exports.deleteVehicle = async (_id) => {
 	}
 };
 
+// Get all vehicles
+exports.getAllVehicles = async () => {
+	try {
+		const vehicles = await Vehicle.find({});
+		return { success: true, vehicles };
+	} catch (error) {
+		console.log("getAllVehicles error:", error);
+		return { success: false, message: error.message || error };
+	}
+};
+
 // Get vehicles by passenger capacity
 exports.getVehiclesByCapacity = async (capacity) => {
 	try {

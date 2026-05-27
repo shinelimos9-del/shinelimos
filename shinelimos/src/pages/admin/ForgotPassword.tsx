@@ -5,31 +5,31 @@ import { sendOtpToAdmin } from "../../utils/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
   const navigate = useNavigate();
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setError("");
+    setStatus("");
+
     if (!email) {
-      setError("Email is required.");
+      setError("Please enter your email.");
       return;
     }
-    setLoading(true);
+
     try {
-      const res = await sendOtpToAdmin(email);
-      if (!res || !res.success) {
-        setError(res?.message || "Failed to send OTP");
-        return;
+      const data = await sendOtpToAdmin(email);
+      if (data.success) {
+        localStorage.setItem("adminResetEmail", email);
+        setStatus("OTP sent. Please check your email.");
+        navigate("/verify-otp");
+      } else {
+        setError(data.message || "Failed to send OTP.");
       }
-      setSuccess(true);
-      setTimeout(() => navigate("/verify-otp", { state: { email } }), 1500);
     } catch (err: any) {
-      setError(err?.message || "Network error");
-    } finally {
-      setLoading(false);
+      setError(err?.response?.data?.message || "Unable to send OTP. Please try again.");
     }
   };
 
@@ -49,6 +49,16 @@ export default function ForgotPassword() {
 
         <div className="glass-dark rounded-3xl p-8 border border-white/10 shadow-2xl backdrop-blur-xl">
           <form onSubmit={handleSendOtp} className="space-y-6">
+            {error && (
+              <div className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 p-3 rounded-lg text-center">
+                {error}
+              </div>
+            )}
+            {status && (
+              <div className="text-emerald-300 text-xs bg-emerald-300/10 border border-emerald-300/20 p-3 rounded-lg text-center">
+                {status}
+              </div>
+            )}
             <div>
               <label className="block text-[10px] uppercase tracking-widest text-white/60 mb-2">Email Address</label>
               <input 
@@ -63,13 +73,10 @@ export default function ForgotPassword() {
             
             <button 
               type="submit"
-              disabled={loading || success}
-              className={`w-full mt-2 ${success ? 'bg-green-500 hover:bg-green-600' : loading ? 'opacity-60 cursor-wait' : 'bg-white hover:bg-gray-200'} ${success ? 'text-white' : 'text-black'} px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5`}
+              className="w-full mt-2 bg-white hover:bg-gray-200 text-black px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5"
             >
-              {success ? '✓ OTP Sent!' : loading ? 'Sending…' : 'Send OTP'}
+              Send OTP
             </button>
-            {error && <div className="mt-3 text-sm text-red-400 text-center">{error}</div>}
-            {success && <div className="mt-3 text-sm text-green-400 text-center">Check your email for the OTP.</div>}
           </form>
         </div>
       </div>

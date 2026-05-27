@@ -77,13 +77,24 @@ exports.updateVehicle_details = async (req, res) => {
 
 exports.deleteVehicle = async (req, res) => {
 	try {
-		const {_id} = req.query;
+		const {id} = req.params;
 		
-		const result = await vehicleService.deleteVehicle(_id);
+		const result = await vehicleService.deleteVehicle(id);
 		if (!result.success) return res.status(404).json(result);
 		return res.status(200).json(result);
 	} catch (error) {
 		console.log("deleteVehicle controller error:", error);
+		return res.status(500).json({ success: false, message: "Internal server error" });
+	}
+};
+
+exports.getAll_vehicles = async (req, res) => {
+	try {
+		const result = await vehicleService.getAllVehicles();
+		if (!result.success) return res.status(400).json(result);
+		return res.status(200).json(result);
+	} catch (error) {
+		console.log("getAll_vehicles controller error:", error);
 		return res.status(500).json({ success: false, message: "Internal server error" });
 	}
 };

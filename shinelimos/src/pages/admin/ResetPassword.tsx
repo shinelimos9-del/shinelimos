@@ -1,19 +1,46 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { adminForgotPassword } from "../../utils/api";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
   const navigate = useNavigate();
 
-  const handleReset = (e: React.FormEvent) => {
+  useEffect(() => {
+    const storedEmail = localStorage.getItem("adminResetEmail");
+    if (!storedEmail) {
+      navigate("/forgot-password");
+      return;
+    }
+    setEmail(storedEmail);
+  }, [navigate]);
+
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setStatus("");
+
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
-    navigate("/admin-login");
+
+    try {
+      const data = await adminForgotPassword(email, password);
+      if (data.success) {
+        localStorage.removeItem("adminResetEmail");
+        setStatus("Password updated successfully.");
+        navigate("/admin-login");
+      } else {
+        setError(data.message || "Failed to reset password.");
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Unable to reset your password. Please try again.");
+    }
   };
 
   return (
@@ -31,6 +58,11 @@ export default function ResetPassword() {
             {error && (
               <div className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 p-3 rounded-lg text-center">
                 {error}
+              </div>
+            )}
+            {status && (
+              <div className="text-emerald-300 text-xs bg-emerald-300/10 border border-emerald-300/20 p-3 rounded-lg text-center">
+                {status}
               </div>
             )}
             
