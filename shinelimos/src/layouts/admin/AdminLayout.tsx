@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { LayoutDashboard, CarFront, LogOut, Bell, Search, Menu, X, CheckSquare } from "lucide-react";
-import Logo from "../../components/Logo";
 import { mockNotifications } from "../../data/mockNotifications";
 
 export default function AdminLayout() {
@@ -38,7 +37,7 @@ export default function AdminLayout() {
     localStorage.removeItem("adminToken");
     sessionStorage.clear();
     // Redirect to login page and prevent going back
-    navigate("/admin-login", { replace: true });
+    navigate("/", { replace: true });
   };
 
   const navItems = [
@@ -48,7 +47,7 @@ export default function AdminLayout() {
   ];
 
   return (
-    <div className="min-h-screen pt-[88px] bg-transparent text-white flex overflow-hidden selection:bg-gold/30">
+    <div className="h-screen pt-[88px] bg-transparent text-white flex overflow-hidden selection:bg-white/10">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
@@ -59,26 +58,23 @@ export default function AdminLayout() {
 
       {/* Sidebar */}
       <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-black/60 backdrop-blur-2xl border-r border-white/5 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
-        <div className="h-20 flex items-center justify-between px-6 border-b border-white/5">
-          <Link to="/" className="scale-75 origin-left">
-            <Logo />
-          </Link>
-          <button className="lg:hidden text-white/50 hover:text-white" onClick={() => setSidebarOpen(false)}>
+        <div className="h-20 flex items-center justify-end px-6 border-b border-white/5">
+          <button className="lg:hidden text-white hover:text-white" onClick={() => setSidebarOpen(false)}>
             <X size={20} />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto py-6 px-4 no-scrollbar space-y-1">
-          <div className="text-[10px] tracking-[0.2em] uppercase text-white/30 mb-4 px-2 font-semibold">Dashboards</div>
+          <div className="text-[10px] tracking-[0.2em] uppercase text-white mb-4 px-2 font-semibold">Dashboards</div>
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || (item.path !== '/admin-dashboard' && location.pathname.startsWith(item.path));
             return (
               <Link 
                 key={item.name} 
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${isActive ? "bg-white/10 text-white font-medium" : "text-white/60 hover:text-white hover:bg-white/5"}`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${isActive ? "bg-white/10 text-white font-medium" : "text-white hover:text-white hover:bg-white/5"}`}
               >
-                <span className={isActive ? "text-gold" : ""}>{item.icon}</span>
+                <span className={isActive ? "text-white" : ""}>{item.icon}</span>
                 <span className="text-sm tracking-wide">{item.name}</span>
               </Link>
             );
@@ -88,7 +84,7 @@ export default function AdminLayout() {
         <div className="p-4 border-t border-white/5">
           <button 
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all duration-300"
+            className="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-white hover:text-white hover:bg-white/5 transition-all duration-300"
           >
             <LogOut size={18} />
             <span className="text-sm tracking-wide">Logout</span>
@@ -101,29 +97,22 @@ export default function AdminLayout() {
         {/* Header */}
         <header className="h-20 bg-black/40 backdrop-blur-xl border-b border-white/5 flex items-center justify-between px-6 sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <button className="lg:hidden text-white/70 hover:text-white" onClick={() => setSidebarOpen(true)}>
+            <button className="lg:hidden text-white hover:text-white" onClick={() => setSidebarOpen(true)}>
               <Menu size={20} />
             </button>
             
-            <div className="hidden md:flex items-center bg-white/5 border border-white/10 rounded-full px-4 py-2 w-64 focus-within:bg-white/10 focus-within:border-white/20 transition-all">
-              <Search size={16} className="text-white/40" />
-              <input 
-                type="text" 
-                placeholder="Search..." 
-                className="bg-transparent border-none outline-none text-sm text-white px-3 w-full placeholder:text-white/30"
-              />
-            </div>
+
           </div>
 
           <div className="flex items-center gap-5">
             <div className="relative" ref={notificationRef}>
               <button 
-                className="relative text-white/70 hover:text-white transition-colors"
+                className="relative text-white hover:text-white transition-colors"
                 onClick={() => setShowNotifications(!showNotifications)}
               >
                 <Bell size={20} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-[#0a0a0a] animate-pulse"></span>
+                  <span className="absolute top-0 right-0 w-2 h-2 bg-white rounded-full border border-[#0a0a0a] animate-pulse"></span>
                 )}
               </button>
               
@@ -132,7 +121,7 @@ export default function AdminLayout() {
                   <div className="p-4 border-b border-white/5 flex justify-between items-center">
                     <h3 className="text-white font-medium">Notifications</h3>
                     {unreadCount > 0 && (
-                      <button onClick={markAllAsRead} className="text-xs text-gold hover:text-gold/80 transition-colors">
+                      <button onClick={markAllAsRead} className="text-xs text-white hover:text-white/80 transition-colors">
                         Mark all as read
                       </button>
                     )}
@@ -146,14 +135,14 @@ export default function AdminLayout() {
                           className={`p-4 border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors cursor-pointer ${!notification.read ? 'bg-white/3' : ''}`}
                         >
                           <div className="flex justify-between items-start mb-1">
-                            <h4 className={`text-sm ${!notification.read ? 'text-white font-medium' : 'text-white/70'}`}>{notification.title}</h4>
-                            <span className="text-[10px] text-white/40">{notification.time}</span>
+                            <h4 className={`text-sm ${!notification.read ? 'text-white font-medium' : 'text-white'}`}>{notification.title}</h4>
+                            <span className="text-[10px] text-white">{notification.time}</span>
                           </div>
-                          <p className="text-xs text-white/50 line-clamp-2">{notification.message}</p>
+                          <p className="text-xs text-white line-clamp-2">{notification.message}</p>
                         </div>
                       ))
                     ) : (
-                      <div className="p-4 text-center text-sm text-white/50">
+                      <div className="p-4 text-center text-sm text-white">
                         No new notifications
                       </div>
                     )}
@@ -164,11 +153,11 @@ export default function AdminLayout() {
             <div className="flex items-center gap-3 border-l border-white/10 pl-5">
               <div className="text-right hidden sm:block">
                 <div className="text-sm font-medium text-white">Admin User</div>
-                <div className="text-[10px] text-white/50 tracking-wider uppercase">Superadmin</div>
+                <div className="text-[10px] text-white tracking-wider uppercase">Superadmin</div>
               </div>
               <div className="w-10 h-10 rounded-full bg-linear-to-tr from-gold to-yellow-600 p-[2px]">
                 <div className="w-full h-full bg-[#111] rounded-full flex items-center justify-center border border-black">
-                  <span className="font-serif-lux text-sm text-gold">A</span>
+                  <span className="font-serif-lux text-sm text-white">A</span>
                 </div>
               </div>
             </div>
