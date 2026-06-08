@@ -14,6 +14,7 @@ import Locations from "./pages/Locations";
 import LocationDetail from "./pages/LocationDetail";
 import Contact from "./pages/Contact";
 import Booking from "./pages/Booking";
+import PaymentSuccess from "./pages/PaymentSuccess";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Faq from "./pages/Faq";
@@ -48,6 +49,8 @@ function AppContent() {
           <Route path="/locations/:slug" element={<LocationDetail />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/booking" element={<Booking />} />
+          <Route path="/payment-success" element={<PaymentSuccess />} />
+          <Route path="/payment-cancelled" element={<div className="text-white text-center py-20">Payment was cancelled. Please contact support if you have any questions.</div>} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/faq" element={<Faq />} />

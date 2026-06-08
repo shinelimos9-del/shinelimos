@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare } from "lucide-react";
-import { getAdminProfile, getNotifications, markNotificationsRead, logoutAdmin } from "../../utils/api";
+import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, Send, CreditCard } from "lucide-react";
+import { getAdminProfile, getNotifications, markNotificationsRead, logoutAdmin, sendPaymentLink } from "../../utils/api";
+import { io } from "socket.io-client";
+import toast, { Toaster } from "react-hot-toast";
+
+const SOCKET_URL = window.location.origin.replace(":5173", ":60000"); // Dynamic URL based on current host
 
 export default function AdminLayout() {
   const location = useLocation();
@@ -11,6 +15,7 @@ export default function AdminLayout() {
   const notificationRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [adminData, setAdminData] = useState<any>(null);
+  const [socket, setSocket] = useState<any>(null);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -18,9 +23,104 @@ export default function AdminLayout() {
     fetchAdminProfile();
     fetchNotifications();
     
-    // Refresh notifications every minute
-    const interval = setInterval(fetchNotifications, 60000);
-    return () => clearInterval(interval);
+    // Initialize Socket.IO
+    const newSocket = io(SOCKET_URL);
+    setSocket(newSocket);
+
+    newSocket.on("new_booking", (data) => {
+      fetchNotifications();
+      toast.custom((t) => (
+        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-[#111] shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-white/10 border border-white/10`}>
+          <div className="flex-1 w-0 p-4">
+            <div className="flex items-start">
+              <div className="shrink-0 pt-0.5">
+                <div className="h-10 w-10 rounded-full bg-gold/20 flex items-center justify-center border border-gold/30">
+                  <Bell className="h-5 w-5 text-gold" />
+                </div>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-white">New Booking Request</p>
+                <p className="mt-1 text-sm text-white/60">{data.booker_name} booked a trip from {data.pickup} to {data.dropoff}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex border-l border-white/5">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                navigate(`/admin-dashboard/notifications?id=${data.booking_id}`);
+              }}
+              className="w-full border border-transparent rounded-none rounded-r-2xl p-4 flex items-center justify-center text-sm font-medium text-gold hover:text-gold/80 focus:outline-none"
+            >
+              View
+            </button>
+          </div>
+        </div>
+      ), { duration: 6000 });
+    });
+
+    newSocket.on("payment_request", (data) => {
+      fetchNotifications();
+      toast.custom((t) => (
+        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-[#111] shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-white/10 border border-blue-500/30`}>
+          <div className="flex-1 w-0 p-4">
+            <div className="flex items-start">
+              <div className="shrink-0 pt-0.5">
+                <div className="h-10 w-10 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                  <CreditCard className="h-5 w-5 text-blue-400" />
+                </div>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-white">Payment Request Received</p>
+                <p className="mt-1 text-sm text-white/60">{data.booker_name} requested a payment link for ${data.estimated_price}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col border-l border-white/5">
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  const res = await sendPaymentLink(data.booking_id);
+                  if (res.success) toast.success("Payment link sent!");
+                  else toast.error(res.message);
+                } catch (err) {
+                  toast.error("Failed to send link");
+                }
+              }}
+              className="flex-1 w-full border-b border-white/5 p-4 flex items-center justify-center text-xs font-medium text-blue-400 hover:text-blue-300"
+            >
+              Send Link
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="flex-1 w-full p-4 flex items-center justify-center text-xs font-medium text-white/40 hover:text-white/60"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      ), { duration: 8000 });
+    });
+
+    newSocket.on("payment_confirmed", (data) => {
+      fetchNotifications();
+      // If we are on a page that fetches data, we might want to refresh its data too
+      // But fetchNotifications already triggers a global update for the header unread count
+      toast.success(`Payment Confirmed: $${data.amount} from ${data.booker_name}`, {
+        icon: '💰',
+        style: {
+          borderRadius: '16px',
+          background: '#111',
+          color: '#fff',
+          border: '1px solid rgba(255,255,255,0.1)'
+        },
+      });
+    });
+
+    return () => {
+      newSocket.disconnect();
+    };
   }, []);
 
   const fetchAdminProfile = async () => {
@@ -219,6 +319,7 @@ export default function AdminLayout() {
             <Outlet />
           </div>
         </div>
+        <Toaster position="top-right" />
       </main>
     </div>
   );

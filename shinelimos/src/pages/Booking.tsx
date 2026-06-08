@@ -3,11 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import { PageHero, GoldButton, GoldDivider } from "../components/ui";
 import SectionBackground from "../components/SectionBackground";
 import TimePicker from "../components/TimePicker";
-import { initiateBooking, finalizeBooking, ADMIN_BASE_URL } from "../utils/api";
+import { initiateBooking, finalizeBooking, requestPayment, ADMIN_BASE_URL } from "../utils/api";
 import AddressSearch from "../components/AddressSearch";
 
 const BG = "https://images.pexels.com/photos/8605325/pexels-photo-8605325.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400";
-import { CheckCircle, ArrowRight, ArrowLeft, MapPin, Calendar, Users, Car, User, Mail, Phone, Clock, Trash2, Plus, Briefcase, Download, Plane, Globe, X } from "lucide-react";
+import { CheckCircle, ArrowRight, ArrowLeft, MapPin, Calendar, Users, Car, User, Mail, Phone, Clock, Trash2, Plus, Briefcase, Download, Plane, Globe, X, CreditCard, Loader2 } from "lucide-react";
 
 const STEPS = ["Trip Itinerary", "Vehicle Selection", "Summary", "Contact Info"];
 
@@ -92,6 +92,8 @@ export default function Booking() {
   const [bookingId, setBookingId] = useState<string | null>(null);
   const [availableVehicles, setAvailableVehicles] = useState<Vehicle[]>([]);
   const [activeFlightSegmentId, setActiveFlightSegmentId] = useState<number | null>(null);
+  const [paymentRequested, setPaymentRequested] = useState(false);
+  const [requestingPayment, setRequestingPayment] = useState(false);
 
   // use loading to avoid unused-variable warning
   if (loading) {
@@ -356,6 +358,25 @@ export default function Booking() {
     }
   };
 
+  const handleRequestPayment = async () => {
+    if (!bookingId) return;
+    
+    setRequestingPayment(true);
+    setError(null);
+    try {
+      const result = await requestPayment(bookingId);
+      if (result.success) {
+        setPaymentRequested(true);
+      } else {
+        setError(result.message || "Failed to send payment request.");
+      }
+    } catch (err: any) {
+      setError(err?.message || "Could not connect to the payment service.");
+    } finally {
+      setRequestingPayment(false);
+    }
+  };
+
   const handleDownloadInvoice = () => {
     const html = `
       <html>
@@ -486,8 +507,28 @@ export default function Booking() {
               <button onClick={handleDownloadInvoice} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full text-sm font-medium transition-all border border-white/20">
                 <Download className="w-4 h-4" /> Download Invoice
               </button>
-              <GoldButton to="/">Return Home</GoldButton>
+              
+              {paymentRequested ? (
+                <div className="flex items-center gap-2 bg-green-500/10 text-green-400 px-6 py-3 rounded-full text-sm font-medium border border-green-500/20">
+                  <CheckCircle className="w-4 h-4" /> Payment Requested
+                </div>
+              ) : (
+                <button 
+                  onClick={handleRequestPayment} 
+                  disabled={requestingPayment}
+                  className="flex items-center gap-2 bg-gold hover:bg-gold/90 text-black px-6 py-3 rounded-full text-sm font-medium transition-all shadow-lg active:scale-95 disabled:opacity-50"
+                >
+                  {requestingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                  Make Payment Request
+                </button>
+              )}
             </div>
+            
+            {paymentRequested && (
+              <p className="mt-4 text-[11px] text-white/50 animate-in fade-in slide-in-from-top-2">
+                Your request has been sent to our billing department. You will receive a secure Stripe payment link via email shortly.
+              </p>
+            )}
           </div>
         </section>
       </div>

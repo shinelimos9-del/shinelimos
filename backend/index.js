@@ -51,6 +51,9 @@ app.use((req, res, next) => {
 });
 
 // Middleware setup
+// Stripe webhook needs raw body for signature verification
+app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
+
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -102,6 +105,9 @@ app.use('/api', require('./src/routes/vehicles.js'));
 app.use('/api', require('./src/routes/booking.js'));
 // Dashboard routes
 app.use('/api', require('./src/routes/dashboard.js'));
+// Payment routes
+app.use('/api', require('./src/routes/payment.js'));
+
 // Setup Socket.IO using the utility
 const server = http.createServer(app);
 const socketUtil = require('./socket');

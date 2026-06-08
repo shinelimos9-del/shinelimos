@@ -3,9 +3,10 @@ const Vehicle = require("../models/vehiclesModels");
 const Admin = require("../models/adminModel");
 const moment = require("moment");
 const socketUtil = require("../../socket");
+const { sendEmail } = require("../utils/emailService");
 
 // Helper to notify admin via socket and save to DB
-const notifyAdmin = async (booking) => {
+const notifyAdmin = async (booking, type = "Booking", message = "New booking received!") => {
 	try {
 		const notificationData = {
 			booking_id: booking._id,
@@ -18,20 +19,59 @@ const notifyAdmin = async (booking) => {
 			vehicle_name: booking.vehicle_details.vehicle_name,
 			date: moment(booking.trip_details[0].date).format("MMM DD, YYYY"),
 			time: booking.trip_details[0].start_time,
-			message: "New booking received!",
-			type: "Booking",
-			payment_status: "Pending"
+			message: message,
+			type: type,
+			payment_status: booking.payment_status || "Pending"
 		};
 
 		// 1. Emit real-time notification
 		const io = socketUtil.getIO();
-		io.emit("new_booking", notificationData);
+		io.emit(type === "Payment Request" ? "payment_request" : "new_booking", notificationData);
 
 		// 2. Save notification to all admins in the database
+		// Also update any existing notifications for this booking to avoid duplicates or status mismatch
+		await Admin.updateMany(
+			{ "notifications.booking_id": booking._id },
+			{ $set: { "notifications.$[elem].payment_status": notificationData.payment_status } },
+			{ arrayFilters: [{ "elem.booking_id": booking._id }] }
+		);
+
 		await Admin.updateMany(
 			{}, 
 			{ $push: { notifications: { $each: [notificationData], $position: 0 } } }
 		);
+
+		// 3. Send email to admin if it's a payment request
+		if (type === "Payment Request") {
+			const adminList = await Admin.find({});
+			const adminEmails = adminList.map(a => a.email);
+			
+			const adminDashboardUrl = process.env.ADMIN_DASHBOARD_URL || "http://localhost:3000/admin";
+			
+			for (const email of adminEmails) {
+				await sendEmail({
+					to: email,
+					subject: `Payment Request - Booking #${booking._id}`,
+					html: `
+						<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+							<h2 style="color: #d4af37; text-align: center;">Payment Request Received</h2>
+							<p>A new payment request has been made for booking <strong>#${booking._id}</strong>.</p>
+							<hr style="border: 0; border-top: 1px solid #eee;" />
+							<div style="margin: 20px 0;">
+								<p><strong>Booker:</strong> ${notificationData.booker_name}</p>
+								<p><strong>Email:</strong> ${notificationData.email}</p>
+								<p><strong>Amount:</strong> $${notificationData.estimated_price}</p>
+								<p><strong>Vehicle:</strong> ${notificationData.vehicle_name}</p>
+							</div>
+							<div style="text-align: center; margin-top: 30px;">
+								<a href="${adminDashboardUrl}/bookings/${booking._id}" style="background-color: #d4af37; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Booking & Send Payment Link</a>
+							</div>
+							<p style="font-size: 12px; color: #888; text-align: center; margin-top: 30px;">This is an automated notification from Shine Limos.</p>
+						</div>
+					`
+				});
+			}
+		}
 
 	} catch (err) {
 		console.log("Admin notification error:", err.message);
@@ -360,6 +400,26 @@ exports.getTodayBookings = async () => {
 		return { success: true, bookings };
 	} catch (error) {
 		console.log("getTodayBookings error:", error);
+		return { success: false, message: error.message || error };
+	}
+};
+
+exports.requestPayment = async (bookingId) => {
+	try {
+		const booking = await Booking.findById(bookingId);
+		if (!booking) {
+			return { success: false, message: "Booking not found" };
+		}
+
+		booking.payment_status = "requested";
+		await booking.save();
+
+		// Notify admin
+		await notifyAdmin(booking, "Payment Request", "Customer requested to make a payment");
+
+		return { success: true, message: "Payment request sent to admin" };
+	} catch (error) {
+		console.log("requestPayment error:", error);
 		return { success: false, message: error.message || error };
 	}
 };

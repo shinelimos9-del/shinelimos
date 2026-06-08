@@ -6,6 +6,9 @@ const admin_auth = require("../../middleware/user_auth");
 // Create booking
 router.post("/bookings", bookingController.create_newBooking);
 
+// Request payment
+router.post("/bookings/request-payment", bookingController.request_payment);
+
 // Get all bookings
 router.get("/bookings",admin_auth, bookingController.get_allBookings);
 

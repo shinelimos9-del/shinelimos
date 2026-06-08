@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getNotifications, markNotificationsRead } from "../../utils/api";
-import { Search, Mail, MailOpen, User, CarFront, MapPin, Banknote, Clock, Loader2 } from "lucide-react";
+import { getNotifications, markNotificationsRead, sendPaymentLink } from "../../utils/api";
+import { Search, Mail, MailOpen, User, CarFront, MapPin, Banknote, Clock, Loader2, Send, CreditCard } from "lucide-react";
 
 export default function AdminNotifications() {
   const [searchParams] = useSearchParams();
@@ -9,6 +9,7 @@ export default function AdminNotifications() {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [sendingPaymentId, setSendingPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchNotifications();
@@ -19,9 +20,11 @@ export default function AdminNotifications() {
       setLoading(true);
       const response = await getNotifications();
       if (response.success) {
-        const mapped = response.notifications.map((n: any) => ({
+          const mapped = response.notifications.map((n: any) => ({
           id: n._id,
-          title: n.type === "Booking" ? "New Booking Request" : "System Notification",
+          bookingId: n.booking_id,
+          title: n.type === "Booking" ? "New Booking Request" : 
+                 (n.type === "Payment Request" || (n.message && n.message.toLowerCase().includes('payment'))) ? "Payment Request Received" : "System Notification",
           message: n.message,
           time: n.time,
           date: n.date,
@@ -32,7 +35,7 @@ export default function AdminNotifications() {
           destination: n.dropoff || "N/A",
           amount: n.estimated_price ? `$${n.estimated_price}` : "N/A",
           paymentStatus: n.payment_status || "Pending",
-          type: n.type || "Notification"
+          type: (n.type === "Payment Request" || (n.message && n.message.toLowerCase().includes('payment'))) ? "Payment Request" : (n.type || "Notification")
         }));
         setNotifications(mapped);
 
@@ -47,6 +50,24 @@ export default function AdminNotifications() {
       console.error("Error fetching notifications:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendPaymentLink = async (bookingId: string) => {
+    try {
+      setSendingPaymentId(bookingId);
+      const response = await sendPaymentLink(bookingId);
+      if (response.success) {
+        alert("Payment link sent to customer!");
+        fetchNotifications();
+      } else {
+        alert(response.message || "Failed to send payment link");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error sending payment link");
+    } finally {
+      setSendingPaymentId(null);
     }
   };
 
@@ -194,13 +215,26 @@ export default function AdminNotifications() {
                       <Banknote size={18} />
                     </div>
                     <div>
-                      <div className="text-white font-medium">Payment Status: <span className={selectedNotification.paymentStatus === 'Paid' ? 'text-emerald-400' : 'text-orange-400'}>{selectedNotification.paymentStatus}</span></div>
+                      <div className="text-white font-medium">Payment Status: <span className={selectedNotification.paymentStatus === 'completed' || selectedNotification.paymentStatus === 'Paid' ? 'text-emerald-400' : selectedNotification.paymentStatus === 'requested' ? 'text-blue-400' : 'text-orange-400'}>{selectedNotification.paymentStatus}</span></div>
                       <div className="text-xs text-white/50 mt-1">Amount: {selectedNotification.amount}</div>
                     </div>
                   </div>
-                  <button className="px-4 py-2 bg-gold/10 hover:bg-gold/20 border border-gold/30 text-gold text-sm rounded-lg transition-colors font-medium">
-                    View Invoice
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {(selectedNotification.type === "Payment Request" || selectedNotification.message?.toLowerCase().includes("payment")) && 
+                     (selectedNotification.paymentStatus === "requested" || selectedNotification.paymentStatus === "Pending") && (
+                      <button 
+                        onClick={() => handleSendPaymentLink(selectedNotification.bookingId)}
+                        disabled={sendingPaymentId === selectedNotification.bookingId}
+                        className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 text-blue-400 text-sm rounded-lg transition-colors font-medium flex items-center gap-2"
+                      >
+                        {sendingPaymentId === selectedNotification.bookingId ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                        Send Payment Link
+                      </button>
+                    )}
+                    <button className="px-4 py-2 bg-gold/10 hover:bg-gold/20 border border-gold/30 text-gold text-sm rounded-lg transition-colors font-medium">
+                      View Invoice
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

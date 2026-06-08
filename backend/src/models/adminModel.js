@@ -40,9 +40,12 @@ const adminSchema = new mongoose.Schema({
     pickup: String,
     dropoff: String,
     estimated_price: Number,
+    vehicle_name: String,
     date: String,
     time: String,
     message: String,
+    type: { type: String, default: "Notification" },
+    payment_status: { type: String, default: "Pending" },
     is_read: { type: Boolean, default: false },
     created_at: { type: Date, default: Date.now }
   }],

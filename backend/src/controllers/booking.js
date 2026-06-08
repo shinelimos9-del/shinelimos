@@ -40,6 +40,20 @@ exports.create_newBooking = async (req, res) => {
 	}
 };
 
+exports.request_payment = async (req, res) => {
+	try {
+		const { booking_id } = req.body;
+		if (!booking_id) return res.status(400).json({ success: false, message: "booking_id is required" });
+		
+		const result = await bookingService.requestPayment(booking_id);
+		if (!result.success) return res.status(400).json(result);
+		return res.status(200).json(result);
+	} catch (error) {
+		console.log("request_payment controller error:", error);
+		return res.status(500).json({ success: false, message: "Internal server error" });
+	}
+};
+
 exports.get_allBookings = async (req, res) => {
 	try {
 		const result = await bookingService.getAllBookings();

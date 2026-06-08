@@ -34,6 +34,16 @@ export const finalizeBooking = async (bookingData: any) => {
   return response.data;
 };
 
+export const requestPayment = async (bookingId: string) => {
+  const response = await api.post('/bookings/request-payment', { booking_id: bookingId });
+  return response.data;
+};
+
+export const sendPaymentLink = async (bookingId: string) => {
+  const response = await api.post('/admin/send-payment-link', { booking_id: bookingId });
+  return response.data;
+};
+
 // Admin auth routes use the root backend path (not /api)
 export const adminLogin = async (email: string, password: string) => {
   const response = await axios.post(`${ADMIN_BASE_URL}/admin_login`, { email, password }, { withCredentials: true });

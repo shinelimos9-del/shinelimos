@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { getAllBookings, updateBookingStatus } from "../../utils/api";
+import { Search, ChevronLeft, ChevronRight, Loader2, CreditCard, Send, CheckCircle2 } from "lucide-react";
+import { getAllBookings, updateBookingStatus, sendPaymentLink } from "../../utils/api";
 import moment from "moment";
 
 export default function AdminBookings() {
@@ -9,6 +9,7 @@ export default function AdminBookings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [sendingPaymentId, setSendingPaymentId] = useState<string | null>(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -48,6 +49,24 @@ export default function AdminBookings() {
     } catch (error) {
       console.error(error);
       alert("Error updating status");
+    }
+  };
+
+  const handleSendPaymentLink = async (bookingId: string) => {
+    try {
+      setSendingPaymentId(bookingId);
+      const response = await sendPaymentLink(bookingId);
+      if (response.success) {
+        alert("Payment link sent to customer!");
+        fetchBookings();
+      } else {
+        alert(response.message || "Failed to send payment link");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error sending payment link");
+    } finally {
+      setSendingPaymentId(null);
     }
   };
 
@@ -135,7 +154,8 @@ export default function AdminBookings() {
                 <th className="p-4 font-medium">Occasion Name</th>
                 <th className="p-4 font-medium">Trip Type</th>
                 <th className="p-4 font-medium">Enquiry Date</th>
-                <th className="p-4 font-medium">Status</th>
+                <th className="p-4 font-medium">Booking Status</th>
+                <th className="p-4 font-medium">Payment Status</th>
                 <th className="p-4 font-medium text-right">Action</th>
               </tr>
             </thead>
@@ -165,22 +185,49 @@ export default function AdminBookings() {
                         {b.booking_status === 'completed' ? 'Complete' : 'Pending'}
                       </span>
                     </td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        b.payment_status === 'completed' ? 'bg-green-500/20 text-green-400' : 
+                        b.payment_status === 'requested' ? 'bg-blue-500/20 text-blue-400' : 
+                        'bg-gray-500/20 text-gray-400'
+                      }`}>
+                        {b.payment_status || 'Pending'}
+                      </span>
+                    </td>
                     <td className="p-4 text-right">
-                      {b.booking_status === 'completed' ? (
-                        <button 
-                          onClick={() => handleUpdateStatus(b._id, 'pending')}
-                          className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 border border-yellow-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                        >
-                          Pending
-                        </button>
-                      ) : (
-                        <button 
-                          onClick={() => handleUpdateStatus(b._id, 'completed')}
-                          className="bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                        >
-                          Complete
-                        </button>
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {b.payment_status === 'requested' && (
+                          <button 
+                            onClick={() => handleSendPaymentLink(b._id)}
+                            disabled={sendingPaymentId === b._id}
+                            className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                            title="Send Stripe Payment Link"
+                          >
+                            {sendingPaymentId === b._id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                            Send Link
+                          </button>
+                        )}
+                        {b.payment_status === 'completed' && (
+                           <div className="flex items-center gap-1 text-green-400 text-xs font-medium bg-green-500/10 px-2 py-1.5 rounded-lg border border-green-500/20">
+                             <CheckCircle2 size={12} /> Paid
+                           </div>
+                        )}
+                        {b.booking_status === 'completed' ? (
+                          <button 
+                            onClick={() => handleUpdateStatus(b._id, 'pending')}
+                            className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 border border-yellow-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                          >
+                            Mark Pending
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={() => handleUpdateStatus(b._id, 'completed')}
+                            className="bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                          >
+                            Mark Complete
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
