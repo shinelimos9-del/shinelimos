@@ -98,6 +98,8 @@ exports.handleStripeWebhook = async (event) => {
         payment.payment_method = session.payment_method_types[0];
         payment.payment_details = session;
         await payment.save();
+      } else {
+        console.warn(`[PAYMENT] Payment record not found for session ${session.id}`);
       }
 
       const booking = await Booking.findById(bookingId);
@@ -112,7 +114,14 @@ exports.handleStripeWebhook = async (event) => {
         const notificationData = {
           booking_id: booking._id,
           booker_name: `${booking.contact_details.booker.first_name} ${booking.contact_details.booker.last_name}`,
-          amount: payment.amount,
+          email: booking.contact_details.booker.email,
+          phone: booking.contact_details.booker.primary_phone?.number || "N/A",
+          pickup: booking.trip_details[0].pickup_location,
+          dropoff: booking.trip_details[0].dropoff_location,
+          estimated_price: payment ? payment.amount : booking.vehicle_details.estimated_price,
+          vehicle_name: booking.vehicle_details.vehicle_name,
+          date: moment(booking.trip_details[0].date).format("MMM DD, YYYY"),
+          time: booking.trip_details[0].start_time,
           message: "Payment confirmed!",
           type: "Payment Received",
           utr_number: session.payment_intent,
@@ -121,6 +130,8 @@ exports.handleStripeWebhook = async (event) => {
 
         const io = socketUtil.getIO();
         io.emit("payment_confirmed", notificationData);
+        // Also emit as new_booking so existing listeners catch it if they don't have payment_confirmed
+        io.emit("new_booking", notificationData);
 
         // Update all notifications for this specific booking across all admins to show 'completed'
         await Admin.updateMany(

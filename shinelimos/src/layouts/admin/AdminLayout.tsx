@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, Send, CreditCard } from "lucide-react";
+import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, Send, CreditCard, CheckCircle } from "lucide-react";
 import { getAdminProfile, getNotifications, markNotificationsRead, logoutAdmin, sendPaymentLink } from "../../utils/api";
 import { io } from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
@@ -57,6 +57,38 @@ export default function AdminLayout() {
           </div>
         </div>
       ), { duration: 6000 });
+    });
+
+    newSocket.on("payment_confirmed", (data) => {
+      fetchNotifications();
+      toast.custom((t) => (
+        <div className={`${t.visible ? 'animate-enter' : 'animate-leave'} max-w-md w-full bg-[#111] shadow-2xl rounded-2xl pointer-events-auto flex ring-1 ring-white/10 border border-green-500/30`}>
+          <div className="flex-1 w-0 p-4">
+            <div className="flex items-start">
+              <div className="shrink-0 pt-0.5">
+                <div className="h-10 w-10 rounded-full bg-green-500/20 flex items-center justify-center border border-green-500/30">
+                  <CheckCircle className="h-5 w-5 text-green-400" />
+                </div>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-white">Payment Received!</p>
+                <p className="mt-1 text-sm text-white/60">{data.booker_name} paid ${data.estimated_price} for booking #{data.booking_id.substring(0,8)}...</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex border-l border-white/5">
+            <button
+              onClick={() => {
+                toast.dismiss(t.id);
+                navigate(`/admin-dashboard/notifications?id=${data.booking_id}`);
+              }}
+              className="w-full border border-transparent rounded-none rounded-r-2xl p-4 flex items-center justify-center text-sm font-medium text-green-400 hover:text-green-300 focus:outline-none"
+            >
+              View
+            </button>
+          </div>
+        </div>
+      ), { duration: 8000 });
     });
 
     newSocket.on("payment_request", (data) => {

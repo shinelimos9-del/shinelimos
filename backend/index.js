@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 });
 
 // Middleware setup
-// Stripe webhook needs raw body for signature verification
+// Stripe webhook needs raw body for signature verification - MUST be before express.json()
 app.use('/api/stripe/webhook', express.raw({ type: 'application/json' }));
 
 app.use(express.json());

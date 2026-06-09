@@ -57,7 +57,7 @@ export default function Footer() {
               {LOCATIONS.map((l) => (
                 <li key={l.slug}>
                   <Link to={`/locations/${l.slug}`} className="text-white/65 hover:text-gold transition-colors">
-                    {l.city}, {l.region.slice(0,2).toUpperCase()}
+                    {l.city} {l.region}
                   </Link>
                 </li>
               ))}
