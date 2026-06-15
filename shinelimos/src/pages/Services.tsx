@@ -5,18 +5,20 @@ import TiltCard from "../components/TiltCard";
 import SectionBackground from "../components/SectionBackground";
 import { SERVICES } from "../data";
 import { ArrowRight } from "lucide-react";
+import SEO from "../components/SEO";
 
-const BG = "https://images.pexels.com/photos/29580163/pexels-photo-29580163.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400";
+const BG = "/images/pexels-photo-29580163.webp";
 
 export default function Services() {
   return (
     <div className="route-fade">
+      <SEO pageKey="services" />
       <PageHero
-        image="https://images.pexels.com/photos/34440729/pexels-photo-34440729.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000"
+        image="/images/pexels-photo-34440729.webp"
         video="https://videos.pexels.com/video-files/8344921/8344921-uhd_3840_2160_25fps.mp4"
         eyebrow="Services"
-        title={<>Crafted for <em className="text-white not-italic">Every Occasion</em></>}
-        subtitle="Seven signature services. One uncompromising standard."
+        title={<>Comprehensive <em className="text-white not-italic">Luxury Travel</em> Solutions</>}
+        subtitle="We provide VIP service and executive transportation service tailored to your exact itinerary."
       />
 
       <SectionBackground image={BG} overlay="dark" parallax className="py-20 px-6">

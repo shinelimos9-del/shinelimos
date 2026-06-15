@@ -34,7 +34,18 @@ export default function Reveal({
         ? { opacity: 0, y: 70, rotateX: 14, scale: 0.94, transformPerspective: 1200 }
         : { opacity: 0, y: 56 };
 
-    const baseTo = { opacity: 1, x: 0, y: 0, rotateX: 0, rotateY: 0, scale: 1, duration: 1.1, ease: "power3.out" };
+    const baseTo = { 
+      opacity: 1, 
+      x: 0, 
+      y: 0, 
+      rotateX: 0, 
+      rotateY: 0, 
+      scale: 1, 
+      duration: 1.1, 
+      ease: "power3.out",
+      force3D: true, // Force GPU acceleration
+      lazy: false // Prevent batching reflows which causes Lighthouse thrashing errors
+    };
 
     gsap.fromTo(el, baseFrom, {
       ...baseTo,
@@ -43,6 +54,8 @@ export default function Reveal({
         trigger: el,
         start: "top 85%",
         toggleActions: "play none none reverse",
+        preventOverlaps: true, // Optimizes performance when scrolling fast
+        fastScrollEnd: true,
       },
     });
   },

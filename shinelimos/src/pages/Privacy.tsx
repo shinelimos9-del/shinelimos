@@ -70,13 +70,13 @@ export default function Privacy() {
   return (
     <div className="route-fade">
       <PageHero
-        image="https://images.pexels.com/photos/15200595/pexels-photo-15200595.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000"
+        image="/images/pexels-photo-15200595.webp"
         eyebrow="Legal"
         title={<>Privacy & <em className="text-white not-italic">Policy</em></>}
         subtitle="Learn how ShineLimos LLC collects, uses, and safeguards your personal data."
       />
 
-      <SectionBackground image="https://images.pexels.com/photos/8425047/pexels-photo-8425047.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+      <SectionBackground image="/images/pexels-photo-8425047.webp" overlay="dark" parallax className="py-20 px-6">
         <div className="mx-auto max-w-4xl space-y-12">
           {/* Header Card */}
           <Reveal>

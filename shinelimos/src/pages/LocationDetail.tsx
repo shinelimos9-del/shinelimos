@@ -1,5 +1,4 @@
 import { useParams, Navigate, Link } from "react-router-dom";
-import { useEffect } from "react";
 import { LOCATIONS, SERVICES } from "../data";
 import { PageHero, SectionHeading, GoldButton, GoldDivider, GlassCard } from "../components/ui";
 import BookingWidget from "../components/BookingWidget";
@@ -7,27 +6,19 @@ import Reveal from "../components/Reveal";
 import SectionBackground from "../components/SectionBackground";
 import TiltCard from "../components/TiltCard";
 import { Check, ArrowRight, MapPin } from "lucide-react";
+import SEO from "../components/SEO";
 
 export default function LocationDetail() {
   const { slug } = useParams();
   const loc = LOCATIONS.find((l) => l.slug === slug);
 
-  useEffect(() => {
-    if (!loc) return;
-    document.title = loc.seoTitle;
-    let desc = document.querySelector('meta[name="description"]');
-    if (!desc) {
-      desc = document.createElement("meta");
-      desc.setAttribute("name", "description");
-      document.head.appendChild(desc);
-    }
-    desc.setAttribute("content", loc.seoDesc);
-  }, [loc]);
+
 
   if (!loc) return <Navigate to="/locations" replace />;
 
   return (
     <div className="route-fade">
+      <SEO pageKey={loc.slug} />
       <PageHero
         image={loc.hero}
         eyebrow="Location"
@@ -35,7 +26,7 @@ export default function LocationDetail() {
         subtitle={`Premier black car, limousine and chauffeur service in ${loc.city}.`}
       />
 
-      <SectionBackground image="https://images.pexels.com/photos/1545732/pexels-photo-1545732.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+      <SectionBackground image="/images/pexels-photo-1545732.webp" overlay="dark" parallax className="py-20 px-6">
         <div className="mx-auto max-w-6xl grid lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <Reveal>
@@ -95,7 +86,7 @@ export default function LocationDetail() {
 
       <GoldDivider />
 
-      <SectionBackground image="https://images.pexels.com/photos/5288741/pexels-photo-5288741.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+      <SectionBackground image="/images/pexels-photo-5288741.webp" overlay="dark" parallax className="py-20 px-6">
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <SectionHeading eyebrow="Services in this area" title={<>Every service, <span className="text-white">available in {loc.city}</span></>} />
@@ -117,7 +108,7 @@ export default function LocationDetail() {
         </div>
       </SectionBackground>
 
-      <SectionBackground image="https://images.pexels.com/photos/14011664/pexels-photo-14011664.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+      <SectionBackground image="/images/pexels-photo-14011664.webp" overlay="dark" parallax className="py-20 px-6">
         <Reveal variant="3d">
           <div className="mx-auto max-w-4xl">
             <BookingWidget />

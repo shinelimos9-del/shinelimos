@@ -72,13 +72,13 @@ export default function Terms() {
   return (
     <div className="route-fade">
       <PageHero
-        image="https://images.pexels.com/photos/15200595/pexels-photo-15200595.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000"
+        image="/images/pexels-photo-15200595.webp"
         eyebrow="Legal"
         title={<>Terms & <em className="text-white not-italic">Conditions</em></>}
         subtitle="Please review the rules, guidelines, and terms that govern your relationship with ShineLimos LLC."
       />
 
-      <SectionBackground image="https://images.pexels.com/photos/5288741/pexels-photo-5288741.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+      <SectionBackground image="/images/pexels-photo-5288741.webp" overlay="dark" parallax className="py-20 px-6">
         <div className="mx-auto max-w-4xl space-y-12">
           {/* Header Card */}
           <Reveal>

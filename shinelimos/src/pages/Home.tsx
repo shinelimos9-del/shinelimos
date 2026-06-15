@@ -4,18 +4,21 @@ import { ArrowRight, Plane, Heart, Briefcase, Crown, Wine, Star, MapPin, X } fro
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { SectionHeading, GoldButton, GlassCard, GoldDivider } from "../components/ui";
-import BookingWidget from "../components/BookingWidget";
+import React, { Suspense } from "react";
 import Reveal from "../components/Reveal";
 import TiltCard from "../components/TiltCard";
-import Carousel from "../components/Carousel";
 import Parallax from "../components/Parallax";
-import FleetCarousel3D from "../components/FleetCarousel3D";
 import SectionBackground from "../components/SectionBackground";
 import { getVehicles } from "../utils/api";
-import { SERVICES, LOCATIONS, TESTIMONIALS, COMPANY } from "../data";
 
-const SECONDARY_VIDEO =
-  "https://videos.pexels.com/video-files/8344927/8344927-uhd_3840_2160_25fps.mp4";
+const BookingWidget = React.lazy(() => import("../components/BookingWidget"));
+const Carousel = React.lazy(() => import("../components/Carousel"));
+const FleetCarousel3D = React.lazy(() => import("../components/FleetCarousel3D"));
+import { SERVICES, LOCATIONS, TESTIMONIALS, COMPANY } from "../data";
+import SEO from "../components/SEO";
+
+const SECONDARY_IMAGE =
+  "/video/carvideo-ezgif.com-video-to-avif-converter.avif";
 
 const SERVICE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   "airport-limo-service": Plane,
@@ -29,52 +32,51 @@ const SERVICE_ICONS: Record<string, React.ComponentType<{ className?: string }>>
 
 const SHOWCASE_SLIDES = [
   {
-    image: "https://images.pexels.com/photos/5288741/pexels-photo-5288741.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000",
+    image: "/images/pexels-photo-5288741.webp",
     subtitle: "Capitol Hill",
     title: "Where the Capital's most discerning travelers begin their day.",
   },
   {
-    image: "https://images.pexels.com/photos/11732276/pexels-photo-11732276.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000",
+    image: "/images/pexels-photo-11732276.webp",
     subtitle: "Lincoln Memorial",
     title: "Monumental moments deserve monumental arrivals.",
   },
   {
-    image: "https://images.pexels.com/photos/17893166/pexels-photo-17893166.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000",
+    image: "/images/pexels-photo-17893166.webp",
     subtitle: "After Hours",
     title: "Washington never sleeps. Neither do we.",
   },
   {
-    image: "https://images.pexels.com/photos/8425047/pexels-photo-8425047.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000",
+    image: "/images/pexels-photo-8425047.webp",
     subtitle: "The Fleet",
     title: "Hand-detailed, garage-kept, never more than three years young.",
   },
   {
-    image: "https://images.pexels.com/photos/30096223/pexels-photo-30096223.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000",
+    image: "/images/new%20car.webp",
     subtitle: "Wedding Service",
     title: "From first look to last dance, every moment perfectly choreographed.",
   },
   {
-    image: "https://images.pexels.com/photos/33598033/pexels-photo-33598033.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000",
+    image: "/images/pexels-photo-33598033.webp",
     subtitle: "Dulles & Reagan",
     title: "Flight-tracked airport transfers, twenty-four hours a day.",
   },
 ];
 
 const BG_IMAGES = {
-  services:
-    "https://images.pexels.com/photos/30096223/pexels-photo-30096223.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
+  services: "/images/new%20car.webp",
   showcase:
-    "https://images.pexels.com/photos/5288741/pexels-photo-5288741.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
+    "/images/pexels-photo-5288741.webp",
   fleet:
-    "https://images.pexels.com/photos/9411658/pexels-photo-9411658.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
+    "/images/pexels-photo-9411658.webp",
   whyUs:
-    "https://images.pexels.com/photos/8425047/pexels-photo-8425047.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
+    "/images/pexels-photo-8425047.webp",
   locations:
-    "https://images.pexels.com/photos/1545732/pexels-photo-1545732.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
+    "/images/pexels-photo-1545732.webp",
   testimonials:
-    "https://images.pexels.com/photos/14011664/pexels-photo-14011664.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
+    "/images/pexels-photo-14011664.webp",
   cta:
-    "https://images.pexels.com/photos/34440729/pexels-photo-34440729.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
+    "/images/pexels-photo-34440729.webp",
 };
 
 gsap.registerPlugin(useGSAP);
@@ -84,8 +86,29 @@ export default function Home() {
   const [showBooking, setShowBooking] = useState(false);
   const [vehicles, setVehicles] = useState<any[]>([]);
 
+  const fleetRef = useRef<HTMLDivElement>(null);
+  const [videoLoaded, setVideoLoaded] = useState(false);
+
   useEffect(() => {
-    fetchHomeVehicles();
+    // Defer video loading to let LCP text paint first
+    const timer = setTimeout(() => {
+      setVideoLoaded(true);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          fetchHomeVehicles();
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "600px" } // Load well before it comes into view
+    );
+    if (fleetRef.current) observer.observe(fleetRef.current);
+    return () => observer.disconnect();
   }, []);
 
   const fetchHomeVehicles = async () => {
@@ -114,7 +137,7 @@ export default function Home() {
         tl.fromTo(
           fadeEls,
           { opacity: 0, y: 30 },
-          { opacity: 1, y: 0, duration: 1.1, stagger: 0.12 }
+          { opacity: 1, y: 0, duration: 1.1, stagger: 0.12, force3D: true, lazy: false }
         );
       }
 
@@ -122,7 +145,7 @@ export default function Home() {
         tl.fromTo(
           videoEl,
           { scale: 1.08, filter: "blur(6px)" },
-          { scale: 1, filter: "blur(0px)", duration: 1.6 },
+          { scale: 1, filter: "blur(0px)", duration: 1.6, force3D: true, lazy: false },
           0
         );
       }
@@ -131,7 +154,7 @@ export default function Home() {
         tl.fromTo(
           sidebarEl,
           { opacity: 0, x: -20 },
-          { opacity: 1, x: 0, duration: 0.8, stagger: 0.1 },
+          { opacity: 1, x: 0, duration: 0.8, stagger: 0.1, force3D: true, lazy: false },
           0.5
         );
       }
@@ -141,6 +164,7 @@ export default function Home() {
 
   return (
     <div className="route-fade bg-black text-white">
+      <SEO pageKey="home" />
       {/* Booking Widget Modal */}
       {showBooking && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
@@ -152,10 +176,12 @@ export default function Home() {
               <X className="h-6 w-6" />
             </button>
             <div className="text-center mb-6">
-              <span className="text-[10px] tracking-[0.4em] text-white/70 uppercase font-orbitron font-bold">Book Your Luxury Chauffeur</span>
-              <h2 className="text-2xl font-serif-lux text-white mt-1">Instant Reservation</h2>
+              <span className="text-[10px] tracking-[0.4em] text-white/90 uppercase font-orbitron font-bold">Book Your Luxury Chauffeur</span>
+              <div className="text-2xl font-serif-lux text-white mt-1">Instant Reservation</div>
             </div>
-            <BookingWidget compact />
+            <Suspense fallback={<div className="h-40 animate-pulse bg-white/5 rounded-xl"></div>}>
+              <BookingWidget compact />
+            </Suspense>
           </div>
         </div>
       )}
@@ -163,16 +189,19 @@ export default function Home() {
       {/* HERO */}
       <section ref={heroRef} className="relative min-h-screen flex items-center pt-24 pb-20 overflow-hidden bg-[#111111]">
         {/* Background Video */}
-        <div className="absolute inset-0 z-0">
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover scale-105"
-          >
-            <source src="/video/car video.mp4" type="video/mp4" />
-          </video>
+        <div className="absolute inset-0 z-0 bg-[#111111]">
+          {videoLoaded && (
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              data-home-video
+              className="absolute inset-0 w-full h-full object-cover scale-105"
+            >
+              <source src="/video/car-video.mp4" type="video/mp4" />
+            </video>
+          )}
           <div className="absolute inset-0 bg-black/40" />
         </div>
         
@@ -188,12 +217,12 @@ export default function Home() {
           <div className="flex-1 text-left relative z-10 ml-0 lg:ml-24">
             
             <h1 className="text-5xl md:text-6xl lg:text-[4.5rem] font-bold text-white leading-[1.2] tracking-wide" data-home-fade style={{ fontFamily: "'Orbitron', sans-serif" }}>
-              CREATE YOUR <br />
-              <span className="text-[#ff1100]">OWN</span> STYLE
+              LUXURY <br />
+              <span className="text-[#ff1100]">TRAVEL</span> EXPERIENCE
             </h1>
 
-            <p className="mt-8 text-white/50 text-sm max-w-sm font-light leading-relaxed tracking-wider" data-home-fade>
-              Diam viverra nunc ullamcorper ac bibendum. Malesuada maecenas lacus magna turpis
+            <p className="mt-8 text-white/80 text-sm max-w-sm font-light leading-relaxed tracking-wider" data-home-fade>
+              Our professional chauffeur service provides executive airport car service and luxury ground transportation for those who demand the very best.
             </p>
 
 
@@ -206,8 +235,8 @@ export default function Home() {
       </section>
 
       {/* MARQUEE BRANDS */}
-      <section className="py-10 border-y border-white/5 overflow-hidden bg-black">
-        <div className="flex marquee w-max gap-16 text-white/20 text-xl md:text-2xl tracking-[0.3em] font-serif-lux">
+      <section className="py-10 border-y border-white/5 overflow-hidden bg-black" aria-hidden="true">
+        <div className="flex marquee w-max gap-16 text-white/40 text-xl md:text-2xl tracking-[0.3em] font-serif-lux">
           {[
             "MERCEDES-BENZ S-CLASS / LUXURY SEDAN", "CADILLAC ESCALADE", "CHEVROLET SUBURBAN", "LINCOLN NAVIGATOR",
             "MERCEDES-BENZ S-CLASS / LUXURY SEDAN", "CADILLAC ESCALADE", "CHEVROLET SUBURBAN", "LINCOLN NAVIGATOR",
@@ -223,8 +252,8 @@ export default function Home() {
           <Reveal>
             <SectionHeading
               eyebrow="Services"
-              title={<>Exceptional & <em className="text-white not-italic">Personalized</em></>}
-              subtitle="We proudly bring exceptional, personalized service tailored to your unique needs."
+              title={<>Executive & <em className="text-white not-italic">VIP Transportation</em></>}
+              subtitle="Whether you need an executive airport car service or hourly VIP transportation, our luxury chauffeur service guarantees a seamless and prestigious ride."
             />
           </Reveal>
           <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -241,7 +270,7 @@ export default function Home() {
                           </div>
                           <div>
                             <h3 className="font-serif-lux text-xl text-white group-hover:text-white transition-colors">{s.title}</h3>
-                            <p className="mt-2 text-sm text-white/60 leading-relaxed font-light">{s.short}</p>
+                            <p className="mt-2 text-sm text-white/80 leading-relaxed font-light">{s.short}</p>
                           </div>
                         </div>
                         <div className="mt-6 flex items-center gap-2 text-[10px] text-white tracking-widest uppercase transition-colors group-hover:text-zinc-300">
@@ -268,23 +297,28 @@ export default function Home() {
             />
           </Reveal>
           <Reveal variant="3d" delay={150} className="mt-14">
-            <Carousel items={SHOWCASE_SLIDES} autoplay={5500} />
+            <Suspense fallback={<div className="h-96 w-full animate-pulse bg-white/5 rounded-2xl"></div>}>
+              <Carousel items={SHOWCASE_SLIDES} autoplay={5500} />
+            </Suspense>
           </Reveal>
         </div>
       </SectionBackground>
 
       {/* 3D FLEET CAROUSEL */}
-      <SectionBackground image={BG_IMAGES.fleet} overlay="dark" parallax className="py-24 px-6">
+      <div ref={fleetRef}>
+        <SectionBackground image={BG_IMAGES.fleet} overlay="dark" parallax className="py-24 px-6">
         <div className="mx-auto max-w-7xl">
           <Reveal>
             <SectionHeading
               eyebrow="The Fleet"
-              title={<>Hand-picked. <span className="text-white">Hand-detailed.</span></>}
-              subtitle="Rotating showcase of our most reserved vehicles. Each less than three model-years old."
+              title={<>Our <span className="text-white">Luxury Fleet.</span></>}
+              subtitle="Discover our luxury fleet. From executive sedans to luxury SUVs, experience premium ground transportation tailored to your specific needs."
             />
           </Reveal>
           <Reveal variant="3d" delay={150} className="mt-14">
-            <FleetCarousel3D vehicles={vehicles} />
+            <Suspense fallback={<div className="h-[400px] w-full animate-pulse bg-white/5 rounded-2xl"></div>}>
+              <FleetCarousel3D vehicles={vehicles} />
+            </Suspense>
           </Reveal>
           <div className="mt-8 text-center">
             <GoldButton to="/fleet" variant="outline">
@@ -293,20 +327,19 @@ export default function Home() {
           </div>
         </div>
       </SectionBackground>
+      </div>
 
       {/* PARALLAX VIDEO STORY SECTION */}
       <section className="relative py-32 px-6 overflow-hidden">
         <div className="absolute inset-0">
-          <video
-            autoPlay
-            muted
-            loop
-            playsInline
+          <img
+            src={SECONDARY_IMAGE}
+            alt="The ShineLimos Standard"
+            loading="lazy"
+            width="1920"
+            height="1080"
             className="absolute inset-0 w-full h-full object-cover scale-110"
-            poster="https://images.pexels.com/photos/8425035/pexels-photo-8425035.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000"
-          >
-            <source src={SECONDARY_VIDEO} type="video/mp4" />
-          </video>
+          />
           <div className="absolute inset-0 bg-black/70" />
         </div>
         <div className="relative mx-auto max-w-4xl text-center">
@@ -339,10 +372,12 @@ export default function Home() {
                 <TiltCard className="rounded-3xl">
                   <div className="relative rounded-3xl overflow-hidden aspect-4/5 glass">
                     <img
-                      src="https://images.pexels.com/photos/8425035/pexels-photo-8425035.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=900"
-                      alt="Chauffeur opening door"
+                      src="/images/car service.webp"
+                      alt="Luxury Mercedes S-Class"
                       loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover ken-burns"
+                      width="800"
+                      height="1000"
+                      className="absolute inset-0 w-full h-full object-contain p-4"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-transparent" />
                     <div className="absolute bottom-6 left-6 right-6 glass-dark rounded-2xl p-5">
@@ -365,7 +400,7 @@ export default function Home() {
             <SectionHeading
               align="left"
               eyebrow="The ShineLimos Difference"
-              title={<>Quiet excellence, <span className="text-white">every detail.</span></>}
+              title={<>Premium car service, <span className="text-white">every detail.</span></>}
             />
             <div className="mt-10 space-y-6">
               {[
@@ -396,35 +431,37 @@ export default function Home() {
         <div className="mx-auto max-w-7xl">
           <Reveal>
             <SectionHeading
-              eyebrow="Service Area"
+              eyebrow="Our Locations"
               title={<>The <em className="text-white not-italic">DMV</em>, perfected.</>}
-              subtitle="Washington DC, Northern Virginia and Maryland — covered 24/7 by our local dispatch."
+              subtitle="Providing luxury limo service and premium car service across Washington DC, Virginia, and Maryland."
             />
           </Reveal>
-          <div className="mt-14 grid gap-5 md:grid-cols-3 lg:grid-cols-5">
-            {LOCATIONS.map((l, i) => (
-              <Reveal key={l.slug} variant="3d" delay={i * 90}>
-                <Link to={`/locations/${l.slug}`}>
-                  <TiltCard intensity={15} className="rounded-2xl">
-                    <div className="relative aspect-4/3 rounded-2xl overflow-hidden glass group">
-                      <img
-                        src={l.hero}
-                        alt={l.city}
-                        loading="lazy"
-                        className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
-                      />
-                      <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent" />
-                      <div className="absolute bottom-0 inset-x-0 p-5">
-                        <MapPin className="h-4 w-4 text-white mb-2" />
-                        <div className="font-serif-lux text-xl text-white leading-tight">
+          <div className="mt-14 grid gap-5 grid-cols-2 md:grid-cols-4">
+            {LOCATIONS.map((l) => (
+              <Link key={l.slug} to={`/locations/${l.slug}`}>
+                <TiltCard intensity={15} className="rounded-2xl">
+                  <div className="relative aspect-4/3 rounded-2xl overflow-hidden glass group">
+                    <img
+                      src={l.hero}
+                      alt={l.city}
+                      loading="lazy"
+                      width="600"
+                      height="450"
+                      className="absolute inset-0 w-full h-full object-contain p-2 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent" />
+                    <div className="absolute bottom-0 inset-x-0 p-4">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <MapPin className="h-3.5 w-3.5 text-white/80 shrink-0" />
+                        <div className="font-bold text-sm text-white uppercase tracking-wider leading-tight">
                           {l.city}
                         </div>
-                        <div className="text-[10px] tracking-[0.25em] text-white/55 mt-1 uppercase">{l.region}</div>
                       </div>
+                      <div className="text-[10px] tracking-[0.25em] text-[#c9a96e] uppercase font-medium ml-5">{l.region}</div>
                     </div>
-                  </TiltCard>
-                </Link>
-              </Reveal>
+                  </div>
+                </TiltCard>
+              </Link>
             ))}
           </div>
         </div>

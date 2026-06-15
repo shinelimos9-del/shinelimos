@@ -7,6 +7,7 @@ import Parallax from "../components/Parallax";
 import SectionBackground from "../components/SectionBackground";
 import { getVehicles, ADMIN_BASE_URL } from "../utils/api";
 import { Users, Briefcase, ArrowRight, Check, Loader2 } from "lucide-react";
+import SEO from "../components/SEO";
 
 export default function Fleet() {
   const [vehicles, setVehicles] = useState<any[]>([]);
@@ -45,12 +46,13 @@ export default function Fleet() {
 
   return (
     <div className="route-fade">
+      <SEO pageKey="fleet" />
       <PageHero
-        image="https://images.pexels.com/photos/15200595/pexels-photo-15200595.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000"
+        image="/images/pexels-photo-15200595.webp"
         video="https://videos.pexels.com/video-files/13643097/13643097-uhd_3840_2160_24fps.mp4"
         eyebrow="The Fleet"
-        title={<>An <em className="text-white not-italic">Uncompromising</em> Collection</>}
-        subtitle="Every vehicle is under three model-years old, garage-kept, professionally detailed before every reservation, and operated only by background-checked chauffeurs."
+        title={<>Our <em className="text-white not-italic">Premium Fleet</em></>}
+        subtitle="Explore our premium fleet of luxury vehicles, meticulously maintained for your ultimate comfort and safety."
       />
 
       {error ? (
@@ -61,7 +63,7 @@ export default function Fleet() {
           </div>
         </section>
       ) : (
-        <SectionBackground image="https://images.pexels.com/photos/9411658/pexels-photo-9411658.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+        <SectionBackground image="/images/pexels-photo-9411658.webp" overlay="dark" parallax className="py-20 px-6">
           <div className="mx-auto max-w-7xl space-y-24">
             {vehicles.map((v, i) => (
               <div
@@ -92,7 +94,7 @@ export default function Fleet() {
                 <Reveal variant={i % 2 === 0 ? "right" : "left"} delay={120} className="[direction:ltr]">
                   <div className="text-[10px] tracking-[0.4em] text-white uppercase mb-3">{v.vehicle_class_name || "Premium Service"}</div>
                   <h2 className="font-serif-lux text-4xl md:text-5xl text-white leading-tight">{v.vehicle_name}</h2>
-                  <p className="mt-4 text-white/65 leading-relaxed">{v.discription || "Experience the pinnacle of luxury transit with our professionally maintained fleet."}</p>
+                  <p className="mt-4 text-white/65 leading-relaxed">{v.discription || "Experience the pinnacle of professional transportation with our premium luxury vehicles, luxury SUV hire, and executive sedan service."}</p>
 
                   <div className="mt-6 flex gap-6">
                     <div className="flex items-center gap-2 text-sm text-white/80">
@@ -127,7 +129,7 @@ export default function Fleet() {
 
       <GoldDivider />
 
-      <SectionBackground image="https://images.pexels.com/photos/17893166/pexels-photo-17893166.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-16 px-6 text-center">
+      <SectionBackground image="/images/pexels-photo-17893166.webp" overlay="dark" parallax className="py-16 px-6 text-center">
         <Reveal>
           <p className="text-white/55 max-w-2xl mx-auto">
             Looking for something exotic? Custom Rolls-Royce, Bentley and Lamborghini bookings

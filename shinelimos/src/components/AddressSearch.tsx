@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { MapPin, Loader2, X } from "lucide-react";
+import { Loader2, X } from "lucide-react";
 import axios from "axios";
 import { MAPBOX_PUBLIC_TOKEN } from "../data";
 
@@ -101,7 +101,7 @@ export default function AddressSearch({ value, onChange, placeholder, className 
       <div className="relative">
         <input
           type="text"
-          className={`${className} !pl-11`}
+          className={`${className} pl-11!`}
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -128,7 +128,7 @@ export default function AddressSearch({ value, onChange, placeholder, className 
       </div>
 
       {showDropdown && suggestions.length > 0 && (
-        <div className="absolute z-[9999] mt-2 w-full bg-black border border-white/20 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-top-2">
+        <div className="absolute z-9999 mt-2 w-full bg-black border border-white/20 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-top-2">
           {suggestions.map((s) => (
             <button
               key={s.mapbox_id}

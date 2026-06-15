@@ -2,12 +2,13 @@ import { PageHero, SectionHeading, GoldButton, GlassCard, GoldDivider } from "..
 import SectionBackground from "../components/SectionBackground";
 import Reveal from "../components/Reveal";
 import { Award, Shield, Users, Sparkles, Clock, Heart } from "lucide-react";
+import SEO from "../components/SEO";
 
 const values = [
-  { icon: Shield, title: "Discretion", body: "Every chauffeur is background-checked, NDA-bound and trained in the art of becoming invisible." },
-  { icon: Clock, title: "Punctuality", body: "Arrive 15 minutes early or it's free. A standard we've held for 15+ years." },
-  { icon: Sparkles, title: "Impeccability", body: "Every vehicle is hand-detailed before every reservation. No exceptions." },
-  { icon: Heart, title: "Hospitality", body: "From the bottle of water in the cup holder to the umbrella by the door — every detail anticipated." },
+  { icon: Shield, title: "Discretion", body: "Every professional driver is background-checked, NDA-bound, and trained in absolute discretion." },
+  { icon: Clock, title: "Punctuality", body: "Arrive 15 minutes early or it's free. Our experienced chauffeurs value your time." },
+  { icon: Sparkles, title: "Impeccability", body: "Immaculate safety standards and perfectly detailed vehicles for your peace of mind." },
+  { icon: Heart, title: "Hospitality", body: "From chilled water to anticipating every need, we ensure absolute customer satisfaction as your airport transfer chauffeur." },
 ];
 
 const stats = [
@@ -18,21 +19,22 @@ const stats = [
 ];
 
 const BG = {
-  story: "https://images.pexels.com/photos/8425047/pexels-photo-8425047.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
-  stats: "https://images.pexels.com/photos/1545732/pexels-photo-1545732.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
-  values: "https://images.pexels.com/photos/14011664/pexels-photo-14011664.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
-  accred: "https://images.pexels.com/photos/5288741/pexels-photo-5288741.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
+  story: "/images/pexels-photo-8425047.webp",
+  stats: "/images/pexels-photo-1545732.webp",
+  values: "/images/pexels-photo-14011664.webp",
+  accred: "/images/pexels-photo-5288741.webp",
 };
 
 export default function About() {
   return (
     <div className="route-fade">
+      <SEO pageKey="about" />
       <PageHero
-        image="https://images.pexels.com/photos/34440729/pexels-photo-34440729.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000"
+        image="/images/pexels-photo-34440729.webp"
         video="https://videos.pexels.com/video-files/8344931/8344931-uhd_3840_2160_25fps.mp4"
         eyebrow="About ShineLimos"
-        title={<>A Quiet Standard of <em className="text-white not-italic">Excellence</em></>}
-        subtitle="Founded in 2010 by a former diplomatic transportation manager, ShineLimos LLC was built on a single conviction: Washington deserved better."
+        title={<>Redefining <em className="text-white not-italic">Luxury Travel</em></>}
+        subtitle="We are a premier luxury transportation company dedicated to unmatched service and absolute customer satisfaction."
       />
 
       {/* Story */}
@@ -41,7 +43,7 @@ export default function About() {
           <Reveal variant="left">
             <div className="rounded-3xl overflow-hidden aspect-4/5 glass">
               <img
-                src="https://images.pexels.com/photos/8425047/pexels-photo-8425047.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=900"
+                src="/images/pexels-photo-8425047.webp"
                 alt="ShineLimos LLC vehicle"
                 loading="lazy"
                 className="w-full h-full object-cover ken-burns"
@@ -56,19 +58,13 @@ export default function About() {
             />
             <div className="mt-8 space-y-5 text-white/70 leading-relaxed">
               <p>
-                ShineLimos LLC was born inside the marble corridors of the State Department, where our
-                founder spent twelve years coordinating motorcades for visiting heads of state. He left
-                with one frustration: the city's private car services simply weren't meeting the standard
-                of the city itself.
+                Founded on strict safety standards and a commitment to excellence, our experienced team provides exceptional service.
               </p>
               <p>
-                In 2010, we launched with three Mercedes S-Classes and a single rule — arrive fifteen
-                minutes early or refund the ride. Fifteen years later, that rule still stands. Today,
-                we operate a fleet of more than two hundred vehicles across DC, Northern Virginia and
-                Maryland, but our soul has never changed.
+                Our experienced chauffeurs and professional drivers undergo rigorous training to ensure your peace of mind. We have grown to become the premier luxury transportation company across DC, Northern Virginia, and Maryland.
               </p>
               <p>
-                We move quietly. We move correctly. And we move on time.
+                We move quietly. We move correctly. And we prioritize your complete customer satisfaction.
               </p>
             </div>
             <div className="mt-8">
@@ -100,7 +96,7 @@ export default function About() {
           <Reveal>
             <SectionHeading
               eyebrow="Core Values"
-              title={<>The four pillars of <em className="text-white not-italic">our craft</em></>}
+              title={<>The cornerstones of our <em className="text-white not-italic">luxury transportation company</em></>}
             />
           </Reveal>
           <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-4">

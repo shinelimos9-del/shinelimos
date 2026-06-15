@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, Send, CreditCard, CheckCircle } from "lucide-react";
+import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, CreditCard, CheckCircle } from "lucide-react";
 import { getAdminProfile, getNotifications, markNotificationsRead, logoutAdmin, sendPaymentLink } from "../../utils/api";
 import { io } from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
@@ -15,7 +15,8 @@ export default function AdminLayout() {
   const notificationRef = useRef<HTMLDivElement>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [adminData, setAdminData] = useState<any>(null);
-  const [socket, setSocket] = useState<any>(null);
+  const [, setSocket] = useState<any>(null);
+
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -236,7 +237,7 @@ export default function AdminLayout() {
       <aside className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-black/60 backdrop-blur-2xl border-r border-white/5 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="h-20 flex items-center justify-between lg:justify-center px-6 border-b border-white/5">
           <Link to="/">
-            <img src="/logo/logo.png" alt="Shine Limo" className="h-10 object-contain hover:opacity-80 transition-opacity" />
+            <img src="/logo/logo.webp" alt="Shine Limo" className="h-10 object-contain hover:opacity-80 transition-opacity" />
           </Link>
           <button className="lg:hidden text-white hover:text-white" onClick={() => setSidebarOpen(false)}>
             <X size={20} />

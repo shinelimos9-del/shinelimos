@@ -6,7 +6,7 @@ export default function Background() {
       {/* Global Background Image */}
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30" 
-        style={{ backgroundImage: "url('https://images.pexels.com/photos/17893166/pexels-photo-17893166.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400')" }}
+        style={{ backgroundImage: "url('/images/pexels-photo-17893166.webp')" }}
       />
       {/* Deep radial gradient base — pure black with subtle white glow */}
       <div

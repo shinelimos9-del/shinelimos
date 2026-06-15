@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHero, GoldButton, GoldDivider } from "../components/ui";
 import SectionBackground from "../components/SectionBackground";
@@ -6,8 +6,9 @@ import TimePicker from "../components/TimePicker";
 import { initiateBooking, finalizeBooking, requestPayment, ADMIN_BASE_URL } from "../utils/api";
 import AddressSearch from "../components/AddressSearch";
 
-const BG = "https://images.pexels.com/photos/8605325/pexels-photo-8605325.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400";
+const BG = "/images/pexels-photo-8605325.webp";
 import { CheckCircle, ArrowRight, ArrowLeft, MapPin, Calendar, Users, Car, User, Mail, Phone, Clock, Trash2, Plus, Briefcase, Download, Plane, Globe, X, CreditCard, Loader2 } from "lucide-react";
+import SEO from "../components/SEO";
 
 const STEPS = ["Trip Itinerary", "Vehicle Selection", "Summary", "Contact Info"];
 
@@ -482,7 +483,7 @@ export default function Booking() {
   if (done) {
     return (
       <div className="route-fade">
-        <PageHero image="https://images.pexels.com/photos/8425047/pexels-photo-8425047.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000" eyebrow="Confirmed" title={<>Your reservation is <em className="text-white not-italic">confirmed</em></>} />
+        <PageHero image="/images/pexels-photo-8425047.webp" eyebrow="Confirmed" title={<>Your reservation is <em className="text-white not-italic">confirmed</em></>} />
         <section className="py-20 px-6">
           <div className="mx-auto max-w-2xl glass-dark rounded-3xl p-10 text-center">
             <div className="w-20 h-20 rounded-full glass-gold flex items-center justify-center mx-auto mb-6">
@@ -537,11 +538,12 @@ export default function Booking() {
 
   return (
     <div className="route-fade">
+      <SEO pageKey="booking" />
       <PageHero
-        image="https://images.pexels.com/photos/5288741/pexels-photo-5288741.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000"
+        image="/images/pexels-photo-5288741.webp"
         eyebrow="Reservations"
-        title={<>Book Your <em className="text-white not-italic">Chauffeur</em></>}
-        subtitle="Four short steps. Instant confirmation. Available 24/7."
+        title={<>Online Limo <em className="text-white not-italic">Reservation</em></>}
+        subtitle="Limousine bus online booking and instant reservation. Four short steps. Available 24/7."
       />
 
       <SectionBackground image={BG} overlay="dark" parallax className="py-16 px-6">
@@ -1194,7 +1196,7 @@ function FlightInfoModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-100 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-[#1e293b] w-full max-w-[320px] rounded-xl overflow-hidden shadow-2xl border border-white/10">
         <div className="bg-[#2d3748] px-4 py-2 flex justify-between items-center border-b border-white/5">
           <span className="text-white font-semibold text-sm">Flight Info</span>

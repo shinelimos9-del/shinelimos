@@ -4,9 +4,10 @@ import SectionBackground from "../components/SectionBackground";
 import Reveal from "../components/Reveal";
 import { COMPANY } from "../data";
 import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from "lucide-react";
+import SEO from "../components/SEO";
 
 const BG = {
-  contact: "https://images.pexels.com/photos/9411653/pexels-photo-9411653.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400",
+  contact: "/images/pexels-photo-9411653.webp",
 };
 
 export default function Contact() {
@@ -15,6 +16,12 @@ export default function Contact() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const message = `🚗 *New Inquiry - ShineLimos*\n\n👤 *Name:* ${form.name}\n📧 *Email:* ${form.email}\n📞 *Phone:* ${form.phone}\n\n💬 *Message:*\n${form.message}`;
+
+    const whatsappUrl = `https://wa.me/12029517172?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank");
+
     setSent(true);
     setTimeout(() => setSent(false), 4500);
     setForm({ name: "", email: "", phone: "", message: "" });
@@ -22,12 +29,13 @@ export default function Contact() {
 
   return (
     <div className="route-fade">
+      <SEO pageKey="contact" />
       <PageHero
-        image="https://images.pexels.com/photos/5288741/pexels-photo-5288741.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000"
+        image="/images/pexels-photo-5288741.webp"
         video="https://videos.pexels.com/video-files/13643097/13643097-uhd_3840_2160_24fps.mp4"
         eyebrow="Contact"
-        title={<>At your <em className="text-white not-italic">service</em>, 24/7</>}
-        subtitle="Our concierge team is available around the clock. Reservations, quotes, corporate accounts — we're a phone call away."
+        title={<>Transportation <em className="text-white not-italic">Support</em> & Booking Assistance</>}
+        subtitle="Our concierge team is available around the clock for any transportation inquiry or service request. Contact us for a private airport taxi service or corporate accounts."
       />
 
       <SectionBackground image={BG.contact} overlay="dark" parallax className="py-24 px-6">
@@ -87,18 +95,7 @@ export default function Contact() {
               </Reveal>
             ))}
 
-            {/* Map */}
-            <Reveal variant="right" delay={400}>
-              <div className="glass rounded-2xl overflow-hidden h-64 relative">
-                <iframe
-                  title="ShineLimos HQ"
-                  src="https://maps.google.com/maps?q=13455+Sunrise+Valley+drive+Herndon+Virginia+20171&t=&z=14&ie=UTF8&iwloc=&output=embed"
-                  className="w-full h-full grayscale contrast-125 opacity-80"
-                  style={{ filter: "invert(0.92) hue-rotate(180deg)" }}
-                  loading="lazy"
-                />
-              </div>
-            </Reveal>
+
           </div>
         </div>
       </SectionBackground>

@@ -1,5 +1,4 @@
 import { useParams, Navigate, Link } from "react-router-dom";
-import { useEffect } from "react";
 import { SERVICES, FLEET } from "../data";
 import { PageHero, SectionHeading, GoldButton, GoldDivider, GlassCard } from "../components/ui";
 import BookingWidget from "../components/BookingWidget";
@@ -7,31 +6,23 @@ import Reveal from "../components/Reveal";
 import SectionBackground from "../components/SectionBackground";
 import TiltCard from "../components/TiltCard";
 import { Check, ArrowRight, Star } from "lucide-react";
+import SEO from "../components/SEO";
 
 export default function ServiceDetail() {
   const { slug } = useParams();
   const service = SERVICES.find((s) => s.slug === slug);
 
-  useEffect(() => {
-    if (!service) return;
-    document.title = service.seoTitle;
-    let desc = document.querySelector('meta[name="description"]');
-    if (!desc) {
-      desc = document.createElement("meta");
-      desc.setAttribute("name", "description");
-      document.head.appendChild(desc);
-    }
-    desc.setAttribute("content", service.seoDesc);
-  }, [service]);
+
 
   if (!service) return <Navigate to="/services" replace />;
 
   return (
     <div className="route-fade">
+      <SEO pageKey={service.slug} />
       <PageHero image={service.hero} eyebrow="Service" title={service.title} subtitle={service.short} />
 
       {/* Intro */}
-      <SectionBackground image="https://images.pexels.com/photos/30096223/pexels-photo-30096223.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+      <SectionBackground image="/images/pexels-photo-30096223.webp" overlay="dark" parallax className="py-20 px-6">
         <div className="mx-auto max-w-6xl grid lg:grid-cols-3 gap-12">
           <div className="lg:col-span-2">
             <Reveal>
@@ -88,7 +79,7 @@ export default function ServiceDetail() {
       {service.slug === "airport-limo-service" && (
         <>
           <GoldDivider />
-          <SectionBackground image="https://images.pexels.com/photos/8425047/pexels-photo-8425047.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+          <SectionBackground image="/images/pexels-photo-8425047.webp" overlay="dark" parallax className="py-20 px-6">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <SectionHeading
@@ -232,7 +223,7 @@ export default function ServiceDetail() {
       <GoldDivider />
 
       {/* Benefits */}
-      <SectionBackground image="https://images.pexels.com/photos/9411658/pexels-photo-9411658.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+      <SectionBackground image="/images/pexels-photo-9411658.webp" overlay="dark" parallax className="py-20 px-6">
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <SectionHeading eyebrow="Why Choose Us" title={<>The ShineLimos <span className="text-white">advantage</span></>} />
@@ -253,7 +244,7 @@ export default function ServiceDetail() {
       </SectionBackground>
 
       {/* Recommended Fleet */}
-      <SectionBackground image="https://images.pexels.com/photos/5288741/pexels-photo-5288741.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+      <SectionBackground image="/images/pexels-photo-5288741.webp" overlay="dark" parallax className="py-20 px-6">
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <SectionHeading eyebrow="Recommended Vehicles" title={<>The fleet for <em className="text-white not-italic">{service.title}</em></>} />
@@ -281,7 +272,7 @@ export default function ServiceDetail() {
       </SectionBackground>
 
       {/* Booking widget */}
-      <SectionBackground image="https://images.pexels.com/photos/14011664/pexels-photo-14011664.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1600&w=2400" overlay="dark" parallax className="py-20 px-6">
+      <SectionBackground image="/images/pexels-photo-14011664.webp" overlay="dark" parallax className="py-20 px-6">
         <div className="mx-auto max-w-4xl">
           <Reveal>
             <SectionHeading eyebrow="Start Your Reservation" title={<>Get your <span className="text-white">instant quote</span></>} />

@@ -19,7 +19,7 @@ export default function PaymentSuccess() {
   return (
     <div className="route-fade">
       <PageHero 
-        image="https://images.pexels.com/photos/8425047/pexels-photo-8425047.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=1200&w=2000" 
+        image="/images/pexels-photo-8425047.webp" 
         eyebrow="Payment Successful" 
         title={<>Your payment is <em className="text-white not-italic">confirmed</em></>} 
       />
