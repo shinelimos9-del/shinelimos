@@ -31,7 +31,7 @@ export const FLEET: Vehicle[] = [
     passengers: 3,
     luggage: 3,
     features: ["Heated Nappa Leather", "Climate Zones", "Burmester® Audio", "Privacy Glass"],
-    image: "/images/S class.jpg",
+    image: "/images/S class.webp",
     blurb: "The defining flagship of executive travel — silent, swift and unmistakably refined."
   },
   {
@@ -41,7 +41,7 @@ export const FLEET: Vehicle[] = [
     passengers: 6,
     luggage: 6,
     features: ["Captain's Chairs", "Panoramic Roof", "AKG Studio Audio", "Massage Seats"],
-    image: "/images/Cadillac Escalade.jpg",
+    image: "/images/Cadillac Escalade.webp",
     blurb: "Commanding presence with limousine-level comfort for executives, families & VIPs."
   },
   {
@@ -51,7 +51,7 @@ export const FLEET: Vehicle[] = [
     passengers: 6,
     luggage: 7,
     features: ["Leather Seating", "Tri-Zone Climate Control", "Bose® Sound System", "Spacious Cargo"],
-    image: "/images/Chevrolet Suburban.jpg",
+    image: "/images/Chevrolet Suburban.webp",
     blurb: "The premium workhorse of luxury group transit, offering unparalleled luggage capacity."
   },
   {
@@ -61,7 +61,7 @@ export const FLEET: Vehicle[] = [
     passengers: 6,
     luggage: 6,
     features: ["Perfect Position Seats", "Revel® Audio", "ActiveMotion Massage", "Ambient Lighting"],
-    image: "/images/Lincoln navigator-SUV.jpg",
+    image: "/images/Lincoln navigator-SUV.webp",
     blurb: "A sanctuary on wheels, combining bespoke craftsmanship with cutting-edge comfort."
   },
   {
@@ -71,7 +71,7 @@ export const FLEET: Vehicle[] = [
     passengers: 14,
     luggage: 14,
     features: ["Stand-Up Cabin", "LED Mood Lighting", "USB-C at Every Seat", "Onboard Bar"],
-    image: "/images/sprinter (mercedes van).jpg",
+    image: "/images/sprinter (mercedes van).webp",
     blurb: "First-class group travel for corporate roadshows, weddings and VIP events."
   },
   {
@@ -81,7 +81,7 @@ export const FLEET: Vehicle[] = [
     passengers: 30,
     luggage: 10,
     features: ["Dance Floor", "Laser Lighting", "Premium Bar", "Subwoofer Audio"],
-    image: "/images/30 PAX bus.jpg",
+    image: "/images/30 PAX bus.webp",
     blurb: "The destination becomes the journey — your private lounge on wheels."
   },
   {
@@ -91,7 +91,7 @@ export const FLEET: Vehicle[] = [
     passengers: 50,
     luggage: 50,
     features: ["Under-Coach Luggage", "Reclining Seats", "Overhead Storage", "PA System"],
-    image: "/images/50 PAX bus.jpg",
+    image: "/images/50 PAX bus.webp",
     blurb: "Elite long-distance transit for large-scale corporate events, conventions, and wedding parties."
   }
 ];
@@ -114,7 +114,7 @@ export const SERVICES: Service[] = [
     slug: "airport-limo-service",
     title: "Airport Limo Service",
     short: "Stress-free Washington DC airport limo service. Flight monitoring and luxury airport transfers.",
-    hero: "/images/sedan.jpg",
+    hero: "/images/sedan.webp",
     intro:
       "Punctual and prestigious Washington DC airport limo service. We make airport luxury transfers effortless. Our DC airport limo service includes advanced flight tracking and flight monitoring to ensure your chauffeur is ready the moment you land.",
     highlights: [
@@ -206,7 +206,7 @@ export const SERVICES: Service[] = [
     slug: "suv-limo-service",
     title: "SUV Limo Service",
     short: "Spacious SUV limo service in Washington DC offering superior legroom and passenger comfort.",
-    hero: "/images/Lincoln navigator-SUV.jpg",
+    hero: "/images/Lincoln navigator-SUV.webp",
     intro:
       "Commanding road presence with superior comfort. Our SUV limo service in Washington DC provides a premier luxury SUV chauffeur service for executives and families. Enjoy spacious luxury suv transportation, ideal for business travel service or seamless group airport transportation.",
     highlights: [
