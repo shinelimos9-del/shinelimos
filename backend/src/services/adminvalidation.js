@@ -5,9 +5,9 @@ const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
     service: "Gmail",
-    auth: {
-        user: "vikasjangid3352@gmail.com",
-        pass: "wtqe znhi gtmv oyfa",
+     auth: {
+        user: "rizeworldcode@gmail.com",
+        pass: "tzyj jabr qyid ynxb",
     },
 });
 
@@ -16,7 +16,13 @@ const sendOTP = (email, otp) => {
         from: "vikasjangid3352@gmail.com",
         to: email,
         subject: "Your OTP Code",
-        text: `Your OTP code is ${otp}`,
+        text: `Dear User,
+Your verification code is:
+${otp}
+This code is valid for 10 minutes.
+If you did not request a password reset, please ignore this email.
+Thank you,
+RizeWorld Team`,
     };
 
     return transporter.sendMail(mailOptions);

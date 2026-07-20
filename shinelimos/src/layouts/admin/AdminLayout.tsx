@@ -295,15 +295,29 @@ export default function AdminLayout() {
               </button>
               
               {showNotifications && (
-                <div className="absolute right-0 mt-6 w-80 bg-[#111]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
-                  <div className="p-4 border-b border-white/5 flex justify-between items-center">
-                    <h3 className="text-white font-medium">Notifications</h3>
-                    {unreadCount > 0 && (
-                      <button onClick={markAllAsRead} className="text-xs text-white hover:text-white/80 transition-colors">
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
+                <>
+                  {/* Mobile backdrop */}
+                  <div 
+                    className="fixed inset-0 bg-black/60 z-60 sm:hidden backdrop-blur-sm"
+                    onClick={() => setShowNotifications(false)}
+                  />
+                  <div className="fixed top-24 left-1/2 -translate-x-1/2 w-[90vw] max-w-sm sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-6 sm:w-80 sm:translate-x-0 sm:translate-y-0 bg-[#111]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl overflow-hidden z-70">
+                    <div className="p-4 border-b border-white/5 flex justify-between items-center">
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => setShowNotifications(false)}
+                          className="sm:hidden text-white/60 hover:text-white transition-colors"
+                        >
+                          <X size={18} />
+                        </button>
+                        <h3 className="text-white font-medium">Notifications</h3>
+                      </div>
+                      {unreadCount > 0 && (
+                        <button onClick={markAllAsRead} className="text-xs text-white hover:text-white/80 transition-colors">
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
                   <div className="max-h-80 overflow-y-auto no-scrollbar">
                     {notifications.length > 0 ? (
                       notifications.map(notification => (
@@ -327,7 +341,8 @@ export default function AdminLayout() {
                       </div>
                     )}
                   </div>
-                </div>
+                  </div>
+                </>
               )}
             </div>
             <div className="flex items-center gap-3 border-l border-white/10 pl-5">

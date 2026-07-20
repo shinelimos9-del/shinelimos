@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { ArrowRight, MapPin, Calendar, Users, Car } from "lucide-react";
 import { GoldButton } from "./ui";
 import TimePicker from "./TimePicker";
