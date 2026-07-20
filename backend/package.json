@@ -50,7 +50,6 @@
     "swagger-autogen": "^2.23.7",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
-    "swisseph": "^0.5.17",
     "telesignsdk": "^3.0.0",
     "twilio": "^5.2.2",
     "webrtc": "^1.14.1"
