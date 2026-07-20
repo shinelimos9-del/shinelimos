@@ -20,6 +20,7 @@ interface Vehicle {
   passenger_capacity: string;
   luggage_capacity: string;
   image: string;
+  images?: string[];
 }
 
 export default function AdminVehicles() {
@@ -33,6 +34,10 @@ export default function AdminVehicles() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  const [selectedSubFiles, setSelectedSubFiles] = useState<File[]>([]);
+  const [subImagePreviews, setSubImagePreviews] = useState<string[]>([]);
+  const [existingSubImages, setExistingSubImages] = useState<string[]>([]);
 
   const [formData, setFormData] = useState({
     vehicle_name: "",
@@ -94,6 +99,10 @@ export default function AdminVehicles() {
         luggage_capacity: vehicle.luggage_capacity,
       });
       setImagePreview(vehicle.image.startsWith('http') ? vehicle.image : `${ADMIN_BASE_URL}${vehicle.image}`);
+      
+      const subs = vehicle.images || [];
+      setExistingSubImages(subs);
+      setSubImagePreviews(subs.map(img => img.startsWith('http') ? img : `${ADMIN_BASE_URL}${img}`));
     } else {
       setEditingVehicle(null);
       setFormData({
@@ -110,8 +119,11 @@ export default function AdminVehicles() {
         luggage_capacity: "",
       });
       setImagePreview(null);
+      setExistingSubImages([]);
+      setSubImagePreviews([]);
     }
     setSelectedFile(null);
+    setSelectedSubFiles([]);
     setModalOpen(true);
   };
 
@@ -119,7 +131,10 @@ export default function AdminVehicles() {
     setModalOpen(false);
     setEditingVehicle(null);
     setSelectedFile(null);
+    setSelectedSubFiles([]);
     setImagePreview(null);
+    setSubImagePreviews([]);
+    setExistingSubImages([]);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -137,6 +152,33 @@ export default function AdminVehicles() {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleSubFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const filesArray = Array.from(files);
+      setSelectedSubFiles(prev => [...prev, ...filesArray]);
+      
+      filesArray.forEach(file => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setSubImagePreviews(prev => [...prev, reader.result as string]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const handleRemoveSubImage = (index: number) => {
+    const existingCount = existingSubImages.length;
+    if (index < existingCount) {
+      setExistingSubImages(prev => prev.filter((_, i) => i !== index));
+    } else {
+      const newIndex = index - existingCount;
+      setSelectedSubFiles(prev => prev.filter((_, i) => i !== newIndex));
+    }
+    setSubImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDeleteVehicle = async (id: string) => {
@@ -178,6 +220,12 @@ export default function AdminVehicles() {
       if (selectedFile) {
         data.append("image", selectedFile);
       }
+
+      selectedSubFiles.forEach(file => {
+        data.append("images", file);
+      });
+
+      data.append("existing_images", JSON.stringify(existingSubImages));
 
       let response;
       if (editingVehicle) {
@@ -325,6 +373,37 @@ export default function AdminVehicles() {
                     className="hidden" 
                     accept="image/*"
                   />
+                </div>
+
+                {/* Sub-images (Gallery) Section */}
+                <div className="space-y-3">
+                  <label className="block text-xs font-bold text-white uppercase tracking-wider">Sub-images (Gallery)</label>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {subImagePreviews.map((preview, idx) => (
+                      <div key={idx} className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/5 bg-white/5 group">
+                        <img src={preview} alt={`Sub ${idx}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSubImage(idx)}
+                          className="absolute top-1.5 right-1.5 bg-black/60 hover:bg-red-600 text-white rounded-full p-1.5 transition-colors shadow-md backdrop-blur-sm"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    <label className="border border-dashed border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 rounded-xl aspect-[4/3] flex flex-col items-center justify-center cursor-pointer transition-colors group">
+                      <Plus className="text-white/40 group-hover:text-white/60 mb-1" size={16} />
+                      <span className="text-[10px] text-white/40 group-hover:text-white/60 font-medium">Add Image</span>
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleSubFilesChange}
+                        className="hidden"
+                        accept="image/*"
+                      />
+                    </label>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

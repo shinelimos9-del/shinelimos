@@ -56,6 +56,10 @@ const vehicleSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  images: {
+    type: Array,
+    default: [],
+  },
 
 
   created_at: {

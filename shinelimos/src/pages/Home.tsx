@@ -204,18 +204,18 @@ export default function Home() {
           )}
           <div className="absolute inset-0 bg-black/40" />
         </div>
-        
+
         {/* Faint Red circles in background like the image */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-            <div className="absolute top-[20%] left-[25%] w-64 h-64 border border-red-500/10 rounded-full" />
-            <div className="absolute bottom-[20%] left-[40%] w-48 h-48 border border-red-500/10 rounded-full" />
-            <div className="absolute top-[10%] right-[35%] w-72 h-72 border border-red-500/10 rounded-full" />
+          <div className="absolute top-[20%] left-[25%] w-64 h-64 border border-red-500/10 rounded-full" />
+          <div className="absolute bottom-[20%] left-[40%] w-48 h-48 border border-red-500/10 rounded-full" />
+          <div className="absolute top-[10%] right-[35%] w-72 h-72 border border-red-500/10 rounded-full" />
         </div>
 
         <div className="relative mx-auto max-w-7xl px-6 w-full flex flex-col lg:flex-row items-center gap-12 mt-12 lg:mt-0 z-10">
           {/* Left Content */}
           <div className="flex-1 text-left relative z-10 ml-0 lg:ml-24">
-            
+
             <h1 className="text-5xl md:text-6xl lg:text-[4.5rem] font-bold text-white leading-[1.2] tracking-wide" data-home-fade style={{ fontFamily: "'Orbitron', sans-serif" }}>
               LUXURY <br />
               <span className="text-[#ff1100]">TRAVEL</span> EXPERIENCE
@@ -226,11 +226,11 @@ export default function Home() {
             </p>
 
 
-            
+
           </div>
 
         </div>
-        
+
 
       </section>
 
@@ -307,26 +307,26 @@ export default function Home() {
       {/* 3D FLEET CAROUSEL */}
       <div ref={fleetRef}>
         <SectionBackground image={BG_IMAGES.fleet} overlay="dark" parallax className="py-24 px-6">
-        <div className="mx-auto max-w-7xl">
-          <Reveal>
-            <SectionHeading
-              eyebrow="The Fleet"
-              title={<>Our <span className="text-white">Luxury Fleet.</span></>}
-              subtitle="Discover our luxury fleet. From executive sedans to luxury SUVs, experience premium ground transportation tailored to your specific needs."
-            />
-          </Reveal>
-          <Reveal variant="3d" delay={150} className="mt-14">
-            <Suspense fallback={<div className="h-[400px] w-full animate-pulse bg-white/5 rounded-2xl"></div>}>
-              <FleetCarousel3D vehicles={vehicles} />
-            </Suspense>
-          </Reveal>
-          <div className="mt-8 text-center">
-            <GoldButton to="/fleet" variant="outline">
-              View Full Fleet <ArrowRight className="h-4 w-4" />
-            </GoldButton>
+          <div className="mx-auto max-w-7xl">
+            <Reveal>
+              <SectionHeading
+                eyebrow="The Fleet"
+                title={<>Our <span className="text-white">Luxury Fleet.</span></>}
+                subtitle="Discover our luxury fleet. From executive sedans to luxury SUVs, experience premium ground transportation tailored to your specific needs."
+              />
+            </Reveal>
+            <Reveal variant="3d" delay={150} className="mt-14">
+              <Suspense fallback={<div className="h-[400px] w-full animate-pulse bg-white/5 rounded-2xl"></div>}>
+                <FleetCarousel3D vehicles={vehicles} />
+              </Suspense>
+            </Reveal>
+            <div className="mt-8 text-center">
+              <GoldButton to="/fleet" variant="outline">
+                View Full Fleet <ArrowRight className="h-4 w-4" />
+              </GoldButton>
+            </div>
           </div>
-        </div>
-      </SectionBackground>
+        </SectionBackground>
       </div>
 
       {/* PARALLAX VIDEO STORY SECTION */}

@@ -5,14 +5,23 @@ exports.add_newVehicle = async (req, res) => {
 	try {
 		const payload = req.body;
 
-		// Upload to Cloudinary if configured, otherwise fallback to local
-		if (req.file) {
-			const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(req.file.path);
-			if (cloudinaryUrl) {
-				payload.image = cloudinaryUrl;
-			} else {
-				payload.image = `/uploads/${req.file.filename}`;
+		// Handle main image upload
+		if (req.files && req.files['image']) {
+			const mainImageFile = req.files['image'][0];
+			const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(mainImageFile.path);
+			payload.image = cloudinaryUrl || `/uploads/${mainImageFile.filename}`;
+		}
+
+		// Handle sub-images upload
+		if (req.files && req.files['images']) {
+			const imagesArray = [];
+			for (const file of req.files['images']) {
+				const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(file.path);
+				imagesArray.push(cloudinaryUrl || `/uploads/${file.filename}`);
 			}
+			payload.images = imagesArray;
+		} else {
+			payload.images = [];
 		}
 
 		// Basic validation
@@ -64,14 +73,32 @@ exports.updateVehicle_details = async (req, res) => {
 		}
 		const payload = req.body;
 
-		// Upload to Cloudinary if configured, otherwise fallback to local
-		if (req.file) {
-			const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(req.file.path);
-			if (cloudinaryUrl) {
-				payload.image = cloudinaryUrl;
-			} else {
-				payload.image = `/uploads/${req.file.filename}`;
+		// Handle main image upload
+		if (req.files && req.files['image']) {
+			const mainImageFile = req.files['image'][0];
+			const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(mainImageFile.path);
+			payload.image = cloudinaryUrl || `/uploads/${mainImageFile.filename}`;
+		}
+
+		// Handle sub-images upload (both newly uploaded files and existing URLs)
+		let existingImages = [];
+		if (payload.existing_images) {
+			try {
+				existingImages = typeof payload.existing_images === 'string' ? JSON.parse(payload.existing_images) : payload.existing_images;
+			} catch (e) {
+				existingImages = [];
 			}
+		}
+
+		if (req.files && req.files['images']) {
+			const newImagesArray = [];
+			for (const file of req.files['images']) {
+				const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(file.path);
+				newImagesArray.push(cloudinaryUrl || `/uploads/${file.filename}`);
+			}
+			payload.images = [...existingImages, ...newImagesArray];
+		} else if (payload.existing_images !== undefined) {
+			payload.images = existingImages;
 		}
 
 		// Price validation/parsing if price is being updated

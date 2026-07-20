@@ -1,27 +1,118 @@
 import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Users, Briefcase, Check, ArrowRight, ArrowLeft } from "lucide-react";
+import { Users, Briefcase, Check, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { FLEET } from "../data";
 import { GoldButton, GoldDivider } from "../components/ui";
 import Reveal from "../components/Reveal";
 import SEO from "../components/SEO";
+import { getVehicles, ADMIN_BASE_URL } from "../utils/api";
 
 export default function FleetDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const vehicle = FLEET.find(
-    (v) =>
-      v.slug === slug ||
-      v.name.toLowerCase().replace(/\s+/g, "-") === slug ||
-      v.category.toLowerCase().replace(/\s+/g, "-") === slug
-  );
+  const [vehicle, setVehicle] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [otherVehicles, setOtherVehicles] = useState<any[]>([]);
   const [activeImg, setActiveImg] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
 
-  // Reset active image when slug changes
   useEffect(() => {
-    setActiveImg(0);
+    async function loadVehicle() {
+      try {
+        setLoading(true);
+        setActiveImg(0);
+        
+        const response = await getVehicles();
+        let dbVehicle = null;
+        let matchedOther = [];
+
+        if (response.success && response.vehicles) {
+          dbVehicle = response.vehicles.find((v: any) => {
+            const formattedDbName = v.vehicle_name.toLowerCase().replace(/\s+/g, "-");
+            return formattedDbName === slug || v._id === slug;
+          });
+          
+          matchedOther = response.vehicles.filter((v: any) => {
+            const formattedDbName = v.vehicle_name.toLowerCase().replace(/\s+/g, "-");
+            return formattedDbName !== slug && v._id !== slug;
+          }).slice(0, 3).map((v: any) => ({
+            slug: v.vehicle_name.toLowerCase().replace(/\s+/g, "-"),
+            name: v.vehicle_name,
+            category: v.vehicle_class_name,
+            blurb: v.discription,
+            image: v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`,
+            passengers: parseInt(v.passenger_capacity) || 3,
+            luggage: parseInt(v.luggage_capacity) || 3,
+          }));
+        }
+
+        const defaultAmenities = [
+          { label: "Phone Chargers", icon: "🔌" },
+          { label: "Refreshments", icon: "🥤" },
+          { label: "Fiji Water", icon: "💧" },
+          { label: "Free WiFi", icon: "📶" }
+        ];
+
+        if (dbVehicle) {
+          const staticMatch = FLEET.find(v => 
+            v.slug === slug || 
+            v.name.toLowerCase() === dbVehicle.vehicle_name.toLowerCase()
+          );
+
+          const mapped = {
+            slug: dbVehicle.vehicle_name.toLowerCase().replace(/\s+/g, "-"),
+            name: dbVehicle.vehicle_name,
+            category: dbVehicle.vehicle_class_name,
+            passengers: parseInt(dbVehicle.passenger_capacity) || 3,
+            luggage: parseInt(dbVehicle.luggage_capacity) || 3,
+            features: dbVehicle.features || [],
+            image: dbVehicle.image.startsWith('http') ? dbVehicle.image : `${ADMIN_BASE_URL}${dbVehicle.image}`,
+            images: (dbVehicle.images && dbVehicle.images.length > 0)
+              ? dbVehicle.images.map((img: string) => img.startsWith('http') ? img : `${ADMIN_BASE_URL}${img}`)
+              : [dbVehicle.image.startsWith('http') ? dbVehicle.image : `${ADMIN_BASE_URL}${dbVehicle.image}`],
+            blurb: dbVehicle.discription,
+            description: dbVehicle.discription,
+            amenities: staticMatch ? staticMatch.amenities : defaultAmenities,
+            price: dbVehicle.price,
+            _id: dbVehicle._id
+          };
+          setVehicle(mapped);
+        } else {
+          const staticMatch = FLEET.find(
+            (v) =>
+              v.slug === slug ||
+              v.name.toLowerCase().replace(/\s+/g, "-") === slug ||
+              v.category.toLowerCase().replace(/\s+/g, "-") === slug
+          );
+          if (staticMatch) {
+            setVehicle({
+              ...staticMatch,
+              images: staticMatch.images || [staticMatch.image]
+            });
+            matchedOther = FLEET.filter(v => v.slug !== staticMatch.slug).slice(0, 3);
+          } else {
+            setVehicle(null);
+          }
+        }
+        setOtherVehicles(matchedOther);
+      } catch (err) {
+        console.error("Error loading vehicle details:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadVehicle();
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white/50">
+        <Loader2 className="animate-spin mb-4" size={32} />
+        <p>Loading vehicle details...</p>
+      </div>
+    );
+  }
 
   if (!vehicle) {
     return (
@@ -34,8 +125,6 @@ export default function FleetDetail() {
       </div>
     );
   }
-
-  const otherVehicles = FLEET.filter((v) => v.slug !== slug).slice(0, 3);
 
   return (
     <div className="route-fade bg-black min-h-screen text-white">
@@ -104,7 +193,7 @@ export default function FleetDetail() {
             if (count === 2) {
               return (
                 <div className="grid grid-cols-2 gap-3 aspect-[16/9]">
-                  {vehicle.images.map((img, index) => (
+                  {vehicle.images.map((img: string, index: number) => (
                     <div 
                       key={index}
                       onClick={() => { setActiveImg(index); setIsZoomed(true); }}
@@ -133,7 +222,7 @@ export default function FleetDetail() {
                     />
                   </div>
                   <div className="col-span-4 grid grid-rows-2 gap-3">
-                    {vehicle.images.slice(1, 3).map((img, index) => (
+                    {vehicle.images.slice(1, 3).map((img: string, index: number) => (
                       <div 
                         key={index}
                         onClick={() => { setActiveImg(index + 1); setIsZoomed(true); }}
@@ -162,7 +251,7 @@ export default function FleetDetail() {
                     />
                   </div>
                   <div className="col-span-6 grid grid-cols-2 gap-3">
-                    {vehicle.images.slice(1, 4).map((img, index) => (
+                    {vehicle.images.slice(1, 4).map((img: string, index: number) => (
                       <div 
                         key={index}
                         onClick={() => { setActiveImg(index + 1); setIsZoomed(true); }}
@@ -275,7 +364,7 @@ export default function FleetDetail() {
                 ✦ Included Amenities ✦
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {vehicle.amenities.map((a) => (
+                {vehicle.amenities.map((a: any) => (
                   <div
                     key={a.label}
                     className="flex items-center gap-3 glass rounded-xl px-4 py-3 border border-white/5 hover:border-white/20 transition-colors"
@@ -293,7 +382,7 @@ export default function FleetDetail() {
                 ✦ Vehicle Features ✦
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {vehicle.features.map((f) => (
+                {vehicle.features.map((f: string) => (
                   <div key={f} className="flex items-center gap-2 text-sm text-white/70">
                     <Check className="h-3.5 w-3.5 text-white shrink-0" />
                     {f}
