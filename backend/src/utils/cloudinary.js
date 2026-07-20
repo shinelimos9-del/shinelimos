@@ -1,5 +1,6 @@
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
+const path = require("path");
 
 const isCloudinaryConfigured = process.env.CLOUDINARY_CLOUD_NAME &&
                               process.env.CLOUDINARY_API_KEY &&
@@ -17,41 +18,51 @@ if (isCloudinaryConfigured) {
 }
 
 /**
- * Uploads a local file to Cloudinary and deletes the local temporary copy.
- * Returns the secure URL of the uploaded image on success, or null if Cloudinary is not configured.
- * @param {string} filePath - Path to the local temporary file
- * @returns {Promise<string|null>}
+ * Uploads a file buffer (from Multer memory storage) to Cloudinary.
+ * Falls back to local disk storage if Cloudinary credentials are not configured.
+ * @param {Object} file - The Multer file object
+ * @returns {Promise<string>} - The file URL
  */
-exports.uploadToCloudinary = async (filePath) => {
-  if (!isCloudinaryConfigured) {
-    return null;
-  }
-  try {
-    const result = await cloudinary.uploader.upload(filePath, {
-      folder: "shinelimos",
-      resource_type: "auto",
+exports.uploadFile = async (file) => {
+  if (!file) return null;
+
+  // 1. If Cloudinary is configured, stream buffer directly to Cloudinary
+  if (isCloudinaryConfigured) {
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "shinelimos",
+          resource_type: "auto",
+        },
+        (error, result) => {
+          if (error) {
+            console.error("Cloudinary: Upload stream error:", error);
+            reject(error);
+          } else {
+            resolve(result.secure_url);
+          }
+        }
+      );
+      uploadStream.end(file.buffer);
     });
+  }
+
+  // 2. Fallback: Write file buffer to local public/uploads directory
+  try {
+    const uploadPath = path.join(__dirname, "../public/uploads");
     
-    // Clean up local temp file synchronously
-    try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    } catch (unlinkErr) {
-      console.error("Cloudinary: Failed to delete local temp file:", unlinkErr);
+    // Ensure the folder exists
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
     }
     
-    return result.secure_url;
-  } catch (error) {
-    console.error("Cloudinary: Upload error:", error);
-    // Attempt cleanup even on failure
-    try {
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-    } catch (cleanupErr) {
-      console.error("Cloudinary: Failed to delete local temp file during error cleanup:", cleanupErr);
-    }
-    throw error;
+    const uniqueName = Date.now() + path.extname(file.originalname);
+    const localFilePath = path.join(uploadPath, uniqueName);
+    
+    fs.writeFileSync(localFilePath, file.buffer);
+    return `/uploads/${uniqueName}`;
+  } catch (err) {
+    console.error("Cloudinary: Local write fallback failed:", err);
+    throw err;
   }
 };

@@ -8,16 +8,16 @@ exports.add_newVehicle = async (req, res) => {
 		// Handle main image upload
 		if (req.files && req.files['image']) {
 			const mainImageFile = req.files['image'][0];
-			const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(mainImageFile.path);
-			payload.image = cloudinaryUrl || `/uploads/${mainImageFile.filename}`;
+			const cloudinaryUrl = await cloudinaryUtil.uploadFile(mainImageFile);
+			payload.image = cloudinaryUrl;
 		}
 
 		// Handle sub-images upload
 		if (req.files && req.files['images']) {
 			const imagesArray = [];
 			for (const file of req.files['images']) {
-				const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(file.path);
-				imagesArray.push(cloudinaryUrl || `/uploads/${file.filename}`);
+				const cloudinaryUrl = await cloudinaryUtil.uploadFile(file);
+				if (cloudinaryUrl) imagesArray.push(cloudinaryUrl);
 			}
 			payload.images = imagesArray;
 		} else {
@@ -76,8 +76,8 @@ exports.updateVehicle_details = async (req, res) => {
 		// Handle main image upload
 		if (req.files && req.files['image']) {
 			const mainImageFile = req.files['image'][0];
-			const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(mainImageFile.path);
-			payload.image = cloudinaryUrl || `/uploads/${mainImageFile.filename}`;
+			const cloudinaryUrl = await cloudinaryUtil.uploadFile(mainImageFile);
+			payload.image = cloudinaryUrl;
 		}
 
 		// Handle sub-images upload (both newly uploaded files and existing URLs)
@@ -93,8 +93,8 @@ exports.updateVehicle_details = async (req, res) => {
 		if (req.files && req.files['images']) {
 			const newImagesArray = [];
 			for (const file of req.files['images']) {
-				const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(file.path);
-				newImagesArray.push(cloudinaryUrl || `/uploads/${file.filename}`);
+				const cloudinaryUrl = await cloudinaryUtil.uploadFile(file);
+				if (cloudinaryUrl) newImagesArray.push(cloudinaryUrl);
 			}
 			payload.images = [...existingImages, ...newImagesArray];
 		} else if (payload.existing_images !== undefined) {
