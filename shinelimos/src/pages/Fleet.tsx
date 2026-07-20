@@ -73,17 +73,25 @@ export default function Fleet() {
               >
                 <Reveal variant={i % 2 === 0 ? "left" : "right"} className="[direction:ltr]">
                   <Parallax speed={0.15}>
-                    <TiltCard className="rounded-3xl">
-                      <div className="relative group rounded-3xl overflow-hidden glass aspect-16/11">
-                        <img
-                          src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`}
-                          alt={v.vehicle_name}
-                          loading="lazy"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ken-burns"
-                        />
-                        <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent" />
-                      </div>
-                    </TiltCard>
+                    <Link to={`/fleet/${v.vehicle_name.toLowerCase().replace(/\s+/g, '-')}`}>
+                      <TiltCard className="rounded-3xl">
+                        <div className="relative group rounded-3xl overflow-hidden glass aspect-16/11 cursor-pointer">
+                          <img
+                            src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`}
+                            alt={v.vehicle_name}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ken-burns"
+                          />
+                          <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent" />
+                          {/* View Details overlay */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/30">
+                            <div className="glass border border-white/30 text-white text-xs tracking-[0.3em] uppercase px-6 py-3 rounded-full flex items-center gap-2">
+                              View Details <ArrowRight className="h-3.5 w-3.5" />
+                            </div>
+                          </div>
+                        </div>
+                      </TiltCard>
+                    </Link>
                     <div className="absolute -bottom-5 -left-5 glass-gold rounded-2xl px-5 py-3 hidden md:block float">
                       <div className="text-[10px] tracking-[0.3em] text-white uppercase">Class</div>
                       <div className="font-serif-lux text-lg text-white">{v.vehicle_class_name || "Luxury Class"}</div>
@@ -115,9 +123,12 @@ export default function Fleet() {
                     ))}
                   </div>
 
-                  <div className="mt-8 flex gap-3">
-                    <GoldButton to={`/booking?vehicle=${v._id}`}>
-                      Reserve This Vehicle <ArrowRight className="h-4 w-4" />
+                  <div className="mt-8 flex flex-wrap gap-3">
+                    <GoldButton to={`/fleet/${v.vehicle_name.toLowerCase().replace(/\s+/g, '-')}`}>
+                      View Details <ArrowRight className="h-4 w-4" />
+                    </GoldButton>
+                    <GoldButton to={`/booking?vehicle=${v._id}`} variant="outline">
+                      Reserve Now <ArrowRight className="h-4 w-4" />
                     </GoldButton>
                   </div>
                 </Reveal>

@@ -4,7 +4,7 @@ import App from "./App";
 import "./index.css";
 
 // Handle dynamic import chunk loading failures gracefully by reloading the page
-window.addEventListener("vite:preloadError", (event) => {
+window.addEventListener("vite:preloadError", () => {
   const lastReload = sessionStorage.getItem("last-preload-reload");
   const now = Date.now();
   // Prevent infinite reload loops by requiring at least 10 seconds between reload attempts

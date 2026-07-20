@@ -20,7 +20,10 @@ export type Vehicle = {
   luggage: number;
   features: string[];
   image: string;
+  images: string[];
   blurb: string;
+  amenities: { label: string; icon: string }[];
+  description: string;
 };
 
 export const FLEET: Vehicle[] = [
@@ -30,9 +33,23 @@ export const FLEET: Vehicle[] = [
     category: "Executive Sedan",
     passengers: 3,
     luggage: 3,
-    features: ["Heated Nappa Leather", "Climate Zones", "Burmester® Audio", "Privacy Glass"],
-    image: "/images/S class.webp",
-    blurb: "The defining flagship of executive travel — silent, swift and unmistakably refined."
+    features: ["Heated Nappa Leather", "Climate Zones", "Burmester® Audio", "Privacy Glass", "Massage Seats", "Executive Headrests"],
+    image: "/car image/Mercedes E-Class 2.png",
+    images: [
+      "/car image/Mercedes E-Class 2.png",
+      "/car image/Mercedes E-Class 3.png",
+      "/car image/Mercedes E-Class 1.jpg",
+      "/car image/Mercedes E-Class 4.jpg",
+      "/car image/Mercedes E-Class 5.avif",
+    ],
+    blurb: "The defining flagship of executive travel — silent, swift and unmistakably refined.",
+    description: "The Mercedes-Benz S-Class is the pinnacle of automotive luxury. With Nappa leather seating, Burmester® surround sound, and whisper-quiet ride, every journey becomes an experience. Ideal for corporate executives, airport transfers, and VIP travel.",
+    amenities: [
+      { label: "Phone Chargers", icon: "🔌" },
+      { label: "Refreshments", icon: "🥤" },
+      { label: "Fiji Water", icon: "💧" },
+      { label: "Free WiFi", icon: "📶" },
+    ],
   },
   {
     slug: "cadillac-escalade",
@@ -40,9 +57,22 @@ export const FLEET: Vehicle[] = [
     category: "Luxury SUV",
     passengers: 6,
     luggage: 6,
-    features: ["Captain's Chairs", "Panoramic Roof", "AKG Studio Audio", "Massage Seats"],
+    features: ["Captain's Chairs", "Panoramic Roof", "AKG Studio Audio", "Massage Seats", "Privacy Partition", "Ambient Lighting"],
     image: "/images/Cadillac Escalade.webp",
-    blurb: "Commanding presence with limousine-level comfort for executives, families & VIPs."
+    images: [
+      "/images/Cadillac Escalade.webp",
+      "/images/pexels-photo-9411658.webp",
+      "/images/pexels-photo-8425035.webp",
+      "/images/pexels-photo-9488191.webp",
+    ],
+    blurb: "Commanding presence with limousine-level comfort for executives, families & VIPs.",
+    description: "The Cadillac Escalade ESV offers a commanding road presence with best-in-class interior space. Captain's chairs, panoramic sunroof, AKG studio audio, and massaging front seats make it the ultimate luxury SUV for groups and VIP clients.",
+    amenities: [
+      { label: "Phone Chargers", icon: "🔌" },
+      { label: "Refreshments", icon: "🥤" },
+      { label: "Fiji Water", icon: "💧" },
+      { label: "Free WiFi", icon: "📶" },
+    ],
   },
   {
     slug: "chevrolet-suburban",
@@ -50,9 +80,22 @@ export const FLEET: Vehicle[] = [
     category: "Luxury SUV",
     passengers: 6,
     luggage: 7,
-    features: ["Leather Seating", "Tri-Zone Climate Control", "Bose® Sound System", "Spacious Cargo"],
+    features: ["Leather Seating", "Tri-Zone Climate Control", "Bose® Sound System", "Spacious Cargo", "Rear Entertainment", "Sunroof"],
     image: "/images/Chevrolet Suburban.webp",
-    blurb: "The premium workhorse of luxury group transit, offering unparalleled luggage capacity."
+    images: [
+      "/images/Chevrolet Suburban.webp",
+      "/images/pexels-photo-9411653.webp",
+      "/images/pexels-photo-8605325.webp",
+      "/images/pexels-photo-30096223.webp",
+    ],
+    blurb: "The premium workhorse of luxury group transit, offering unparalleled luggage capacity.",
+    description: "The Chevrolet Suburban is the gold standard for luxury group travel. Featuring tri-zone climate control, premium Bose® audio, and expansive cargo space, it handles both business and family travel with equal grace and power.",
+    amenities: [
+      { label: "Phone Chargers", icon: "🔌" },
+      { label: "Refreshments", icon: "🥤" },
+      { label: "Fiji Water", icon: "💧" },
+      { label: "Free WiFi", icon: "📶" },
+    ],
   },
   {
     slug: "lincoln-navigator",
@@ -60,9 +103,22 @@ export const FLEET: Vehicle[] = [
     category: "Luxury SUV",
     passengers: 6,
     luggage: 6,
-    features: ["Perfect Position Seats", "Revel® Audio", "ActiveMotion Massage", "Ambient Lighting"],
+    features: ["Perfect Position Seats", "Revel® Audio", "ActiveMotion Massage", "Ambient Lighting", "Panoramic Vista Roof", "30-Way Adjustable Seats"],
     image: "/images/Lincoln navigator-SUV.webp",
-    blurb: "A sanctuary on wheels, combining bespoke craftsmanship with cutting-edge comfort."
+    images: [
+      "/images/Lincoln navigator-SUV.webp",
+      "/images/pexels-photo-2034851.webp",
+      "/images/pexels-photo-9411658.webp",
+      "/images/pexels-photo-8425047.webp",
+    ],
+    blurb: "A sanctuary on wheels, combining bespoke craftsmanship with cutting-edge comfort.",
+    description: "The Lincoln Navigator redefines luxury SUV travel. With 30-way perfect position seats featuring ActiveMotion® massage, Revel® Ultima 3D audio, and a panoramic Vista Roof, every passenger experiences true first-class comfort on the road.",
+    amenities: [
+      { label: "Phone Chargers", icon: "🔌" },
+      { label: "Refreshments", icon: "🥤" },
+      { label: "Fiji Water", icon: "💧" },
+      { label: "Free WiFi", icon: "📶" },
+    ],
   },
   {
     slug: "sprinter-van",
@@ -70,9 +126,22 @@ export const FLEET: Vehicle[] = [
     category: "Sprinter Van",
     passengers: 14,
     luggage: 14,
-    features: ["Stand-Up Cabin", "LED Mood Lighting", "USB-C at Every Seat", "Onboard Bar"],
+    features: ["Stand-Up Cabin", "LED Mood Lighting", "USB-C at Every Seat", "Onboard Bar", "Reclining Leather Seats", "Privacy Curtains"],
     image: "/images/sprinter (mercedes van).webp",
-    blurb: "First-class group travel for corporate roadshows, weddings and VIP events."
+    images: [
+      "/images/sprinter (mercedes van).webp",
+      "/images/pexels-photo-15200595.webp",
+      "/images/pexels-photo-29580163.webp",
+      "/images/pexels-photo-9488191.webp",
+    ],
+    blurb: "First-class group travel for corporate roadshows, weddings and VIP events.",
+    description: "The Mercedes-Benz Sprinter Limo van is the perfect choice for group executive travel. A stand-up cabin, onboard bar, LED mood lighting, and USB-C at every seat transform every journey into a mobile boardroom or celebration lounge.",
+    amenities: [
+      { label: "Phone Chargers", icon: "🔌" },
+      { label: "Onboard Bar", icon: "🍾" },
+      { label: "Fiji Water", icon: "💧" },
+      { label: "Free WiFi", icon: "📶" },
+    ],
   },
   {
     slug: "30-pax-bus",
@@ -80,9 +149,22 @@ export const FLEET: Vehicle[] = [
     category: "Party Bus",
     passengers: 30,
     luggage: 10,
-    features: ["Dance Floor", "Laser Lighting", "Premium Bar", "Subwoofer Audio"],
+    features: ["Dance Floor", "Laser Lighting", "Premium Bar", "Subwoofer Audio", "LED Strip Lighting", "Leather Perimeter Seating"],
     image: "/images/30 PAX bus.webp",
-    blurb: "The destination becomes the journey — your private lounge on wheels."
+    images: [
+      "/images/30 PAX bus.webp",
+      "/images/pexels-photo-2034851.webp",
+      "/images/pexels-photo-8425035.webp",
+      "/images/pexels-photo-9411658.webp",
+    ],
+    blurb: "The destination becomes the journey — your private lounge on wheels.",
+    description: "Our 30-Passenger Party Bus is the ultimate celebration vehicle. Featuring a dance floor, laser lighting, premium bar, and thunderous subwoofer audio, it transforms every mile into a party. Perfect for bachelorette parties, corporate events, and nightlife tours.",
+    amenities: [
+      { label: "Premium Bar", icon: "🍾" },
+      { label: "LED Lighting", icon: "💡" },
+      { label: "Dance Floor", icon: "🎵" },
+      { label: "Free WiFi", icon: "📶" },
+    ],
   },
   {
     slug: "50-pax-bus",
@@ -90,9 +172,22 @@ export const FLEET: Vehicle[] = [
     category: "Executive Coach",
     passengers: 50,
     luggage: 50,
-    features: ["Under-Coach Luggage", "Reclining Seats", "Overhead Storage", "PA System"],
+    features: ["Under-Coach Luggage", "Reclining Seats", "Overhead Storage", "PA System", "Restroom Onboard", "DVD Entertainment"],
     image: "/images/50 PAX bus.webp",
-    blurb: "Elite long-distance transit for large-scale corporate events, conventions, and wedding parties."
+    images: [
+      "/images/50 PAX bus.webp",
+      "/images/pexels-photo-30096223.webp",
+      "/images/pexels-photo-8605325.webp",
+      "/images/pexels-photo-9411653.webp",
+    ],
+    blurb: "Elite long-distance transit for large-scale corporate events, conventions, and wedding parties.",
+    description: "The 50-Passenger Executive Coach is our flagship group transport solution. With reclining seats, ample overhead and under-coach luggage storage, a PA system, and onboard restroom, it handles conventions, corporate retreats, and wedding parties with ease.",
+    amenities: [
+      { label: "Phone Chargers", icon: "🔌" },
+      { label: "PA System", icon: "🎤" },
+      { label: "Restroom", icon: "🚻" },
+      { label: "Free WiFi", icon: "📶" },
+    ],
   }
 ];
 

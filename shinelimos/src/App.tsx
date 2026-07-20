@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Background from "./components/Background";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -13,6 +13,7 @@ import { Loader2 } from "lucide-react";
 const Home = React.lazy(() => import("./pages/Home"));
 const About = React.lazy(() => import("./pages/About"));
 const Fleet = React.lazy(() => import("./pages/Fleet"));
+const FleetDetail = React.lazy(() => import("./pages/FleetDetail"));
 const Services = React.lazy(() => import("./pages/Services"));
 const ServiceDetail = React.lazy(() => import("./pages/ServiceDetail"));
 const Locations = React.lazy(() => import("./pages/Locations"));
@@ -56,6 +57,7 @@ function AppContent() {
             <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/fleet" element={<Fleet />} />
+          <Route path="/fleet/:slug" element={<FleetDetail />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/:slug" element={<ServiceDetail />} />
           <Route path="/locations" element={<Locations />} />
@@ -97,10 +99,10 @@ function AppContent() {
 export default function App() {
   return (
     <HelmetProvider>
-      <HashRouter>
+      <BrowserRouter>
         <ScrollToTop />
         <AppContent />
-      </HashRouter>
+      </BrowserRouter>
     </HelmetProvider>
   );
 }
