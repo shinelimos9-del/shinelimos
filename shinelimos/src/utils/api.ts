@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'https://demo-rental-cars.shinelimos.com/api';
-export const ADMIN_BASE_URL = 'https://demo-rental-cars.shinelimos.com';
+export const API_BASE_URL = 'https://blueviolet-owl-255591.hostingersite.com/api';
+export const ADMIN_BASE_URL = 'https://blueviolet-owl-255591.hostingersite.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
