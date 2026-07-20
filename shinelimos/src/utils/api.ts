@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://localhost:60000/api';
-export const ADMIN_BASE_URL = 'http://localhost:60000';
+export const API_BASE_URL = 'https://demo-rental-cars.shinelimos.com/api';
+export const ADMIN_BASE_URL = 'https://demo-rental-cars.shinelimos.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,

@@ -14,6 +14,7 @@ const app = express();
 
 // CORS configuration
 const allowedOrigins = [
+  'https://shinelimosllc.com',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
