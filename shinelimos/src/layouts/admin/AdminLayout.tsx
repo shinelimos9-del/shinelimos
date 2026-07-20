@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, CreditCard, CheckCircle } from "lucide-react";
-import { getAdminProfile, getNotifications, markNotificationsRead, logoutAdmin, sendPaymentLink } from "../../utils/api";
+import { getAdminProfile, getNotifications, markNotificationsRead, logoutAdmin, sendPaymentLink, ADMIN_BASE_URL } from "../../utils/api";
 import { io } from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
 
-const SOCKET_URL = window.location.origin.replace(":5173", ":60000"); // Dynamic URL based on current host
+const SOCKET_URL = ADMIN_BASE_URL; // Uses the configured admin API base URL for Socket.IO
 
 export default function AdminLayout() {
   const location = useLocation();
