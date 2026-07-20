@@ -32,8 +32,8 @@ exports.sendStripePaymentLink = async (bookingId) => {
         },
       ],
       mode: "payment",
-      success_url: `${process.env.FRONTEND_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.FRONTEND_URL}/payment-cancelled`,
+      success_url: `${process.env.FRONTEND_URL}/#/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.FRONTEND_URL}/#/payment-cancelled`,
       customer_email: bookerEmail,
       metadata: {
         booking_id: booking._id.toString(),
