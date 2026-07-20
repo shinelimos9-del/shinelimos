@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { CheckCircle, ArrowRight, Loader2 } from "lucide-react";
+import { CheckCircle, Loader2 } from "lucide-react";
 import { PageHero, GoldButton } from "../components/ui";
 
 export default function PaymentSuccess() {

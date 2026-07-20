@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { getNotifications, markNotificationsRead, sendPaymentLink } from "../../utils/api";
-import { Search, Mail, MailOpen, User, CarFront, MapPin, Banknote, Clock, Loader2, Send, CreditCard } from "lucide-react";
+import { getNotifications, sendPaymentLink } from "../../utils/api";
+import { Search, Mail, MailOpen, User, CarFront, MapPin, Banknote, Clock, Loader2, Send } from "lucide-react";
 
 export default function AdminNotifications() {
   const [searchParams] = useSearchParams();

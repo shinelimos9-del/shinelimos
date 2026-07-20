@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Loader2, CreditCard, Send, CheckCircle2 } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2 } from "lucide-react";
 import { getAllBookings, updateBookingStatus, sendPaymentLink } from "../../utils/api";
 import moment from "moment";
 
