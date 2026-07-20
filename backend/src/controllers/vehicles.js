@@ -1,12 +1,18 @@
 const vehicleService = require("../services/vehicles");
+const cloudinaryUtil = require("../utils/cloudinary");
 
 exports.add_newVehicle = async (req, res) => {
 	try {
 		const payload = req.body;
 
-		// Add image path to payload if file was uploaded
+		// Upload to Cloudinary if configured, otherwise fallback to local
 		if (req.file) {
-			payload.image = `/uploads/${req.file.filename}`;
+			const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(req.file.path);
+			if (cloudinaryUrl) {
+				payload.image = cloudinaryUrl;
+			} else {
+				payload.image = `/uploads/${req.file.filename}`;
+			}
 		}
 
 		// Basic validation
@@ -58,9 +64,14 @@ exports.updateVehicle_details = async (req, res) => {
 		}
 		const payload = req.body;
 
-		// Add image path to payload if new file was uploaded
+		// Upload to Cloudinary if configured, otherwise fallback to local
 		if (req.file) {
-			payload.image = `/uploads/${req.file.filename}`;
+			const cloudinaryUrl = await cloudinaryUtil.uploadToCloudinary(req.file.path);
+			if (cloudinaryUrl) {
+				payload.image = cloudinaryUrl;
+			} else {
+				payload.image = `/uploads/${req.file.filename}`;
+			}
 		}
 
 		// Price validation/parsing if price is being updated
