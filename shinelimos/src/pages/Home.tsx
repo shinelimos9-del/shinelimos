@@ -205,12 +205,6 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/40" />
         </div>
 
-        {/* Faint Red circles in background like the image */}
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-[20%] left-[25%] w-64 h-64 border border-red-500/10 rounded-full" />
-          <div className="absolute bottom-[20%] left-[40%] w-48 h-48 border border-red-500/10 rounded-full" />
-          <div className="absolute top-[10%] right-[35%] w-72 h-72 border border-red-500/10 rounded-full" />
-        </div>
 
         <div className="relative mx-auto max-w-7xl px-6 w-full flex flex-col lg:flex-row items-center gap-12 mt-12 lg:mt-0 z-10">
           {/* Left Content */}
