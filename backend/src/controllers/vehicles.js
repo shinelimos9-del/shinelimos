@@ -39,7 +39,7 @@ exports.add_newVehicle = async (req, res) => {
 				return res.status(400).json({ success: false, message: "Invalid price format. Expected an object or JSON string." });
 			}
 		}
-
+		// z
 		// Features validation/parsing
 		if (typeof payload.features === 'string') {
 			try {
