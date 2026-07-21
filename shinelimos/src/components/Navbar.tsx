@@ -29,7 +29,7 @@ export default function Navbar() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-500 ${
-        scrolled ? "py-2" : "py-4"
+        scrolled ? "py-1.5 sm:py-2" : "py-2.5 sm:py-4"
       }`}
     >
       {/* Glass bar */}
@@ -48,7 +48,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop nav */}
-          <ul className="hidden lg:flex items-center gap-8 ml-4 xl:ml-12">
+          <ul className="hidden xl:flex items-center gap-8 ml-4 xl:ml-12">
             <li>
               <NavLink to="/" className={({ isActive }) => `${navLinkBase} ${isActive ? "active text-gold" : ""}`}>
                 Home
@@ -145,7 +145,7 @@ export default function Navbar() {
           </ul>
 
           {/* Right CTAs */}
-          <div className="hidden lg:flex items-center gap-4">
+          <div className="hidden xl:flex items-center gap-4">
             <Link
               to="/admin-login"
               className="relative flex h-[42px] items-center justify-center rounded-full border border-white/20 bg-black/50 px-6 text-xs font-medium tracking-[0.15em] uppercase text-white transition-all hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
@@ -163,7 +163,7 @@ export default function Navbar() {
           {/* Mobile burger */}
           <button
             onClick={() => setOpen((v) => !v)}
-            className="lg:hidden glass rounded-full p-2.5"
+            className="xl:hidden glass rounded-full p-2.5"
             aria-label="Toggle menu"
           >
             {open ? <X className="h-5 w-5 text-gold" /> : <Menu className="h-5 w-5 text-gold" />}
@@ -173,7 +173,7 @@ export default function Navbar() {
 
       {/* Mobile drawer */}
       <div
-        className={`lg:hidden fixed inset-x-0 top-[88px] mx-4 transition-all duration-500 origin-top ${
+        className={`xl:hidden fixed inset-x-0 top-[76px] sm:top-[88px] mx-2 sm:mx-4 lg:mx-6 transition-all duration-500 origin-top ${
           open ? "scale-100 opacity-100" : "scale-95 opacity-0 pointer-events-none"
         }`}
       >

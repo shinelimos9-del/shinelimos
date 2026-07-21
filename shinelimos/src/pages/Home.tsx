@@ -187,7 +187,7 @@ export default function Home() {
       )}
 
       {/* HERO */}
-      <section ref={heroRef} className="relative min-h-screen flex items-center pt-24 pb-20 overflow-hidden bg-[#111111]">
+      <section ref={heroRef} className="relative min-h-screen flex items-center pt-20 pb-16 sm:pt-24 sm:pb-20 overflow-hidden bg-[#111111]">
         {/* Background Video */}
         <div className="absolute inset-0 z-0 bg-[#111111]">
           {videoLoaded && (
@@ -206,11 +206,11 @@ export default function Home() {
         </div>
 
 
-        <div className="relative mx-auto max-w-7xl px-6 w-full flex flex-col lg:flex-row items-center gap-12 mt-12 lg:mt-0 z-10">
+        <div className="relative mx-auto max-w-7xl px-6 w-full flex flex-col xl:flex-row items-center gap-12 mt-12 xl:mt-0 z-10">
           {/* Left Content */}
-          <div className="flex-1 text-left relative z-10 ml-0 lg:ml-24">
+          <div className="flex-1 text-left relative z-10 ml-0 xl:ml-24">
 
-            <h1 className="text-5xl md:text-6xl lg:text-[4.5rem] font-bold text-white leading-[1.2] tracking-wide" data-home-fade style={{ fontFamily: "'Orbitron', sans-serif" }}>
+            <h1 className="text-[2.2rem] xs:text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-bold text-white leading-[1.15] sm:leading-[1.2] tracking-wide" data-home-fade style={{ fontFamily: "'Orbitron', sans-serif" }}>
               LUXURY <br />
               <span className="text-[#ff1100]">TRAVEL</span> EXPERIENCE
             </h1>
@@ -430,7 +430,7 @@ export default function Home() {
               subtitle="Providing luxury limo service and premium car service across Washington DC, Virginia, and Maryland."
             />
           </Reveal>
-          <div className="mt-14 grid gap-5 grid-cols-2 md:grid-cols-4">
+          <div className="mt-14 grid gap-5 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
             {LOCATIONS.map((l) => (
               <Link key={l.slug} to={`/locations/${l.slug}`}>
                 <TiltCard intensity={15} className="rounded-2xl">

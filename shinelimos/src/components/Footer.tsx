@@ -12,9 +12,9 @@ export default function Footer() {
           background: "linear-gradient(90deg, transparent, #ffffff, transparent)",
         }}
       />
-      <div className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-10 lg:grid-cols-5">
-          <div className="lg:col-span-2 space-y-5">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
+        <div className="grid gap-8 sm:gap-10 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="sm:col-span-2 lg:col-span-2 space-y-5">
             <Logo />
             <p className="text-sm text-white/60 leading-relaxed max-w-md">
               ShineLimos LLC is the Washington DC area's premier black car, limousine

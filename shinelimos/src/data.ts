@@ -34,9 +34,9 @@ export const FLEET: Vehicle[] = [
     passengers: 3,
     luggage: 3,
     features: ["Heated Nappa Leather", "Climate Zones", "Burmester® Audio", "Privacy Glass", "Massage Seats", "Executive Headrests"],
-    image: "/car image/Mercedes E-Class 2.png",
+    image: "/images/S_class-removebg.png",
     images: [
-      "/car image/Mercedes E-Class 2.png",
+      "/images/S_class-removebg.png",
       "/car image/Mercedes E-Class 3.png",
       "/car image/Mercedes E-Class 1.jpg",
       "/car image/Mercedes E-Class 4.jpg",
@@ -58,9 +58,9 @@ export const FLEET: Vehicle[] = [
     passengers: 6,
     luggage: 6,
     features: ["Captain's Chairs", "Panoramic Roof", "AKG Studio Audio", "Massage Seats", "Privacy Partition", "Ambient Lighting"],
-    image: "/images/Cadillac Escalade.webp",
+    image: "/images/cadillac-escalade-removebg.png",
     images: [
-      "/images/Cadillac Escalade.webp",
+      "/images/cadillac-escalade-removebg.png",
       "/images/pexels-photo-9411658.webp",
       "/images/pexels-photo-8425035.webp",
       "/images/pexels-photo-9488191.webp",
@@ -104,9 +104,9 @@ export const FLEET: Vehicle[] = [
     passengers: 6,
     luggage: 6,
     features: ["Perfect Position Seats", "Revel® Audio", "ActiveMotion Massage", "Ambient Lighting", "Panoramic Vista Roof", "30-Way Adjustable Seats"],
-    image: "/images/Lincoln navigator-SUV.webp",
+    image: "/images/lincoln-navigator-removebg.png",
     images: [
-      "/images/Lincoln navigator-SUV.webp",
+      "/images/lincoln-navigator-removebg.png",
       "/images/pexels-photo-2034851.webp",
       "/images/pexels-photo-9411658.webp",
       "/images/pexels-photo-8425047.webp",
@@ -127,9 +127,9 @@ export const FLEET: Vehicle[] = [
     passengers: 14,
     luggage: 14,
     features: ["Stand-Up Cabin", "LED Mood Lighting", "USB-C at Every Seat", "Onboard Bar", "Reclining Leather Seats", "Privacy Curtains"],
-    image: "/images/sprinter (mercedes van).webp",
+    image: "/images/sprinter-removebg.png",
     images: [
-      "/images/sprinter (mercedes van).webp",
+      "/images/sprinter-removebg.png",
       "/images/pexels-photo-15200595.webp",
       "/images/pexels-photo-29580163.webp",
       "/images/pexels-photo-9488191.webp",
@@ -150,9 +150,9 @@ export const FLEET: Vehicle[] = [
     passengers: 30,
     luggage: 10,
     features: ["Dance Floor", "Laser Lighting", "Premium Bar", "Subwoofer Audio", "LED Strip Lighting", "Leather Perimeter Seating"],
-    image: "/images/30 PAX bus.webp",
+    image: "/images/30-pax-removebg.png",
     images: [
-      "/images/30 PAX bus.webp",
+      "/images/30-pax-removebg.png",
       "/images/pexels-photo-2034851.webp",
       "/images/pexels-photo-8425035.webp",
       "/images/pexels-photo-9411658.webp",
@@ -173,9 +173,9 @@ export const FLEET: Vehicle[] = [
     passengers: 50,
     luggage: 50,
     features: ["Under-Coach Luggage", "Reclining Seats", "Overhead Storage", "PA System", "Restroom Onboard", "DVD Entertainment"],
-    image: "/images/50 PAX bus.webp",
+    image: "/images/50-pax-removebg.png",
     images: [
-      "/images/50 PAX bus.webp",
+      "/images/50-pax-removebg.png",
       "/images/pexels-photo-30096223.webp",
       "/images/pexels-photo-8605325.webp",
       "/images/pexels-photo-9411653.webp",
@@ -209,7 +209,7 @@ export const SERVICES: Service[] = [
     slug: "airport-limo-service",
     title: "Airport Limo Service",
     short: "Stress-free Washington DC airport limo service. Flight monitoring and luxury airport transfers.",
-    hero: "/images/sedan.webp",
+    hero: "/images/sedan-removebg.png",
     intro:
       "Punctual and prestigious Washington DC airport limo service. We make airport luxury transfers effortless. Our DC airport limo service includes advanced flight tracking and flight monitoring to ensure your chauffeur is ready the moment you land.",
     highlights: [
@@ -232,7 +232,7 @@ export const SERVICES: Service[] = [
     slug: "wedding-limo-service",
     title: "Wedding Limo Service",
     short: "Elegant transportation and a stunning wedding limousine for your perfect day.",
-    hero: "/images/pexels-photo-14011664.webp",
+    hero: "/images/mercedes-s-class-removebg.png",
     intro:
       "Flawless luxury wedding transportation for your perfect day in Washington DC. As one of the leading wedding limo companies, we provide an exquisite wedding limousine and elegant transportation for the entire bridal party. From black limo for wedding rentals to dedicated groom transportation and special event transportation, your wedding chauffeur ensures every detail is picture-perfect.",
     highlights: [
@@ -255,7 +255,7 @@ export const SERVICES: Service[] = [
     slug: "party-bus-rental",
     title: "Party Bus Rental",
     short: "The ultimate event transportation experience with luxury amenities for nightlife transportation.",
-    hero: "/images/pexels-photo-2034851.webp",
+    hero: "/images/30-pax-removebg.png",
     intro:
       "The ultimate group transport experience. Celebrate in style with our state-of-the-art party bus limo rental DC. Perfect for event transportation, a premium party bus tour Washington DC, or unforgettable nightlife transportation.",
     highlights: [
@@ -278,7 +278,7 @@ export const SERVICES: Service[] = [
     slug: "black-car-service",
     title: "Black Car Service",
     short: "Discreet and premium executive black car transportation tailored for business meetings.",
-    hero: "/images/Mercedes Benz S Class  luxury sedan.webp",
+    hero: "/images/mercedes-s-class-removebg.png",
     intro:
       "Discreet, reliable, and sophisticated luxury black car service for all your travel needs. Whether you need executive black car transportation for business or a black car service to Dulles airport, our professional drivers deliver a premium transportation experience. Enjoy a quiet, comfortable luxury ride with our elite luxury sedan service.",
     highlights: [
@@ -301,7 +301,7 @@ export const SERVICES: Service[] = [
     slug: "suv-limo-service",
     title: "SUV Limo Service",
     short: "Spacious SUV limo service in Washington DC offering superior legroom and passenger comfort.",
-    hero: "/images/Lincoln navigator-SUV.webp",
+    hero: "/images/cadillac-escalade-removebg.png",
     intro:
       "Commanding road presence with superior comfort. Our SUV limo service in Washington DC provides a premier luxury SUV chauffeur service for executives and families. Enjoy spacious luxury suv transportation, ideal for business travel service or seamless group airport transportation.",
     highlights: [
@@ -324,7 +324,7 @@ export const SERVICES: Service[] = [
     slug: "sprinter-van-rental",
     title: "Sprinter Van Rental",
     short: "Executive sprinter van rental for corporate teams, roadshows, and events.",
-    hero: "/images/pexels-photo-15200595.webp",
+    hero: "/images/sprinter-removebg.png",
     intro:
       "Experience the ultimate in group business travel. Our executive sprinter van rental is designed for top-tier corporate transportation and private van hire. Whether you need an executive shuttle for a roadshow or a corporate shuttle service for events, we ensure seamless executive mobility.",
     highlights: [
@@ -347,7 +347,7 @@ export const SERVICES: Service[] = [
     slug: "luxury-car-rental",
     title: "Luxury Car Rental",
     short: "Chauffeur-driven executive car rental and premium car rental service for VIP clients.",
-    hero: "/images/pexels-photo-29580163.webp",
+    hero: "/images/S_class-removebg.png",
     intro:
       "Access our exclusive collection of the world's finest motorcars. Our executive car rental and premium car rental service provide elite chauffeur-driven luxury car hire. Perfect for embassy transportation, executive travel, and any high end transportation requirement, ensuring a first class transportation experience.",
     highlights: [

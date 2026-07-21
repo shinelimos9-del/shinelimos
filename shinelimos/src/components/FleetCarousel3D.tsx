@@ -53,13 +53,14 @@ export default function FleetCarousel3D({ vehicles = [] }: FleetCarousel3DProps)
                   transition: "filter 0.8s, box-shadow 0.8s",
                 }}
               >
+                <div className="absolute inset-0 bg-black/60" />
                 <img
                   src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`}
                   alt={v.vehicle_name}
                   loading={i === 0 ? "eager" : "lazy"}
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-contain p-3"
                 />
-                <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/90 via-transparent to-transparent" />
                 <div className="absolute bottom-0 inset-x-0 p-4">
                   <div className="text-[10px] tracking-[0.3em] text-white/80 uppercase">{v.vehicle_class_name || "Luxury Class"}</div>
                   <div className="font-serif-lux text-xl text-white leading-tight">{v.vehicle_name}</div>

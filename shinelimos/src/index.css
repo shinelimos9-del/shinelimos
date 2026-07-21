@@ -1,5 +1,12 @@
 @import "tailwindcss";
 
+/* Extra-small breakpoint for Galaxy S8+ (360px) and Z Fold outer */
+@custom-variant xs (&:where(.xs\:*, [class~="xs\:*"] *));
+
+@media (min-width: 360px) {
+  .xs\:text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+}
+
 html, body, #root {
   background: #000;
   color: #fff;
@@ -9,6 +16,15 @@ html, body, #root {
 }
 
 * { box-sizing: border-box; }
+
+/* Nest Hub (1024x600) – short viewport fix: hero should not exceed viewport height */
+@media (max-height: 640px) and (min-width: 768px) {
+  section[class*="min-h-screen"] {
+    min-height: 100svh !important;
+    padding-top: 5rem !important;
+    padding-bottom: 3rem !important;
+  }
+}
 
 /* ----------  Custom utility classes  ---------- */
 @layer utilities {

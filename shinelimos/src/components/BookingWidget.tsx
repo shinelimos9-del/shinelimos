@@ -46,16 +46,16 @@ export default function BookingWidget({ compact = false }: { compact?: boolean }
   return (
     <div className={`glass-dark rounded-3xl ${compact ? "p-5" : "p-7 md:p-9"}`}>
       {/* Tabs */}
-      <div className="flex gap-1.5 mb-6 p-1 rounded-full bg-white/5 border border-white/10 w-fit mx-auto">
+      <div className="flex gap-1 mb-6 p-1 rounded-full bg-white/5 border border-white/10 w-full overflow-x-auto no-scrollbar">
         {(["one-way", "round-trip", "hourly"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 sm:px-5 py-2 rounded-full text-[11px] tracking-[0.18em] uppercase font-medium transition-all ${
+            className={`flex-1 min-w-fit px-3 py-2 rounded-full text-[10px] sm:text-[11px] tracking-[0.12em] sm:tracking-[0.18em] uppercase font-medium transition-all whitespace-nowrap ${
               tab === t ? "bg-gold text-black" : "text-white/60 hover:text-white"
             }`}
           >
-            {t === "one-way" ? "One Way" : t === "round-trip" ? "Round Trip" : "As Directed/Hourly"}
+            {t === "one-way" ? "One Way" : t === "round-trip" ? "Round Trip" : "Hourly"}
           </button>
         ))}
       </div>

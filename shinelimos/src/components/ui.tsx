@@ -146,8 +146,12 @@ export function PageHero({
     { scope: heroRef, dependencies: [image, video, title, subtitle, eyebrow] }
   );
 
+  // Detect if image is a transparent removebg PNG
+  const isTransparentPng = image.toLowerCase().includes("-removebg") || (image.toLowerCase().endsWith(".png") && !image.toLowerCase().includes("/car image/"));
+
   return (
-    <section ref={heroRef} className="relative pt-40 pb-24 overflow-hidden min-h-[60vh] flex items-center">
+    <section ref={heroRef} className="relative pt-28 pb-12 sm:pt-36 sm:pb-20 overflow-x-hidden min-h-[65vh] flex items-center">
+      {/* Background layer */}
       {video ? (
         <div className="absolute inset-0 video-tint" data-hero-media>
           <video
@@ -157,6 +161,9 @@ export function PageHero({
             <source src={video} type="video/mp4" />
           </video>
         </div>
+      ) : isTransparentPng ? (
+        /* Dark gradient background for transparent vehicle images */
+        <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, #080808 0%, #111111 40%, #181818 100%)" }} />
       ) : (
         <div
           className="absolute inset-0 ken-burns"
@@ -168,22 +175,65 @@ export function PageHero({
           }}
         />
       )}
+
       <div className="absolute inset-0 bg-black/30 backdrop-blur-[1px] opacity-0" data-hero-glow />
-      <div className="relative mx-auto max-w-6xl px-6 text-center zoom-3d w-full">
-        {eyebrow && (
-          <div className="text-[11px] tracking-[0.5em] text-white uppercase mb-5" data-hero-fade>
-            ✦ {eyebrow} ✦
+
+      {isTransparentPng && !video ? (
+        /* Special layout: text left + floating vehicle image right */
+        <div className="relative mx-auto max-w-7xl px-6 w-full">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            {/* Text side */}
+            <div className="text-left" data-hero-fade>
+              {eyebrow && (
+                <div className="text-[11px] tracking-[0.5em] text-white/70 uppercase mb-5">
+                  ✦ {eyebrow} ✦
+                </div>
+              )}
+              <h1 className="font-serif-lux text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.02] text-white">
+                {title}
+              </h1>
+              {subtitle && (
+                <p className="mt-6 text-white/70 max-w-xl text-base md:text-lg leading-relaxed">
+                  {subtitle}
+                </p>
+              )}
+            </div>
+            {/* Vehicle image side */}
+            <div className="relative flex items-center justify-center py-4" data-hero-fade>
+              {/* Glow behind vehicle */}
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="w-80 h-80 rounded-full opacity-20 blur-3xl" style={{ background: "radial-gradient(circle, rgba(255,255,255,0.35) 0%, transparent 70%)" }} />
+              </div>
+              <img
+                src={image}
+                alt={typeof title === "string" ? title : "Service vehicle"}
+                className="relative w-full object-contain"
+                style={{
+                  maxHeight: "380px",
+                  filter: "drop-shadow(0 24px 64px rgba(255,255,255,0.18))"
+                }}
+              />
+            </div>
           </div>
-        )}
-        <h1 className="font-serif-lux text-5xl md:text-6xl lg:text-7xl leading-[1.02] text-white" data-hero-fade>
-          {title}
-        </h1>
-        {subtitle && (
-          <p className="mt-6 text-white/75 max-w-2xl mx-auto text-base md:text-lg leading-relaxed" data-hero-fade>
-            {subtitle}
-          </p>
-        )}
-      </div>
+        </div>
+      ) : (
+        /* Standard layout: centered text */
+        <div className="relative mx-auto max-w-6xl px-6 text-center zoom-3d w-full">
+          {eyebrow && (
+            <div className="text-[11px] tracking-[0.5em] text-white uppercase mb-5" data-hero-fade>
+              ✦ {eyebrow} ✦
+            </div>
+          )}
+          <h1 className="font-serif-lux text-5xl md:text-6xl lg:text-7xl leading-[1.02] text-white" data-hero-fade>
+            {title}
+          </h1>
+          {subtitle && (
+            <p className="mt-6 text-white/75 max-w-2xl mx-auto text-base md:text-lg leading-relaxed" data-hero-fade>
+              {subtitle}
+            </p>
+          )}
+        </div>
+      )}
     </section>
   );
 }
