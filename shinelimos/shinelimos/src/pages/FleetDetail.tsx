@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useParams, Link } from "react-router-dom";
 import { Users, Briefcase, Check, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { FLEET } from "../data";
@@ -12,14 +13,23 @@ export default function FleetDetail() {
   const [vehicle, setVehicle] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [otherVehicles, setOtherVehicles] = useState<any[]>([]);
-  const [activeImg, setActiveImg] = useState(0);
-  const [isZoomed, setIsZoomed] = useState(false);
+  const [activeImg, setActiveImg] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (activeImg !== null) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [activeImg]);
 
   useEffect(() => {
     async function loadVehicle() {
       try {
         setLoading(true);
-        setActiveImg(0);
         
         const response = await getVehicles();
         let dbVehicle = null;
@@ -170,7 +180,7 @@ export default function FleetDetail() {
         {/* ─── TOP: BENTO GRID IMAGE GALLERY (FULL WIDTH) ─── */}
         <div className="space-y-4">
           <div className="text-[10px] tracking-[0.4em] text-white/50 uppercase mb-2">
-            ✦ Vehicle Gallery (Click to Zoom) ✦
+            ✦ Vehicle Gallery (Click to Enlarge) ✦
           </div>
           
           {/* Dynamic Bento Grid based on Image Count */}
@@ -179,8 +189,8 @@ export default function FleetDetail() {
             if (count === 1) {
               return (
                 <div 
-                  onClick={() => { setActiveImg(0); setIsZoomed(true); }}
-                  className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] aspect-[16/9] max-w-4xl mx-auto"
+                  onClick={() => setActiveImg(0)}
+                  className="rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] aspect-[16/9] max-w-4xl mx-auto cursor-zoom-in"
                 >
                   <img
                     src={vehicle.images[0]}
@@ -196,8 +206,8 @@ export default function FleetDetail() {
                   {vehicle.images.map((img: string, index: number) => (
                     <div 
                       key={index}
-                      onClick={() => { setActiveImg(index); setIsZoomed(true); }}
-                      className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                      onClick={() => setActiveImg(index)}
+                      className="rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
                     >
                       <img
                         src={img}
@@ -213,8 +223,8 @@ export default function FleetDetail() {
               return (
                 <div className="grid grid-cols-12 gap-3 aspect-[16/9]">
                   <div 
-                    onClick={() => { setActiveImg(0); setIsZoomed(true); }}
-                    className="col-span-8 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                    onClick={() => setActiveImg(0)}
+                    className="col-span-8 rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
                   >
                     <img
                       src={vehicle.images[0]}
@@ -225,8 +235,8 @@ export default function FleetDetail() {
                     {vehicle.images.slice(1, 3).map((img: string, index: number) => (
                       <div 
                         key={index}
-                        onClick={() => { setActiveImg(index + 1); setIsZoomed(true); }}
-                        className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                        onClick={() => setActiveImg(index + 1)}
+                        className="rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
                       >
                         <img
                           src={img}
@@ -242,8 +252,8 @@ export default function FleetDetail() {
               return (
                 <div className="grid grid-cols-12 gap-3 aspect-[16/9]">
                   <div 
-                    onClick={() => { setActiveImg(0); setIsZoomed(true); }}
-                    className="col-span-6 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                    onClick={() => setActiveImg(0)}
+                    className="col-span-6 rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
                   >
                     <img
                       src={vehicle.images[0]}
@@ -254,8 +264,8 @@ export default function FleetDetail() {
                     {vehicle.images.slice(1, 4).map((img: string, index: number) => (
                       <div 
                         key={index}
-                        onClick={() => { setActiveImg(index + 1); setIsZoomed(true); }}
-                        className={`rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] ${index === 2 ? 'col-span-2' : ''}`}
+                        onClick={() => setActiveImg(index + 1)}
+                        className={`rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in ${index === 2 ? 'col-span-2' : ''}`}
                       >
                         <img
                           src={img}
@@ -272,8 +282,8 @@ export default function FleetDetail() {
               <div className="grid grid-cols-12 gap-3 auto-rows-[140px] md:auto-rows-[180px]">
                 {/* Image 1: Left */}
                 <div 
-                  onClick={() => { setActiveImg(0); setIsZoomed(true); }}
-                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  onClick={() => setActiveImg(0)}
+                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
                 >
                   <img
                     src={vehicle.images[0]}
@@ -283,8 +293,8 @@ export default function FleetDetail() {
 
                 {/* Image 2: Center */}
                 <div 
-                  onClick={() => { setActiveImg(1); setIsZoomed(true); }}
-                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  onClick={() => setActiveImg(1)}
+                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
                 >
                   <img
                     src={vehicle.images[1]}
@@ -294,7 +304,7 @@ export default function FleetDetail() {
 
                 {/* Image 3: Top Right */}
                 <div 
-                  onClick={() => { setActiveImg(2); setIsZoomed(true); }}
+                  onClick={() => setActiveImg(2)}
                   className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                 >
                   <img
@@ -305,7 +315,7 @@ export default function FleetDetail() {
 
                 {/* Image 4: Bottom Left */}
                 <div 
-                  onClick={() => { setActiveImg(3); setIsZoomed(true); }}
+                  onClick={() => setActiveImg(3)}
                   className="col-span-12 sm:col-span-6 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                 >
                   <img
@@ -316,7 +326,7 @@ export default function FleetDetail() {
 
                 {/* Image 5: Bottom Right */}
                 <div 
-                  onClick={() => { setActiveImg(4); setIsZoomed(true); }}
+                  onClick={() => setActiveImg(4)}
                   className="col-span-12 sm:col-span-6 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                 >
                   <img
@@ -478,24 +488,25 @@ export default function FleetDetail() {
         </div>
       </section>
 
-      {/* Zoom Overlay */}
-      {isZoomed && (
+      {/* Full Screen Image Modal via Portal */}
+      {activeImg !== null && vehicle?.images?.[activeImg] && createPortal(
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 cursor-zoom-out"
-          onClick={() => setIsZoomed(false)}
+          className="fixed inset-0 z-[99999] bg-black/95 flex items-center justify-center p-4 md:p-8 cursor-zoom-out backdrop-blur-md"
+          onClick={() => setActiveImg(null)}
         >
           <img
             src={vehicle.images[activeImg]}
             alt={vehicle.name}
-            className="max-w-full max-h-full object-contain rounded-xl"
+            className="max-w-full max-h-[92vh] object-contain rounded-2xl shadow-2xl transition-all duration-300"
           />
           <button
-            className="absolute top-4 right-4 text-white/60 hover:text-white text-3xl"
-            onClick={() => setIsZoomed(false)}
+            className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-colors backdrop-blur-sm"
+            onClick={() => setActiveImg(null)}
           >
             ✕
           </button>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`
