@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useParams, Link } from "react-router-dom";
-import { Users, Briefcase, Check, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
+import { Users, Briefcase, Check, ArrowRight, ArrowLeft, Loader2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { FLEET } from "../data";
 import { GoldButton, GoldDivider } from "../components/ui";
 import Reveal from "../components/Reveal";
@@ -25,6 +25,23 @@ export default function FleetDetail() {
       document.body.style.overflow = "";
     };
   }, [activeImg]);
+
+  useEffect(() => {
+    if (activeImg === null || !vehicle?.images?.length) return;
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        setActiveImg((prev) => (prev === null ? 0 : (prev - 1 + vehicle.images.length) % vehicle.images.length));
+      } else if (e.key === "ArrowRight") {
+        setActiveImg((prev) => (prev === null ? 0 : (prev + 1) % vehicle.images.length));
+      } else if (e.key === "Escape") {
+        setActiveImg(null);
+      }
+    };
+    
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [activeImg, vehicle?.images?.length]);
 
   useEffect(() => {
     async function loadVehicle() {
@@ -491,16 +508,52 @@ export default function FleetDetail() {
           className="fixed inset-0 z-[99999] bg-black/95 flex items-center justify-center p-4 md:p-8 cursor-zoom-out backdrop-blur-md"
           onClick={() => setActiveImg(null)}
         >
+          {/* Back Button */}
+          {vehicle.images.length > 1 && (
+            <button
+              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white bg-white/5 hover:bg-white/10 w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm hover:scale-105 border border-white/10 hover:border-white/20 select-none z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveImg((prev) => (prev === null ? 0 : (prev - 1 + vehicle.images.length) % vehicle.images.length));
+              }}
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="h-6 w-6" />
+            </button>
+          )}
+
+          {/* Image */}
           <img
             src={vehicle.images[activeImg]}
             alt={vehicle.name}
-            className="max-w-full max-h-[92vh] object-contain rounded-2xl shadow-2xl transition-all duration-300"
+            className="max-w-full max-h-[92vh] object-contain rounded-2xl shadow-2xl transition-all duration-300 cursor-default select-none animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
           />
+
+          {/* Next Button */}
+          {vehicle.images.length > 1 && (
+            <button
+              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/70 hover:text-white bg-white/5 hover:bg-white/10 w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm hover:scale-105 border border-white/10 hover:border-white/20 select-none z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveImg((prev) => (prev === null ? 0 : (prev + 1) % vehicle.images.length));
+              }}
+              aria-label="Next image"
+            >
+              <ChevronRight className="h-6 w-6" />
+            </button>
+          )}
+
+          {/* Close Button */}
           <button
-            className="absolute top-6 right-6 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-colors backdrop-blur-sm"
-            onClick={() => setActiveImg(null)}
+            className="absolute top-6 right-6 text-white/70 hover:text-white bg-white/5 hover:bg-white/10 w-12 h-12 rounded-full flex items-center justify-center transition-all cursor-pointer backdrop-blur-sm hover:scale-105 border border-white/10 hover:border-white/20 select-none z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveImg(null);
+            }}
+            aria-label="Close modal"
           >
-            ✕
+            <X className="h-5 w-5" />
           </button>
         </div>,
         document.body
