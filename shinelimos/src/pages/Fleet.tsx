@@ -75,12 +75,12 @@ export default function Fleet() {
                   <Parallax speed={0.15}>
                     <Link to={`/fleet/${v.vehicle_name.toLowerCase().replace(/\s+/g, '-')}`}>
                       <TiltCard className="rounded-3xl">
-                        <div className="relative group rounded-3xl overflow-hidden glass aspect-16/11 cursor-pointer">
+                        <div className="relative group rounded-3xl overflow-hidden glass aspect-16/11 cursor-pointer flex items-center justify-center p-3 bg-black/40">
                           <img
                             src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`}
                             alt={v.vehicle_name}
                             loading="lazy"
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 ken-burns"
+                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700"
                           />
                           <div className="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent" />
                           {/* View Details overlay */}

@@ -177,10 +177,9 @@ export default function FleetDetail() {
       {/* ── MAIN CONTENT ── */}
       <div className="mx-auto max-w-7xl px-6 py-8 lg:py-12 space-y-12">
         
-        {/* ─── TOP: BENTO GRID IMAGE GALLERY (FULL WIDTH) ─── */}
         <div className="space-y-4">
           <div className="text-[10px] tracking-[0.4em] text-white/50 uppercase mb-2">
-            ✦ Vehicle Gallery (Click to Enlarge) ✦
+            ✦ Vehicle Gallery (Click to Zoom) ✦
           </div>
           
           {/* Dynamic Bento Grid based on Image Count */}
@@ -190,7 +189,7 @@ export default function FleetDetail() {
               return (
                 <div 
                   onClick={() => setActiveImg(0)}
-                  className="rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] aspect-[16/9] max-w-4xl mx-auto cursor-zoom-in"
+                  className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] aspect-[16/9] max-w-4xl mx-auto"
                 >
                   <img
                     src={vehicle.images[0]}
@@ -207,7 +206,7 @@ export default function FleetDetail() {
                     <div 
                       key={index}
                       onClick={() => setActiveImg(index)}
-                      className="rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
+                      className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                     >
                       <img
                         src={img}
@@ -224,7 +223,7 @@ export default function FleetDetail() {
                 <div className="grid grid-cols-12 gap-3 aspect-[16/9]">
                   <div 
                     onClick={() => setActiveImg(0)}
-                    className="col-span-8 rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
+                    className="col-span-8 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                   >
                     <img
                       src={vehicle.images[0]}
@@ -236,7 +235,7 @@ export default function FleetDetail() {
                       <div 
                         key={index}
                         onClick={() => setActiveImg(index + 1)}
-                        className="rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
+                        className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                       >
                         <img
                           src={img}
@@ -253,7 +252,7 @@ export default function FleetDetail() {
                 <div className="grid grid-cols-12 gap-3 aspect-[16/9]">
                   <div 
                     onClick={() => setActiveImg(0)}
-                    className="col-span-6 rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
+                    className="col-span-6 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                   >
                     <img
                       src={vehicle.images[0]}
@@ -265,7 +264,7 @@ export default function FleetDetail() {
                       <div 
                         key={index}
                         onClick={() => setActiveImg(index + 1)}
-                        className={`rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in ${index === 2 ? 'col-span-2' : ''}`}
+                        className={`rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] ${index === 2 ? 'col-span-2' : ''}`}
                       >
                         <img
                           src={img}
@@ -283,7 +282,7 @@ export default function FleetDetail() {
                 {/* Image 1: Left */}
                 <div 
                   onClick={() => setActiveImg(0)}
-                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
+                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                 >
                   <img
                     src={vehicle.images[0]}
@@ -294,7 +293,7 @@ export default function FleetDetail() {
                 {/* Image 2: Center */}
                 <div 
                   onClick={() => setActiveImg(1)}
-                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] cursor-zoom-in"
+                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                 >
                   <img
                     src={vehicle.images[1]}
@@ -486,9 +485,7 @@ export default function FleetDetail() {
             ))}
           </div>
         </div>
-      </section>
-
-      {/* Full Screen Image Modal via Portal */}
+      </section>      {/* Full Screen Image Modal via Portal */}
       {activeImg !== null && vehicle?.images?.[activeImg] && createPortal(
         <div
           className="fixed inset-0 z-[99999] bg-black/95 flex items-center justify-center p-4 md:p-8 cursor-zoom-out backdrop-blur-md"
@@ -508,7 +505,6 @@ export default function FleetDetail() {
         </div>,
         document.body
       )}
-
       <style>{`
         @keyframes fadeInImg {
           from { opacity: 0; transform: scale(1.03); }
