@@ -1,0 +1,52 @@
+import { Link } from "react-router-dom";
+import { PageHero } from "../components/ui";
+import TiltCard from "../components/TiltCard";
+import SectionBackground from "../components/SectionBackground";
+import { LOCATIONS } from "../data";
+import { MapPin } from "lucide-react";
+import SEO from "../components/SEO";
+
+const BG = "/images/pexels-photo-9488191.webp";
+
+export default function Locations() {
+  return (
+    <div className="route-fade">
+      <SEO pageKey="locations" />
+      <PageHero
+        image="/video/carvideo-ezgif.com-video-to-avif-converter.avif"
+        eyebrow="Service Area"
+        title={<>Regional <em className="text-white not-italic">Transportation</em></>}
+        subtitle="Extensive coverage area for all your regional transportation needs. We provide Washington metro transportation, intercity chauffeur service, and luxury rides across the capital."
+      />
+
+      <SectionBackground image={BG} overlay="dark" parallax className="py-20 px-6">
+        <div className="mx-auto max-w-7xl grid gap-5 grid-cols-2 md:grid-cols-4">
+          {LOCATIONS.map((l) => (
+            <Link key={l.slug} to={`/locations/${l.slug}`}>
+              <TiltCard intensity={15} className="rounded-2xl">
+                <div className="relative aspect-4/3 rounded-2xl overflow-hidden glass group">
+                  <img
+                    src={l.hero}
+                    alt={l.city}
+                    loading="lazy"
+                    className="absolute inset-0 w-full h-full object-contain p-2 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
+                  />
+                  <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent" />
+                  <div className="absolute bottom-0 inset-x-0 p-4">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <MapPin className="h-3.5 w-3.5 text-white/80 shrink-0" />
+                      <div className="font-bold text-sm text-white uppercase tracking-wider leading-tight">
+                        {l.city}
+                      </div>
+                    </div>
+                    <div className="text-[10px] tracking-[0.25em] text-[#c9a96e] uppercase font-medium ml-5">{l.region}</div>
+                  </div>
+                </div>
+              </TiltCard>
+            </Link>
+          ))}
+        </div>
+      </SectionBackground>
+    </div>
+  );
+}

@@ -1,0 +1,57 @@
+{
+  "info": {
+    "name": "TripBooking - Vehicles API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0"
+  },
+  "item": [
+    {
+      "name": "Create Vehicle",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/vehicles",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","vehicles"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"vehicle_name\": \"Sedan\",\n  \"price\": \"100\",\n  \"unites\": \"per day\",\n  \"passenger_capacity\": \"4\",\n  \"luggage_capacity\": \"2\",\n  \"image\": \"/uploads/vehicle.jpg\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Update Vehicle (replace :id with actual id)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/vehicles/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","vehicles",":id"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"price\": \"120\",\n  \"unites\": \"per day\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Delete Vehicle (replace :id with actual id)",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/vehicles/:id",
+          "host": ["{{baseUrl}}"],
+          "path": ["api","vehicles",":id"]
+        }
+      }
+    }
+  ]
+}
