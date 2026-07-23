@@ -453,7 +453,7 @@ export default function Home() {
                       height="337"
                       className={`w-full h-full ${
                         l.hero.endsWith('.jpeg') || l.hero.endsWith('.jpg') 
-                          ? "object-cover scale-115 group-hover:scale-125" 
+                          ? "object-cover scale-108 group-hover:scale-115" 
                           : "object-contain scale-110 sm:scale-115 group-hover:scale-120"
                       } opacity-95 group-hover:opacity-100 transition-all duration-500 drop-shadow-xl`}
                     />
