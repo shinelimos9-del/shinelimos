@@ -93,7 +93,7 @@ export default function Footer() {
           <div>© {new Date().getFullYear()} {COMPANY.name}. All rights reserved. | Built by RizeWorld</div>
           <div className="flex gap-6">
             <Link to="/privacy" className="hover:text-gold">Privacy</Link>
-            <Link to="/terms" className="hover:text-gold">Terms</Link>
+            <Link to="/terms" className="hover:text-gold">Terms & Conditions</Link>
             <Link to="/faq" className="hover:text-gold">FAQ</Link>
           </div>
         </div>
