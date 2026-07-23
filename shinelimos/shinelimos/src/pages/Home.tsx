@@ -433,7 +433,7 @@ export default function Home() {
             {LOCATIONS.map((l) => (
               <Link key={l.slug} to={`/locations/${l.slug}`}>
                 <TiltCard intensity={15} className="rounded-2xl">
-                  <div className="relative h-36 sm:h-40 rounded-2xl overflow-hidden glass group bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 border border-white/10 flex items-center justify-center p-1.5">
+                  <div className="relative h-40 sm:h-44 rounded-2xl overflow-hidden glass group bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 border border-white/10 flex items-center justify-center p-1.5">
                     <img
                       src={l.hero}
                       alt={l.city}

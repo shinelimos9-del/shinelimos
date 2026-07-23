@@ -434,7 +434,7 @@ export default function Home() {
             {LOCATIONS.map((l) => (
               <Link key={l.slug} to={`/locations/${l.slug}`}>
                 <TiltCard intensity={15} className="rounded-2xl">
-                  <div className="relative h-36 sm:h-40 rounded-2xl overflow-hidden glass group bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 border border-white/10 flex items-center justify-center p-1.5">
+                  <div className="relative h-40 sm:h-44 rounded-2xl overflow-hidden glass group bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 border border-white/10 flex items-center justify-center p-1.5">
                     <img
                       src={l.hero}
                       alt={l.city}
@@ -442,7 +442,7 @@ export default function Home() {
                       width="600"
                       height="337"
                       className={`w-full h-full object-contain scale-125 -translate-y-2.5 group-hover:scale-135 opacity-95 group-hover:opacity-100 transition-all duration-500 drop-shadow-xl ${
-                        l.slug === "alexandria-va" ? "-translate-y-4 scale-115" : ""
+                        l.slug === "alexandria-va" || l.slug === "tysons-corner" ? "-translate-y-4 scale-115" : ""
                       }`}
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent pointer-events-none" />
