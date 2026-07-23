@@ -2,70 +2,228 @@ import { Link } from "react-router-dom";
 import { PageHero } from "../components/ui";
 import Reveal from "../components/Reveal";
 import SectionBackground from "../components/SectionBackground";
-import { FileText, Calendar, ShieldAlert, UserCheck, Settings, ShieldCheck, Mail, Phone } from "lucide-react";
+import { 
+  FileText, 
+  Calendar, 
+  CreditCard, 
+  Clock, 
+  ShieldAlert, 
+  Wine, 
+  AlertTriangle, 
+  Car, 
+  Baby, 
+  MapPin, 
+  Plane, 
+  Users, 
+  ShieldCheck, 
+  CheckCircle, 
+  Mail, 
+  Phone,
+  Briefcase
+} from "lucide-react";
+import { COMPANY } from "../data";
 
 export default function Terms() {
   const sections = [
     {
       icon: Calendar,
       num: "1",
-      title: "Booking & Payment",
+      title: "Reservations",
       content: [
-        "All reservations must be confirmed in advance and are subject to availability.",
-        "A valid credit card is required to secure your booking.",
-        "Full payment may be required prior to service, depending on the type of reservation."
+        "Reservations may be made online, by phone, email, or text message.",
+        "A reservation is considered confirmed only after you receive an official confirmation from Shine Limos LLC."
       ]
     },
     {
-      icon: ShieldAlert,
+      icon: CreditCard,
       num: "2",
-      title: "Cancellation Policy",
+      title: "Payment",
       content: [
-        "Cancellations must be made at least:",
-        "• 24 hours in advance for Sprinters and Buses",
-        "• 12 hours in advance for SUVs and Sedans",
-        "Failure to do so may result in a cancellation fee.",
-        "No-shows will be charged the full amount of the trip.",
-        "For group events, weddings, or specialty vehicles, separate cancellation policies may apply."
+        "Payment is due before or at the time of service unless other arrangements have been made in advance.",
+        "We accept major credit cards and other approved payment methods.",
+        "Note: A 3% credit card processing fee applies to all credit card payments."
       ]
     },
     {
       icon: ShieldAlert,
       num: "3",
-      title: "Delays & Liability",
+      title: "Cancellations & Refunds",
+      subsections: [
+        {
+          heading: "Sedan & SUV Reservations",
+          bullets: [
+            "Cancel more than 24 hours before pickup: Full refund.",
+            "Cancel within 24 hours of pickup: No refund."
+          ]
+        },
+        {
+          heading: "Sprinter Vans, Stretch Limousines & Party Buses",
+          bullets: [
+            "Cancel more than 7 days before service: Full refund.",
+            "Cancel within 7 days of service: No refund unless otherwise stated."
+          ]
+        }
+      ],
       content: [
-        "ShineLimos LLC is not responsible for delays caused by traffic, weather, road conditions, or other factors beyond our control.",
-        "While we strive to provide timely service, we cannot guarantee arrival or departure times in such cases.",
-        "We are not liable for missed flights, appointments, or events due to uncontrollable delays."
+        "Refunds, when applicable, will be processed back to the original payment method."
       ]
     },
     {
-      icon: UserCheck,
+      icon: Clock,
       num: "4",
-      title: "Client Responsibilities",
-      content: [
-        "Clients must ensure all information provided (pickup location, time, number of passengers, etc.) is accurate.",
-        "Any damage to the vehicle caused by the client or their guests will be the client’s responsibility.",
-        "No smoking, illegal substances, or unruly behavior is allowed in any vehicle."
+      title: "Waiting Time",
+      subsections: [
+        {
+          heading: "Non-Airport Pickups",
+          bullets: [
+            "15 minutes of complimentary waiting time.",
+            "After 15 minutes, waiting time is billed at $1.00 per minute."
+          ]
+        },
+        {
+          heading: "Airport Pickups",
+          bullets: [
+            "Complimentary wait time begins after the flight has landed.",
+            "Flight tracking is included for commercial flights.",
+            "Additional waiting time will be billed according to your reservation."
+          ]
+        }
       ]
     },
     {
-      icon: Settings,
+      icon: Briefcase,
       num: "5",
-      title: "Changes to Service",
+      title: "Hourly Services",
       content: [
-        "ShineLimos LLC reserves the right to upgrade vehicles or make necessary changes to ensure timely and quality service.",
-        "We reserve the right to refuse service to any client for safety or legal reasons."
+        "Hourly reservations are billed according to the minimum hourly requirement stated at the time of booking.",
+        "Additional time requested during service will be billed in 30-minute or 1-hour increments, depending on vehicle availability."
+      ]
+    },
+    {
+      icon: ShieldAlert,
+      num: "6",
+      title: "Passenger Conduct",
+      subtitle: "For the safety and comfort of everyone:",
+      content: [
+        "No smoking or vaping inside the vehicle.",
+        "No illegal drugs or illegal activities.",
+        "Seat belts must be worn when required by law.",
+        "Passengers must follow all chauffeur instructions.",
+        "Note: Shine Limos LLC reserves the right to terminate service without refund if passengers engage in unsafe, abusive, or illegal behavior."
+      ]
+    },
+    {
+      icon: AlertTriangle,
+      num: "7",
+      title: "Vehicle Damage",
+      subtitle: "The customer is financially responsible for damage caused by passengers, including but not limited to:",
+      content: [
+        "Excessive cleaning required",
+        "Vomiting or bodily fluids",
+        "Burns or upholstery damage",
+        "Broken interior or exterior components",
+        "Stains or spillages",
+        "Glass damage",
+        "Note: Cleaning and repair charges will be billed directly to the credit card on file."
+      ]
+    },
+    {
+      icon: Wine,
+      num: "8",
+      title: "Alcohol",
+      content: [
+        "Alcohol is permitted only where allowed by applicable federal, state, and local laws.",
+        "Passengers must comply with all applicable liquor laws.",
+        "Note: No underage drinking is permitted under any circumstances."
+      ]
+    },
+    {
+      icon: Briefcase,
+      num: "9",
+      title: "Personal Belongings",
+      content: [
+        "Passengers are solely responsible for their personal belongings.",
+        "Shine Limos LLC is not responsible for lost, stolen, or damaged items left inside the vehicle."
+      ]
+    },
+    {
+      icon: AlertTriangle,
+      num: "10",
+      title: "Delays",
+      content: [
+        "Traffic, weather, road closures, accidents, and other circumstances beyond our control may occasionally affect travel times.",
+        "While we make every effort to provide timely service, Shine Limos LLC cannot guarantee exact arrival times under extraordinary circumstances."
+      ]
+    },
+    {
+      icon: Car,
+      num: "11",
+      title: "Vehicle Substitution",
+      content: [
+        "In rare situations due to maintenance, mechanical issues, or scheduling requirements, Shine Limos LLC reserves the right to substitute a comparable or upgraded vehicle at no additional charge."
+      ]
+    },
+    {
+      icon: Baby,
+      num: "12",
+      title: "Child Safety Seats",
+      content: [
+        "Child safety seats are the responsibility of the customer unless arranged in advance.",
+        "Parents and guardians are responsible for ensuring children are properly secured according to applicable state laws."
+      ]
+    },
+    {
+      icon: MapPin,
+      num: "13",
+      title: "Additional Stops",
+      content: [
+        "Additional stops not included in the original reservation may result in additional charges."
+      ]
+    },
+    {
+      icon: Plane,
+      num: "14",
+      title: "Airport Flight Monitoring",
+      content: [
+        "Commercial airline arrivals are monitored whenever valid flight details are provided at booking.",
+        "Please ensure accurate airline and flight number details are submitted when making your reservation."
+      ]
+    },
+    {
+      icon: Users,
+      num: "15",
+      title: "Affiliate Transportation",
+      content: [
+        "To better serve our clients, Shine Limos LLC may use trusted licensed affiliate transportation providers when necessary.",
+        "All affiliate providers are expected to meet our strict professional service standards."
+      ]
+    },
+    {
+      icon: ShieldAlert,
+      num: "16",
+      title: "Limitation of Liability",
+      content: [
+        "Shine Limos LLC shall not be liable for delays, missed flights, missed appointments, indirect damages, or consequential damages resulting from circumstances beyond our reasonable control."
       ]
     },
     {
       icon: ShieldCheck,
-      num: "6",
+      num: "17",
       title: "Privacy",
       content: [
-        "Please refer to our Privacy Policy for how we collect, use, and protect your information."
+        "Customer information is used solely to provide transportation services, process payments, and communicate regarding reservations.",
+        "We do not sell or share personal information except as required by law or necessary to complete your reservation.",
+        "Please refer to our Privacy Policy for complete details."
       ],
-      link: { text: "Privacy Policy", to: "/privacy" }
+      hasPrivacyLink: true
+    },
+    {
+      icon: CheckCircle,
+      num: "18",
+      title: "Acceptance",
+      content: [
+        "By booking transportation with Shine Limos LLC, you acknowledge that you have read, understood, and agree to these Terms & Conditions."
+      ]
     }
   ];
 
@@ -75,7 +233,7 @@ export default function Terms() {
         image="/images/pexels-photo-15200595.webp"
         eyebrow="Legal"
         title={<>Terms & <em className="text-white not-italic">Conditions</em></>}
-        subtitle="Please review the rules, guidelines, and terms that govern your relationship with ShineLimos LLC."
+        subtitle="Welcome to Shine Limos LLC. Please review the terms & conditions governing our services."
       />
 
       <SectionBackground image="/images/pexels-photo-5288741.webp" overlay="dark" parallax className="py-20 px-6">
@@ -86,14 +244,14 @@ export default function Terms() {
               <div className="flex flex-wrap justify-between items-center gap-4 border-b border-white/10 pb-6 mb-6">
                 <div className="flex items-center gap-3">
                   <FileText className="h-6 w-6 text-white" />
-                  <h2 className="text-xl font-serif-lux text-white uppercase tracking-wider">Terms of Service</h2>
+                  <h2 className="text-xl font-serif-lux text-white uppercase tracking-wider">Terms & Conditions</h2>
                 </div>
                 <div className="text-xs text-white/55 font-mono">
-                  Effective Date: 04/06/2025
+                  Effective Date: July 23, 2026
                 </div>
               </div>
               <p className="text-white/75 leading-relaxed font-light">
-                By using our website and booking our services, you agree to the following terms and conditions. Please read them carefully before proceeding. All services are operated under the company name <strong className="text-white font-medium">ShineLimos LLC</strong>.
+                Welcome to <strong className="text-white font-medium">Shine Limos LLC</strong>. By booking transportation services with Shine Limos LLC, you agree to the following Terms & Conditions.
               </p>
             </div>
           </Reveal>
@@ -103,7 +261,7 @@ export default function Terms() {
             {sections.map((section, idx) => {
               const Icon = section.icon;
               return (
-                <Reveal key={idx} delay={idx * 80}>
+                <Reveal key={idx} delay={idx * 40}>
                   <div className="glass rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300">
                     <div className="flex items-start gap-4">
                       <div className="glass-gold w-10 h-10 rounded-xl flex items-center justify-center shrink-0">
@@ -113,36 +271,71 @@ export default function Terms() {
                         <h3 className="font-serif-lux text-xl text-white tracking-wide">
                           {section.num}. {section.title}
                         </h3>
-                        <ul className="mt-4 space-y-3">
-                          {section.content.map((bullet, bIdx) => {
-                            // Render list elements elegantly
-                            const isBullet = bullet.startsWith("• ");
-                            const text = isBullet ? bullet.slice(2) : bullet;
 
-                            if (section.link && text.includes("Privacy Policy")) {
+                        {section.subtitle && (
+                          <p className="text-sm text-white/80 mt-2 font-medium">
+                            {section.subtitle}
+                          </p>
+                        )}
+
+                        {/* Subsections if present (e.g. Cancellations, Waiting Time) */}
+                        {section.subsections && (
+                          <div className="mt-4 space-y-4">
+                            {section.subsections.map((sub, sIdx) => (
+                              <div key={sIdx} className="bg-white/5 rounded-xl p-4 border border-white/5">
+                                <h4 className="text-sm font-semibold text-gold mb-2">{sub.heading}</h4>
+                                <ul className="space-y-2">
+                                  {sub.bullets.map((bText, bIdx) => (
+                                    <li key={bIdx} className="text-sm text-white/70 leading-relaxed font-light pl-4 list-disc list-inside">
+                                      {bText}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Direct bullets/content */}
+                        {section.content && (
+                          <ul className="mt-4 space-y-2.5">
+                            {section.content.map((item, bIdx) => {
+                              const isNote = item.startsWith("Note:");
+                              const isBullet = (section.subtitle || section.num === "1" || section.num === "2") && !isNote;
+
+                              if (section.hasPrivacyLink && item.includes("Privacy Policy")) {
+                                return (
+                                  <li key={bIdx} className="text-sm text-white/70 leading-relaxed font-light">
+                                    Please refer to our{" "}
+                                    <Link to="/privacy" className="text-white underline hover:text-white/90">
+                                      Privacy Policy
+                                    </Link>{" "}
+                                    for complete details on how we collect, use, and protect your information.
+                                  </li>
+                                );
+                              }
+
+                              if (isNote) {
+                                return (
+                                  <li key={bIdx} className="text-xs text-gold/90 italic mt-2 font-medium">
+                                    {item}
+                                  </li>
+                                );
+                              }
+
                               return (
-                                <li key={bIdx} className="text-sm text-white/70 leading-relaxed font-light">
-                                  Please refer to our{" "}
-                                  <Link to="/privacy" className="text-white underline hover:text-white/90">
-                                    Privacy Policy
-                                  </Link>{" "}
-                                  for how we collect, use, and protect your information.
+                                <li
+                                  key={bIdx}
+                                  className={`text-sm text-white/70 leading-relaxed font-light ${
+                                    isBullet ? "pl-4 list-disc list-inside" : ""
+                                  }`}
+                                >
+                                  {item}
                                 </li>
                               );
-                            }
-
-                            return (
-                              <li
-                                key={bIdx}
-                                className={`text-sm text-white/70 leading-relaxed font-light ${
-                                  isBullet ? "pl-4 list-disc list-inside" : ""
-                                }`}
-                              >
-                                {text}
-                              </li>
-                            );
-                          })}
-                        </ul>
+                            })}
+                          </ul>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -154,15 +347,15 @@ export default function Terms() {
           {/* Contact Section */}
           <Reveal>
             <div className="glass rounded-3xl p-8 border border-white/10 mt-12 bg-linear-to-b from-white/2 to-transparent">
-              <h3 className="font-serif-lux text-2xl text-white mb-6">7. Contact Us</h3>
+              <h3 className="font-serif-lux text-2xl text-white mb-6">Contact Us</h3>
               <p className="text-sm text-white/70 leading-relaxed font-light mb-6">
-                For questions or concerns regarding these terms, please contact us:
+                If you have any questions or concerns regarding these Terms & Conditions, please contact us:
               </p>
               
               <div className="grid gap-6 md:grid-cols-2">
                 <div className="glass-gold rounded-2xl p-6 border border-white/5">
                   <div className="text-[10px] tracking-widest text-white/50 uppercase mb-3">Corporate Office</div>
-                  <div className="font-serif-lux text-lg text-white">ShineLimos LLC</div>
+                  <div className="font-serif-lux text-lg text-white">{COMPANY.name}</div>
                   <div className="text-xs text-white/60 mt-1 leading-relaxed">
                     13455 Sunrise Valley drive<br />
                     Herndon Virginia 20171
@@ -176,8 +369,8 @@ export default function Terms() {
                     </div>
                     <div>
                       <div className="text-[9px] tracking-widest text-white/40 uppercase">Email Us</div>
-                      <a href="mailto:booking@shinelimos.com" className="text-sm text-white hover:text-white/80 font-mono">
-                        booking@shinelimos.com
+                      <a href={`mailto:${COMPANY.email}`} className="text-sm text-white hover:text-white/80 font-mono">
+                        {COMPANY.email}
                       </a>
                     </div>
                   </div>
@@ -189,11 +382,8 @@ export default function Terms() {
                     <div>
                       <div className="text-[9px] tracking-widest text-white/40 uppercase">Call Support</div>
                       <div className="space-y-1">
-                        <a href="tel:+17035956269" className="block text-sm text-white hover:text-white/80 font-mono">
-                          +1 703 595 6269
-                        </a>
-                        <a href="tel:+12029517172" className="block text-sm text-white hover:text-white/80 font-mono">
-                          +1 202 951 7172
+                        <a href={`tel:${COMPANY.phoneRaw}`} className="block text-sm text-white hover:text-white/80 font-mono">
+                          {COMPANY.phone}
                         </a>
                       </div>
                     </div>
@@ -203,7 +393,7 @@ export default function Terms() {
             </div>
           </Reveal>
         </div>
-      </SectionBackground>
+      SectionBackground>
     </div>
   );
 }
