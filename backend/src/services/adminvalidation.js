@@ -25,7 +25,7 @@ const sendOTP = async (email, otp) => {
             const response = await axios.post(
                 "https://api.brevo.com/v3/smtp/email",
                 {
-                    sender: { email: process.env.EMAIL_USER || "vikasjangid3352@gmail.com", name: "Shine Limos" },
+                    sender: { email: process.env.EMAIL_USER || "rizeworldcode@gmail.com", name: "Shine Limos" },
                     to: [{ email: email }],
                     subject: "Shine Limos - Admin Password Reset Code",
                     htmlContent: htmlContent,
