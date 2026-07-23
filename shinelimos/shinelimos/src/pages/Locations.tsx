@@ -40,7 +40,7 @@ export default function Locations() {
                     src={l.hero}
                     alt={l.city}
                     loading="lazy"
-                    className="w-full h-full object-contain scale-120 translate-y-2 group-hover:scale-130 opacity-95 group-hover:opacity-100 transition-all duration-500 drop-shadow-xl"
+                    className="w-full h-full object-contain scale-115 -translate-y-3.5 group-hover:scale-125 opacity-95 group-hover:opacity-100 transition-all duration-500 drop-shadow-xl"
                   />
                 </div>
               </TiltCard>
