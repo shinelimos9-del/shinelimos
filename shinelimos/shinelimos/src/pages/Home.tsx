@@ -451,7 +451,7 @@ export default function Home() {
                       loading="lazy"
                       width="600"
                       height="337"
-                      className="w-full h-full object-contain scale-115 -translate-y-3.5 group-hover:scale-125 opacity-95 group-hover:opacity-100 transition-all duration-500 drop-shadow-xl"
+                      className="w-full h-full object-contain scale-115 -translate-y-1 group-hover:scale-125 opacity-95 group-hover:opacity-100 transition-all duration-500 drop-shadow-xl"
                     />
                   </div>
                 </TiltCard>
