@@ -360,6 +360,53 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 		// Notify admin via socket
 		notifyAdmin(updated);
 
+		// Send Booking Received confirmation email to Booker
+		try {
+			const bookerEmail = updated.contact_details?.booker?.email;
+			const bookerName = `${updated.contact_details?.booker?.first_name || 'Valued'} ${updated.contact_details?.booker?.last_name || 'Customer'}`;
+			
+			if (bookerEmail) {
+				console.log(`[BOOKING] Sending initial booking confirmation email to booker: ${bookerEmail}`);
+				await sendEmail({
+					to: bookerEmail,
+					subject: `Reservation Request Received - Shine Limos (#${updated._id})`,
+					html: `
+						<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
+							<div style="text-align: center; margin-bottom: 30px;">
+								<h1 style="color: #000; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">Shine Limos</h1>
+								<div style="height: 2px; width: 50px; background-color: #d4af37; margin: 10px auto;"></div>
+							</div>
+
+							<h2 style="color: #000; text-align: center; font-size: 20px;">Reservation Request Received</h2>
+							
+							<p>Dear ${bookerName},</p>
+							<p>Thank you for choosing <strong>Shine Limos</strong>. We have successfully received your reservation request (<strong>#${updated._id}</strong>). Our dispatch team is reviewing your trip details and will send you a payment link shortly to finalize your reservation.</p>
+							
+							<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0; border: 1px solid #eee;">
+								<h3 style="margin-top: 0; font-size: 16px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Trip Summary</h3>
+								<p style="margin: 10px 0; font-size: 14px;"><strong>Booking Ref:</strong> #${updated._id}</p>
+								<p style="margin: 10px 0; font-size: 14px;"><strong>Vehicle Requested:</strong> ${updated.vehicle_details?.vehicle_name || 'N/A'}</p>
+								<p style="margin: 10px 0; font-size: 14px;"><strong>Pickup:</strong> ${updated.trip_details[0]?.pickup_location}</p>
+								<p style="margin: 10px 0; font-size: 14px;"><strong>Drop-off:</strong> ${updated.trip_details[0]?.dropoff_location}</p>
+								<p style="margin: 10px 0; font-size: 14px;"><strong>Date & Time:</strong> ${moment(updated.trip_details[0]?.date).format("MMM DD, YYYY")} at ${updated.trip_details[0]?.start_time}</p>
+								<p style="margin: 10px 0; font-size: 14px;"><strong>Estimated Price:</strong> $${updated.vehicle_details?.estimated_price || 'N/A'}</p>
+							</div>
+
+							<p style="line-height: 1.6; color: #555;">If you have any questions or immediate changes, please call our 24/7 dispatch line at <strong>+1 (202) 951-7172</strong> or reply to this email.</p>
+							
+							<p style="margin-top: 30px;">Warm regards,<br><strong>Shine Limos Team</strong></p>
+							
+							<div style="border-top: 1px solid #eee; margin-top: 30px; padding-top: 20px; text-align: center; color: #888; font-size: 12px;">
+								<p>© ${new Date().getFullYear()} Shine Limos LLC. All rights reserved.</p>
+							</div>
+						</div>
+					`
+				});
+			}
+		} catch (mailErr) {
+			console.error("[BOOKING] Error sending initial booking email to booker:", mailErr.message);
+		}
+
 		return { success: true, message: "Booking finalized successfully", booking: updated };
 	} catch (error) {
 		console.log("finalizeBooking error:", error);
