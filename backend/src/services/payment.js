@@ -136,11 +136,16 @@ const fulfillPayment = async (sessionOrId, bookingIdParam) => {
       return { success: false, message: "Booking ID missing" };
     }
 
+    const emailAlreadySent = payment ? payment.email_sent : false;
+
     if (payment) {
       payment.status = "completed";
       payment.utr_number = session.payment_intent || payment.utr_number;
       payment.payment_method = session.payment_method_types?.[0] || payment.payment_method;
       payment.payment_details = session;
+      if (!emailAlreadySent) {
+        payment.email_sent = true;
+      }
       await payment.save();
     }
 
@@ -150,7 +155,6 @@ const fulfillPayment = async (sessionOrId, bookingIdParam) => {
       return { success: false, message: "Booking not found" };
     }
 
-    const alreadyCompleted = booking.payment_status === "completed";
     booking.payment_status = "completed";
     await booking.save();
 
@@ -210,16 +214,16 @@ const fulfillPayment = async (sessionOrId, bookingIdParam) => {
       }
     );
 
-    // Push new "Payment Received" notification if not already completed
-    if (!alreadyCompleted) {
+    // Push new "Payment Received" notification if email not sent
+    if (!emailAlreadySent) {
       await Admin.updateMany(
         {},
         { $push: { notifications: { $each: [notificationData], $position: 0 } } }
       );
     }
 
-    // Send Emails to BOTH Booker AND Admin if not already processed
-    if (!alreadyCompleted) {
+    // Send Emails to BOTH Booker AND Admin if not already sent
+    if (!emailAlreadySent) {
       const amountPaid = payment ? payment.amount : booking.vehicle_details.estimated_price;
       const bookerEmail = booking.contact_details.booker.email;
       const bookerName = `${booking.contact_details.booker.first_name} ${booking.contact_details.booker.last_name}`;
