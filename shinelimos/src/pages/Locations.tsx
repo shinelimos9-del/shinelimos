@@ -20,7 +20,7 @@ export default function Locations() {
       />
 
       <SectionBackground image={BG} overlay="dark" parallax className="py-20 px-6">
-        <div className="mx-auto max-w-6xl grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
+        <div className="mx-auto max-w-5xl grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
           {LOCATIONS.map((l) => (
             <Link key={l.slug} to={`/locations/${l.slug}`}>
               <TiltCard intensity={15} className="rounded-2xl">
