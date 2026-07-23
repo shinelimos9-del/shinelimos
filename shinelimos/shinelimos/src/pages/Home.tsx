@@ -421,7 +421,7 @@ export default function Home() {
 
       {/* LOCATIONS with 3D tilt */}
       <SectionBackground image={BG_IMAGES.locations} overlay="dark" parallax className="py-24 px-6">
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-6xl">
           <Reveal>
             <SectionHeading
               eyebrow="Our Locations"
@@ -429,20 +429,20 @@ export default function Home() {
               subtitle="Providing luxury limo service and premium car service across Washington DC, Virginia, and Maryland."
             />
           </Reveal>
-          <div className="mt-14 grid gap-5 grid-cols-2 md:grid-cols-4">
+          <div className="mt-12 grid gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-4">
             {LOCATIONS.map((l) => (
               <Link key={l.slug} to={`/locations/${l.slug}`}>
                 <TiltCard intensity={15} className="rounded-2xl">
-                  <div className="relative aspect-16/9 rounded-2xl overflow-hidden glass group bg-neutral-900/80 border border-white/10 flex items-center justify-center">
+                  <div className="relative h-36 sm:h-40 rounded-2xl overflow-hidden glass group bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 border border-white/10 flex items-center justify-center p-1.5">
                     <img
                       src={l.hero}
                       alt={l.city}
                       loading="lazy"
                       width="600"
                       height="337"
-                      className="w-full h-full object-contain p-1.5 opacity-95 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 drop-shadow-xl"
+                      className="w-full h-full object-contain opacity-95 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 drop-shadow-xl"
                     />
-                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent pointer-events-none" />
+                    <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent pointer-events-none" />
                     <div className="absolute bottom-0 inset-x-0 p-3 z-10">
                       <div className="flex items-center gap-1.5 mb-0.5">
                         <MapPin className="h-3.5 w-3.5 text-[#c9a96e] shrink-0" />
