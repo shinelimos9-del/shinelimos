@@ -218,7 +218,7 @@ export default function FleetDetail() {
             }
             if (count === 2) {
               return (
-                <div className="grid grid-cols-2 gap-3 aspect-[16/9]">
+                <div className="grid grid-cols-2 gap-4 h-64 sm:h-80 md:h-[450px]">
                   {vehicle.images.map((img: string, index: number) => (
                     <div 
                       key={index}
@@ -237,7 +237,7 @@ export default function FleetDetail() {
             }
             if (count === 3) {
               return (
-                <div className="grid grid-cols-12 gap-3 aspect-[16/9]">
+                <div className="grid grid-cols-12 gap-4 h-64 sm:h-80 md:h-[450px]">
                   <div 
                     onClick={() => setActiveImg(0)}
                     className="col-span-8 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
@@ -247,7 +247,7 @@ export default function FleetDetail() {
                       className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
                     />
                   </div>
-                  <div className="col-span-4 grid grid-rows-2 gap-3">
+                  <div className="col-span-4 grid grid-rows-2 gap-4">
                     {vehicle.images.slice(1, 3).map((img: string, index: number) => (
                       <div 
                         key={index}
@@ -266,7 +266,7 @@ export default function FleetDetail() {
             }
             if (count === 4) {
               return (
-                <div className="grid grid-cols-12 gap-3 aspect-[16/9]">
+                <div className="grid grid-cols-12 gap-4 h-64 sm:h-80 md:h-[480px]">
                   <div 
                     onClick={() => setActiveImg(0)}
                     className="col-span-6 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
@@ -276,7 +276,7 @@ export default function FleetDetail() {
                       className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
                     />
                   </div>
-                  <div className="col-span-6 grid grid-cols-2 gap-3">
+                  <div className="col-span-6 grid grid-cols-2 gap-4">
                     {vehicle.images.slice(1, 4).map((img: string, index: number) => (
                       <div 
                         key={index}
@@ -295,11 +295,11 @@ export default function FleetDetail() {
             }
             // 5 or more images
             return (
-              <div className="grid grid-cols-12 gap-3 auto-rows-[140px] md:auto-rows-[180px]">
+              <div className="grid grid-cols-12 gap-4">
                 {/* Image 1: Left */}
                 <div 
                   onClick={() => setActiveImg(0)}
-                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  className="col-span-12 sm:col-span-4 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                 >
                   <img
                     src={vehicle.images[0]}
@@ -310,7 +310,7 @@ export default function FleetDetail() {
                 {/* Image 2: Center */}
                 <div 
                   onClick={() => setActiveImg(1)}
-                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  className="col-span-12 sm:col-span-4 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                 >
                   <img
                     src={vehicle.images[1]}
@@ -321,7 +321,7 @@ export default function FleetDetail() {
                 {/* Image 3: Top Right */}
                 <div 
                   onClick={() => setActiveImg(2)}
-                  className="col-span-12 sm:col-span-4 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  className="col-span-12 sm:col-span-4 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                 >
                   <img
                     src={vehicle.images[2]}
@@ -332,7 +332,7 @@ export default function FleetDetail() {
                 {/* Image 4: Bottom Left */}
                 <div 
                   onClick={() => setActiveImg(3)}
-                  className="col-span-12 sm:col-span-6 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  className="col-span-12 sm:col-span-6 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                 >
                   <img
                     src={vehicle.images[3]}
@@ -343,7 +343,7 @@ export default function FleetDetail() {
                 {/* Image 5: Bottom Right */}
                 <div 
                   onClick={() => setActiveImg(4)}
-                  className="col-span-12 sm:col-span-6 row-span-1.5 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  className="col-span-12 sm:col-span-6 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
                 >
                   <img
                     src={vehicle.images[4]}
