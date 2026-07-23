@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { verifyAdminOtp } from "../../utils/api";
 
 export default function VerifyOtp() {
@@ -8,6 +8,7 @@ export default function VerifyOtp() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -25,20 +26,25 @@ export default function VerifyOtp() {
     setStatus("");
 
     if (!otp) {
-      setError("Please enter the OTP.");
+      setError("Please enter the OTP code.");
       return;
     }
 
+    setLoading(true);
     try {
       const data = await verifyAdminOtp(email, otp);
       if (data.success) {
-        setStatus("OTP verified. Please reset your password.");
-        navigate("/reset-password");
+        setStatus(data.message || "OTP verified successfully. Proceeding to password reset...");
+        setTimeout(() => {
+          navigate("/reset-password");
+        }, 1000);
       } else {
         setError(data.message || "OTP verification failed.");
       }
     } catch (err: any) {
       setError(err?.response?.data?.message || "Unable to verify OTP. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -53,7 +59,7 @@ export default function VerifyOtp() {
         
         <div className="text-center mb-8">
           <h1 className="font-serif-lux text-3xl md:text-4xl text-white">Verify OTP</h1>
-          <p className="text-white/50 mt-3 text-sm">Enter the code sent to your email.</p>
+          <p className="text-white/50 mt-3 text-sm">Enter the 6-digit code sent to your email.</p>
         </div>
 
         <div className="glass-dark rounded-3xl p-8 border border-white/10 shadow-2xl backdrop-blur-xl">
@@ -75,17 +81,25 @@ export default function VerifyOtp() {
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 required
+                disabled={loading}
                 maxLength={6}
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white text-center tracking-[0.5em] text-lg focus:outline-none focus:border-white/40 focus:bg-white/5 transition-all placeholder-white/20"
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white text-center tracking-[0.5em] text-lg focus:outline-none focus:border-white/40 focus:bg-white/5 transition-all placeholder-white/20 disabled:opacity-50"
                 placeholder="••••••"
               />
             </div>
             
             <button 
               type="submit"
-              className="w-full mt-2 bg-white hover:bg-gray-200 text-black px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5"
+              disabled={loading}
+              className="w-full mt-2 bg-white hover:bg-gray-200 text-black px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              Confirm OTP
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Verifying OTP...
+                </>
+              ) : (
+                "Confirm OTP"
+              )}
             </button>
           </form>
         </div>

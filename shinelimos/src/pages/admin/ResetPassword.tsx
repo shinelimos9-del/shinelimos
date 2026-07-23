@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
 import { adminForgotPassword } from "../../utils/api";
 
 export default function ResetPassword() {
@@ -8,6 +9,7 @@ export default function ResetPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,17 +31,27 @@ export default function ResetPassword() {
       return;
     }
 
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    setLoading(true);
     try {
       const data = await adminForgotPassword(email, password);
       if (data.success) {
         localStorage.removeItem("adminResetEmail");
-        setStatus("Password updated successfully.");
-        navigate("/admin-login");
+        setStatus(data.message || "Password updated successfully. Redirecting to login...");
+        setTimeout(() => {
+          navigate("/admin-login");
+        }, 1500);
       } else {
         setError(data.message || "Failed to reset password.");
       }
     } catch (err: any) {
       setError(err?.response?.data?.message || "Unable to reset your password. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -73,7 +85,8 @@ export default function ResetPassword() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-white/40 focus:bg-white/5 transition-all placeholder-white/30"
+                disabled={loading}
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-white/40 focus:bg-white/5 transition-all placeholder-white/30 disabled:opacity-50"
                 placeholder="••••••••"
               />
             </div>
@@ -85,16 +98,24 @@ export default function ResetPassword() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-white/40 focus:bg-white/5 transition-all placeholder-white/30"
+                disabled={loading}
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-white/40 focus:bg-white/5 transition-all placeholder-white/30 disabled:opacity-50"
                 placeholder="••••••••"
               />
             </div>
 
             <button 
               type="submit"
-              className="w-full mt-2 bg-white hover:bg-gray-200 text-black px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5"
+              disabled={loading}
+              className="w-full mt-2 bg-white hover:bg-gray-200 text-black px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              Confirm Password
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Updating Password...
+                </>
+              ) : (
+                "Confirm Password"
+              )}
             </button>
           </form>
         </div>

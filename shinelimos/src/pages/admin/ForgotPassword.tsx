@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { sendOtpToAdmin } from "../../utils/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [status, setStatus] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -19,17 +20,22 @@ export default function ForgotPassword() {
       return;
     }
 
+    setLoading(true);
     try {
       const data = await sendOtpToAdmin(email);
       if (data.success) {
         localStorage.setItem("adminResetEmail", email);
-        setStatus("OTP sent. Please check your email.");
-        navigate("/verify-otp");
+        setStatus(data.message || "OTP sent. Please check your email.");
+        setTimeout(() => {
+          navigate("/verify-otp");
+        }, 1200);
       } else {
         setError(data.message || "Failed to send OTP.");
       }
     } catch (err: any) {
       setError(err?.response?.data?.message || "Unable to send OTP. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,7 +50,7 @@ export default function ForgotPassword() {
         
         <div className="text-center mb-8">
           <h1 className="font-serif-lux text-3xl md:text-4xl text-white">Forgot Password</h1>
-          <p className="text-white/50 mt-3 text-sm">Enter your email to receive an OTP.</p>
+          <p className="text-white/50 mt-3 text-sm">Enter your registered admin email to receive an OTP.</p>
         </div>
 
         <div className="glass-dark rounded-3xl p-8 border border-white/10 shadow-2xl backdrop-blur-xl">
@@ -66,16 +72,24 @@ export default function ForgotPassword() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-white/40 focus:bg-white/5 transition-all placeholder-white/30"
+                disabled={loading}
+                className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm focus:outline-none focus:border-white/40 focus:bg-white/5 transition-all placeholder-white/30 disabled:opacity-50"
                 placeholder="admin@shinelimos.com"
               />
             </div>
             
             <button 
               type="submit"
-              className="w-full mt-2 bg-white hover:bg-gray-200 text-black px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5"
+              disabled={loading}
+              className="w-full mt-2 bg-white hover:bg-gray-200 text-black px-6 py-4 rounded-xl text-sm font-bold tracking-wider uppercase transition-all shadow-[0_0_20px_rgba(255,255,255,0.15)] hover:shadow-[0_0_30px_rgba(255,255,255,0.25)] hover:-translate-y-0.5 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              Send OTP
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Sending OTP...
+                </>
+              ) : (
+                "Send OTP"
+              )}
             </button>
           </form>
         </div>
