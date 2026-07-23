@@ -169,6 +169,10 @@ export default function Booking() {
     document.title = "Book Your Chauffeur | ShineLimos LLC";
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [step, done]);
+
   const selectedVehicle: Vehicle | null = data.vehicle_details ?? availableVehicles.find((v) => v._id === data.vehicle_id) ?? null;
   const update = (k: keyof BookingData, v: any) => {
     setError(null);
