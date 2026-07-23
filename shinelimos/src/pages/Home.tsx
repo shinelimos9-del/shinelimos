@@ -441,7 +441,9 @@ export default function Home() {
                       loading="lazy"
                       width="600"
                       height="337"
-                      className="w-full h-full object-contain scale-130 group-hover:scale-140 opacity-95 group-hover:opacity-100 transition-all duration-500 drop-shadow-xl"
+                      className={`w-full h-full object-contain scale-125 -translate-y-2.5 group-hover:scale-135 opacity-95 group-hover:opacity-100 transition-all duration-500 drop-shadow-xl ${
+                        l.slug === "alexandria-va" ? "-translate-y-4 scale-115" : ""
+                      }`}
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent pointer-events-none" />
                     <div className="absolute bottom-0 inset-x-0 p-3 z-10">
