@@ -207,12 +207,12 @@ export default function FleetDetail() {
               return (
                 <div 
                   onClick={() => setActiveImg(0)}
-                  className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] aspect-[16/9] max-w-4xl mx-auto"
+                  className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2 h-72 sm:h-96 md:h-[500px] max-w-4xl mx-auto"
                 >
                   <img
                     src={vehicle.images[0]}
                     alt={`${vehicle.name}`}
-                    className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                    className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                   />
                 </div>
               );
@@ -224,12 +224,12 @@ export default function FleetDetail() {
                     <div 
                       key={index}
                       onClick={() => setActiveImg(index)}
-                      className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                      className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2"
                     >
                       <img
                         src={img}
                         alt={`${vehicle.name} - ${index + 1}`}
-                        className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                        className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                       />
                     </div>
                   ))}
@@ -241,11 +241,11 @@ export default function FleetDetail() {
                 <div className="grid grid-cols-12 gap-4 h-64 sm:h-80 md:h-[450px]">
                   <div 
                     onClick={() => setActiveImg(0)}
-                    className="col-span-8 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                    className="col-span-8 rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2"
                   >
                     <img
                       src={vehicle.images[0]}
-                      className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                      className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                     />
                   </div>
                   <div className="col-span-4 grid grid-rows-2 gap-4">
@@ -253,11 +253,11 @@ export default function FleetDetail() {
                       <div 
                         key={index}
                         onClick={() => setActiveImg(index + 1)}
-                        className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                        className="rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2"
                       >
                         <img
                           src={img}
-                          className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                          className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                         />
                       </div>
                     ))}
@@ -270,11 +270,11 @@ export default function FleetDetail() {
                 <div className="grid grid-cols-12 gap-4 h-64 sm:h-80 md:h-[480px]">
                   <div 
                     onClick={() => setActiveImg(0)}
-                    className="col-span-6 rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                    className="col-span-6 rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2"
                   >
                     <img
                       src={vehicle.images[0]}
-                      className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                      className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                     />
                   </div>
                   <div className="col-span-6 grid grid-cols-2 gap-4">
@@ -282,11 +282,11 @@ export default function FleetDetail() {
                       <div 
                         key={index}
                         onClick={() => setActiveImg(index + 1)}
-                        className={`rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d] ${index === 2 ? 'col-span-2' : ''}`}
+                        className={`rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2 ${index === 2 ? 'col-span-2' : ''}`}
                       >
                         <img
                           src={img}
-                          className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                          className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                         />
                       </div>
                     ))}
@@ -300,55 +300,55 @@ export default function FleetDetail() {
                 {/* Image 1: Left */}
                 <div 
                   onClick={() => setActiveImg(0)}
-                  className="col-span-12 sm:col-span-4 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  className="col-span-12 sm:col-span-4 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2 shadow-xl"
                 >
                   <img
                     src={vehicle.images[0]}
-                    className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                    className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                   />
                 </div>
 
                 {/* Image 2: Center */}
                 <div 
                   onClick={() => setActiveImg(1)}
-                  className="col-span-12 sm:col-span-4 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  className="col-span-12 sm:col-span-4 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2 shadow-xl"
                 >
                   <img
                     src={vehicle.images[1]}
-                    className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                    className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                   />
                 </div>
 
                 {/* Image 3: Top Right */}
                 <div 
                   onClick={() => setActiveImg(2)}
-                  className="col-span-12 sm:col-span-4 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  className="col-span-12 sm:col-span-4 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2 shadow-xl"
                 >
                   <img
                     src={vehicle.images[2]}
-                    className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                    className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                   />
                 </div>
 
                 {/* Image 4: Bottom Left */}
                 <div 
                   onClick={() => setActiveImg(3)}
-                  className="col-span-12 sm:col-span-6 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  className="col-span-12 sm:col-span-6 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2 shadow-xl"
                 >
                   <img
                     src={vehicle.images[3]}
-                    className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                    className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                   />
                 </div>
 
                 {/* Image 5: Bottom Right */}
                 <div 
                   onClick={() => setActiveImg(4)}
-                  className="col-span-12 sm:col-span-6 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/5 hover:border-white/20 group relative bg-[#0d0d0d]"
+                  className="col-span-12 sm:col-span-6 h-64 sm:h-72 md:h-80 lg:h-[360px] rounded-2xl overflow-hidden cursor-zoom-in border border-white/10 hover:border-white/30 group relative bg-gradient-to-b from-neutral-900/90 via-black to-neutral-950 flex items-center justify-center p-2 shadow-xl"
                 >
                   <img
                     src={vehicle.images[4]}
-                    className="w-full h-full object-cover transition-transform duration-750 group-hover:scale-105"
+                    className="max-w-full max-h-full w-full h-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-md"
                   />
                 </div>
               </div>
