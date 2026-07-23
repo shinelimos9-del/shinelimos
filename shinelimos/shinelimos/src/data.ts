@@ -439,7 +439,7 @@ export const LOCATIONS: Location[] = [
     slug: "tysons-corner",
     city: "Tysons Corner",
     region: "Luxury Car Rental",
-    hero: "/location car/tysons corner.webp",
+    hero: "/location car/car 2.jpg.jpeg",
     intro:
       "Tysons is where the DMV does business. If you're seeking a luxury car rental Tysons Corner or an exotic car rental McLean VA, we offer the finest prestige vehicle rental options. Rely on our premium car hire for your next corporate event or weekend getaway.",
     highlights: [
@@ -475,7 +475,7 @@ export const LOCATIONS: Location[] = [
     slug: "dulles-airport",
     city: "Dulles Airport",
     region: "Airport Transfers",
-    hero: "/location car/dulles airport.webp",
+    hero: "/location car/car.jpg.jpeg",
     intro:
       "Washington Dulles International Airport (IAD) is our most active transfer hub. With real-time flight tracking, meet & greet service, and complimentary wait time, we ensure your arrival and departure are seamless, every single time.",
     highlights: [
