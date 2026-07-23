@@ -429,7 +429,7 @@ export default function FleetDetail() {
               
               <div className="space-y-3">
                 <GoldButton to={`/booking?vehicle=${vehicle.slug}`} className="w-full justify-center">
-                  Book Now <ArrowRight className="h-4 w-4" />
+                  Quote & Book <ArrowRight className="h-4 w-4" />
                 </GoldButton>
                 <GoldButton to="/fleet" variant="outline" className="w-full justify-center">
                   <ArrowLeft className="h-4 w-4" /> View All Fleet

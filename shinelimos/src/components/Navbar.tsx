@@ -154,9 +154,9 @@ export default function Navbar() {
             </Link>
             <Link
               to="/booking"
-              className="relative flex h-[42px] items-center justify-center rounded-full bg-white px-6 text-xs font-medium tracking-[0.15em] uppercase text-black transition-transform hover:scale-105 pulse-gold"
+              className="relative flex h-[42px] items-center justify-center rounded-full bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#aa7c11] px-6 text-xs font-bold tracking-[0.15em] uppercase text-black transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(212,175,55,0.6)] pulse-gold"
             >
-              Book Now
+              Quote & Book
             </Link>
           </div>
 
@@ -189,9 +189,9 @@ export default function Navbar() {
             </a>
             <Link
               to="/booking"
-              className="rounded-xl bg-white py-3 text-center text-sm font-medium text-black"
+              className="rounded-xl bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#aa7c11] py-3 text-center text-sm font-bold text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]"
             >
-              Book Now
+              Quote & Book
             </Link>
           </div>
           <Link

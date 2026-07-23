@@ -512,7 +512,7 @@ export default function Home() {
                 Book in 60 seconds. Available 24/7. Trusted by ambassadors, executives and discerning travelers across the DMV.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-4">
-                <GoldButton to="/booking">Book Now <ArrowRight className="h-4 w-4" /></GoldButton>
+                <GoldButton to="/booking">Quote & Book <ArrowRight className="h-4 w-4" /></GoldButton>
                 <GoldButton href={`tel:${COMPANY.phoneRaw}`} variant="outline">
                   Call {COMPANY.phone}
                 </GoldButton>
