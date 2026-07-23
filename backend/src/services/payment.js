@@ -138,7 +138,16 @@ const fulfillPayment = async (sessionOrId, bookingIdParam) => {
 
     const emailAlreadySent = payment ? payment.email_sent : false;
 
-    if (payment) {
+    if (!payment) {
+      payment = new Payment({
+        booking_id: bookingId,
+        stripe_session_id: session.id,
+        amount: session.amount_total ? (session.amount_total / 100) : 0,
+        status: "completed",
+        email_sent: true,
+      });
+      await payment.save();
+    } else {
       payment.status = "completed";
       payment.utr_number = session.payment_intent || payment.utr_number;
       payment.payment_method = session.payment_method_types?.[0] || payment.payment_method;
@@ -225,8 +234,8 @@ const fulfillPayment = async (sessionOrId, bookingIdParam) => {
     // Send Emails to BOTH Booker AND Admin if not already sent
     if (!emailAlreadySent) {
       const amountPaid = payment ? payment.amount : booking.vehicle_details.estimated_price;
-      const bookerEmail = booking.contact_details.booker.email;
-      const bookerName = `${booking.contact_details.booker.first_name} ${booking.contact_details.booker.last_name}`;
+      const bookerEmail = booking.contact_details?.booker?.email || booking.contact_details?.passenger?.email || session.customer_details?.email || session.customer_email;
+      const bookerName = booking.contact_details?.booker?.first_name ? `${booking.contact_details.booker.first_name} ${booking.contact_details.booker.last_name || ''}` : 'Valued Customer';
 
       try {
         // 1. Send confirmation email to Booker
