@@ -440,7 +440,7 @@ export default function Home() {
                       loading="lazy"
                       width="600"
                       height="450"
-                      className="absolute inset-0 w-full h-full object-contain p-2 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
+                      className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent" />
                     <div className="absolute bottom-0 inset-x-0 p-4">
