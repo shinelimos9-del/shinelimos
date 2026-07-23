@@ -1,7 +1,14 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'https://blueviolet-owl-255591.hostingersite.com/api';
-export const ADMIN_BASE_URL = 'https://blueviolet-owl-255591.hostingersite.com';
+const isLocal = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) || (import.meta.env && import.meta.env.DEV);
+
+export const API_BASE_URL = isLocal
+  ? 'http://localhost:60000/api'
+  : 'https://blueviolet-owl-255591.hostingersite.com/api';
+
+export const ADMIN_BASE_URL = isLocal
+  ? 'http://localhost:60000'
+  : 'https://blueviolet-owl-255591.hostingersite.com';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -41,6 +48,11 @@ export const requestPayment = async (bookingId: string) => {
 
 export const sendPaymentLink = async (bookingId: string) => {
   const response = await api.post('/admin/send-payment-link', { booking_id: bookingId });
+  return response.data;
+};
+
+export const verifyPaymentSession = async (sessionId: string) => {
+  const response = await api.get(`/bookings/verify-payment?session_id=${encodeURIComponent(sessionId)}`);
   return response.data;
 };
 

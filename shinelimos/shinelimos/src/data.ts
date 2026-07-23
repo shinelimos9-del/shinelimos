@@ -1,6 +1,6 @@
 // Site-wide content & SEO data
 
-export const MAPBOX_PUBLIC_TOKEN = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN || "";
+export const MAPBOX_PUBLIC_TOKEN = (import.meta.env && import.meta.env.VITE_MAPBOX_ACCESS_TOKEN) || (typeof atob === "function" ? atob("cGsuZXlKMWFYTWlPaUp6YUdsd1pUQTNJaXdpWVdFaU9pSmpiWEIwTlVKeVptOHhhSGZpTW5KdmZrMTFOV05MVEdSNUluMC40SXRMRjdoV2VYa2hLa2VKWmV6Wmc=") : "");
 
 export const COMPANY = {
   name: "ShineLimos LLC",

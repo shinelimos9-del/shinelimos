@@ -44,6 +44,11 @@ export const sendPaymentLink = async (bookingId: string) => {
   return response.data;
 };
 
+export const verifyPaymentSession = async (sessionId: string) => {
+  const response = await api.get(`/bookings/verify-payment?session_id=${encodeURIComponent(sessionId)}`);
+  return response.data;
+};
+
 // Admin auth routes use the root backend path (not /api)
 export const adminLogin = async (email: string, password: string) => {
   const response = await axios.post(`${ADMIN_BASE_URL}/admin_login`, { email, password }, { withCredentials: true });

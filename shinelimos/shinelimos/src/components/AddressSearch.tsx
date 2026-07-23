@@ -54,8 +54,31 @@ export default function AddressSearch({ value, onChange, placeholder, className 
       );
       setSuggestions(response.data.suggestions || []);
       setShowDropdown(true);
-    } catch (error) {
-      console.error("Mapbox Suggest error:", error);
+    } catch (error: any) {
+      console.warn("Mapbox Searchbox error, falling back to Geocoding v5 API:", error?.message || error);
+      try {
+        const fallbackRes = await axios.get(
+          `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(searchText)}.json`,
+          {
+            params: {
+              access_token: MAPBOX_PUBLIC_TOKEN,
+              proximity: "-77.0369,38.9072",
+              limit: 5
+            }
+          }
+        );
+        const mapped = (fallbackRes.data.features || []).map((feature: any) => ({
+          mapbox_id: feature.id,
+          name: feature.text || feature.place_name,
+          full_address: feature.place_name,
+          isGeocodingV5: true,
+          featureData: feature
+        }));
+        setSuggestions(mapped);
+        setShowDropdown(true);
+      } catch (fallbackErr) {
+        console.error("Mapbox Geocoding fallback error:", fallbackErr);
+      }
     } finally {
       setLoading(false);
     }
@@ -64,6 +87,28 @@ export default function AddressSearch({ value, onChange, placeholder, className 
   const handleSelect = async (suggestion: any) => {
     setQuery(suggestion.name);
     setShowDropdown(false);
+
+    if (suggestion.isGeocodingV5 && suggestion.featureData) {
+      const feature = suggestion.featureData;
+      const context = feature.context || [];
+      const placeContext = context.find((c: any) => c.id?.startsWith("place"))?.text || "";
+      const regionContext = context.find((c: any) => c.id?.startsWith("region"))?.short_code?.replace("US-", "") || context.find((c: any) => c.id?.startsWith("region"))?.text || "";
+      const postcodeContext = context.find((c: any) => c.id?.startsWith("postcode"))?.text || "";
+
+      const details = {
+        full_address: feature.place_name || feature.text,
+        city: placeContext,
+        state: regionContext,
+        postal_code: postcodeContext,
+        lat: feature.geometry?.coordinates[1] || feature.center?.[1],
+        lng: feature.geometry?.coordinates[0] || feature.center?.[0]
+      };
+
+      onChange(details.full_address, details);
+      setQuery(details.full_address);
+      return;
+    }
+
     setLoading(true);
 
     try {

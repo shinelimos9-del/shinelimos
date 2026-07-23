@@ -20,8 +20,6 @@ exports.stripe_webhook = async (req, res) => {
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
   if (!webhookSecret) {
-    console.log("CRITICAL: STRIPE_WEBHOOK_SECRET is not defined in environment variables.");
-    
     console.error("CRITICAL: STRIPE_WEBHOOK_SECRET is not defined in environment variables.");
     return res.status(500).send("Webhook configuration error");
   }
@@ -41,4 +39,22 @@ exports.stripe_webhook = async (req, res) => {
 
   await paymentService.handleStripeWebhook(event);
   res.json({ received: true });
+};
+
+exports.verify_payment = async (req, res) => {
+  try {
+    const { session_id } = req.query;
+    if (!session_id) {
+      return res.status(400).json({ success: false, message: "session_id is required" });
+    }
+
+    const result = await paymentService.verifyStripePayment(session_id);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("verify_payment controller error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
 };

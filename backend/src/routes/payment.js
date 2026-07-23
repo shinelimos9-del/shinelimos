@@ -9,4 +9,7 @@ router.post("/admin/send-payment-link", admin_auth, paymentController.send_payme
 // Stripe webhook (raw body handled in index.js)
 router.post("/stripe/webhook", paymentController.stripe_webhook);
 
+// Frontend Payment Verification on Payment Success Page
+router.get("/bookings/verify-payment", paymentController.verify_payment);
+
 module.exports = router;
