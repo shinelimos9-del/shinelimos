@@ -24,17 +24,17 @@ export default function Locations() {
           {LOCATIONS.map((l) => (
             <Link key={l.slug} to={`/locations/${l.slug}`}>
               <TiltCard intensity={15} className="rounded-2xl">
-                <div className="relative aspect-4/3 rounded-2xl overflow-hidden glass group">
+                <div className="relative aspect-4/3 rounded-2xl overflow-hidden glass group bg-neutral-900/60 border border-white/10 flex items-center justify-center">
                   <img
                     src={l.hero}
                     alt={l.city}
                     loading="lazy"
-                    className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700"
+                    className="w-full h-full object-contain p-3 opacity-90 group-hover:opacity-100 group-hover:scale-105 transition-all duration-500 drop-shadow-xl"
                   />
-                  <div className="absolute inset-0 bg-linear-to-t from-black via-black/30 to-transparent" />
-                  <div className="absolute bottom-0 inset-x-0 p-4">
+                  <div className="absolute inset-0 bg-linear-to-t from-black via-black/40 to-transparent pointer-events-none" />
+                  <div className="absolute bottom-0 inset-x-0 p-4 z-10">
                     <div className="flex items-center gap-1.5 mb-1">
-                      <MapPin className="h-3.5 w-3.5 text-white/80 shrink-0" />
+                      <MapPin className="h-3.5 w-3.5 text-[#c9a96e] shrink-0" />
                       <div className="font-bold text-sm text-white uppercase tracking-wider leading-tight">
                         {l.city}
                       </div>
