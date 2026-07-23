@@ -453,8 +453,8 @@ export default function Home() {
                       height="337"
                       className={`w-full h-full ${
                         l.hero.endsWith('.jpeg') || l.hero.endsWith('.jpg') 
-                          ? "object-cover scale-105 group-hover:scale-110" 
-                          : "object-contain scale-135 sm:scale-140 group-hover:scale-145"
+                          ? "object-cover scale-100 group-hover:scale-105" 
+                          : "object-contain scale-120 sm:scale-125 group-hover:scale-130"
                       } opacity-95 group-hover:opacity-100 transition-all duration-500 drop-shadow-xl`}
                     />
                   </div>
