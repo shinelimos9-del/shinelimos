@@ -393,7 +393,7 @@ export default function Terms() {
             </div>
           </Reveal>
         </div>
-      SectionBackground>
+      </SectionBackground>
     </div>
   );
 }
