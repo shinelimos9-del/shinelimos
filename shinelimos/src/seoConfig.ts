@@ -45,6 +45,11 @@ export const SEO_CONFIG: Record<string, SEOData> = {
     description: "Find answers to your luxury transportation questions. Transportation support and customer assistance for our premium car service.",
     keywords: "transportation support, customer assistance, transportation inquiry, booking assistance, luxury limo service FAQ, airport transportation questions"
   },
+  "cancellation-policy": {
+    title: "Cancellation Policy | ShineLimos",
+    description: "Review our reservation cancellation guidelines, refund policies, and modification terms for executive sedan, SUV, sprinter van, and limo services.",
+    keywords: "cancellation policy, refund policy, reservation cancellation, ride modification, limo cancellation rules"
+  },
   "airport-limo-service": {
     title: "Washington DC Airport Limo Service | Airport Executive Transfer",
     description: "DC airport limo service, luxury airport shuttle service, airport luxury transfers.",

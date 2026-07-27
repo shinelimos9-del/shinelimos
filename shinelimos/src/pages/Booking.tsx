@@ -493,11 +493,10 @@ export default function Booking() {
             <div className="w-20 h-20 rounded-full glass-gold flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="h-10 w-10 text-gold" />
             </div>
-            <h2 className="font-serif-lux text-3xl gradient-gold-text">Thank you, {data.firstName || "guest"}!</h2>
-            <p className="text-white/70 mt-3">Confirmation #CN-{Math.floor(100000 + Math.random() * 900000)}</p>
-            <p className="text-sm text-white/60 mt-4 leading-relaxed">
-              A reservation specialist will contact you within 15 minutes at <span className="text-gold">{data.primaryPhone}</span> to
-              confirm details and process a soft authorization on your card. No charge until 24 hours before pickup.
+            <h2 className="font-serif-lux text-2xl sm:text-3xl gradient-gold-text">Thank you for your reservation request!</h2>
+            <p className="text-white/70 mt-3 font-mono text-sm">Confirmation #CN-{Math.floor(100000 + Math.random() * 900000)}</p>
+            <p className="text-sm text-white/70 mt-4 leading-relaxed font-light">
+              Your booking request has been received. A reservation specialist will contact you within 15 minutes to confirm your trip details and verify your payment information. Your card will not be charged at this time. Once your reservation is confirmed, your card will be charged 24 hours before your scheduled pickup.
             </p>
             <div className="mt-8 grid sm:grid-cols-2 gap-4 text-left text-sm">
               <Detail label="Vehicle" value={selectedVehicle?.vehicle_name || "Not selected"} />

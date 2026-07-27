@@ -80,6 +80,7 @@ export default function Footer() {
               <li><Link to="/about" className="text-white/65 hover:text-gold">About Us</Link></li>
               <li><Link to="/fleet" className="text-white/65 hover:text-gold">Our Fleet</Link></li>
               <li><Link to="/booking" className="text-white/65 hover:text-gold">Reservations</Link></li>
+              <li><Link to="/cancellation-policy" className="text-white/65 hover:text-gold">Cancellation Policy</Link></li>
               <li><Link to="/contact" className="text-white/65 hover:text-gold">Contact</Link></li>
             </ul>
             <div className="mt-6 glass-gold rounded-xl p-4">
@@ -91,9 +92,10 @@ export default function Footer() {
 
         <div className="mt-12 pt-8 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-white/45">
           <div>© {new Date().getFullYear()} {COMPANY.name}. All rights reserved. | Built by RizeWorld</div>
-          <div className="flex gap-6">
+          <div className="flex flex-wrap justify-center gap-6">
             <Link to="/privacy" className="hover:text-gold">Privacy Policy</Link>
             <Link to="/terms" className="hover:text-gold">Terms & Conditions</Link>
+            <Link to="/cancellation-policy" className="hover:text-gold">Cancellation Policy</Link>
             <Link to="/faq" className="hover:text-gold">FAQ</Link>
           </div>
         </div>

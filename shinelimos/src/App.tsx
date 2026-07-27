@@ -23,6 +23,7 @@ const Booking = React.lazy(() => import("./pages/Booking"));
 const PaymentSuccess = React.lazy(() => import("./pages/PaymentSuccess"));
 const Terms = React.lazy(() => import("./pages/Terms"));
 const Privacy = React.lazy(() => import("./pages/Privacy"));
+const CancellationPolicy = React.lazy(() => import("./pages/CancellationPolicy"));
 const Faq = React.lazy(() => import("./pages/Faq"));
 
 const AdminLogin = React.lazy(() => import("./pages/admin/AdminLogin"));
@@ -68,6 +69,7 @@ function AppContent() {
           <Route path="/payment-cancelled" element={<div className="text-white text-center py-20">Payment was cancelled. Please contact support if you have any questions.</div>} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/cancellation-policy" element={<CancellationPolicy />} />
           <Route path="/faq" element={<Faq />} />
           
           {/* Admin Auth Routes */}
