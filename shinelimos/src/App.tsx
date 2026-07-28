@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Background from "./components/Background";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -26,6 +26,16 @@ const Privacy = React.lazy(() => import("./pages/Privacy"));
 const CancellationPolicy = React.lazy(() => import("./pages/CancellationPolicy"));
 const Faq = React.lazy(() => import("./pages/Faq"));
 
+const AdminLogin = React.lazy(() => import("./pages/admin/AdminLogin"));
+const ForgotPassword = React.lazy(() => import("./pages/admin/ForgotPassword"));
+const VerifyOtp = React.lazy(() => import("./pages/admin/VerifyOtp"));
+const ResetPassword = React.lazy(() => import("./pages/admin/ResetPassword"));
+const AdminLayout = React.lazy(() => import("./layouts/admin/AdminLayout"));
+const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminVehicles = React.lazy(() => import("./pages/admin/AdminVehicles"));
+const AdminBookings = React.lazy(() => import("./pages/admin/AdminBookings"));
+const AdminNotifications = React.lazy(() => import("./pages/admin/AdminNotifications"));
+
 // Loading Fallback
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-screen bg-black">
@@ -34,12 +44,15 @@ const PageLoader = () => (
 );
 
 function AppContent() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin") || location.pathname === "/forgot-password" || location.pathname === "/verify-otp" || location.pathname === "/reset-password";
+
   return (
     <>
       <Background />
-      <Navbar />
+      {!isAdminRoute && <Navbar />}
       
-      <main className="relative">
+      <main className={isAdminRoute ? "" : "relative"}>
         <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -58,13 +71,29 @@ function AppContent() {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/cancellation-policy" element={<CancellationPolicy />} />
             <Route path="/faq" element={<Faq />} />
+            
+            {/* Admin Auth Routes */}
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/verify-otp" element={<VerifyOtp />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
+            {/* Admin Dashboard Routes */}
+            <Route path="/admin-dashboard" element={<AdminLayout />}>
+              <Route index element={<AdminDashboard />} />
+              <Route path="vehicles" element={<AdminVehicles />} />
+              <Route path="bookings" element={<AdminBookings />} />
+              <Route path="notifications" element={<AdminNotifications />} />
+              <Route path="*" element={<div className="text-white text-center py-20 text-xl font-light">Page under construction</div>} />
+            </Route>
+
             <Route path="*" element={<Home />} />
           </Routes>
         </Suspense>
       </main>
 
-      <Footer />
-      <CallNowButton />
+      {!isAdminRoute && <Footer />}
+      {!isAdminRoute && <CallNowButton />}
     </>
   );
 }
