@@ -55,6 +55,17 @@ function safeNumber(val, defaultVal = 0) {
 }
 
 /**
+ * Safely parse hours or duration value from string or number (e.g. "3 Hours" -> 3)
+ */
+function parseHours(val) {
+  if (val === null || val === undefined || val === '') return 0;
+  if (typeof val === 'number') return safeNumber(val, 0);
+  const str = String(val);
+  const match = str.match(/(\d+(?:\.\d+)?)/);
+  return match ? safeNumber(match[1], 0) : 0;
+}
+
+/**
  * Round number to exactly 2 decimal places to prevent floating point inaccuracies
  */
 function round2(val) {
@@ -342,6 +353,7 @@ module.exports = {
   calculateQuote,
   round2,
   safeNumber,
+  parseHours,
   isAirportPickup,
   isLateNightTime,
   isHolidayDate,
