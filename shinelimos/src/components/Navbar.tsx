@@ -147,12 +147,6 @@ export default function Navbar() {
           {/* Right CTAs */}
           <div className="hidden xl:flex items-center gap-4">
             <Link
-              to="/admin-login"
-              className="relative flex h-[42px] items-center justify-center rounded-full border border-white/20 bg-black/50 px-6 text-xs font-medium tracking-[0.15em] uppercase text-white transition-all hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-            >
-              Admin Login
-            </Link>
-            <Link
               to="/booking"
               className="relative flex h-[42px] items-center justify-center rounded-full bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#aa7c11] px-6 text-xs font-bold tracking-[0.15em] uppercase text-black transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(212,175,55,0.6)] pulse-gold"
             >
@@ -194,12 +188,6 @@ export default function Navbar() {
               Quote & Book
             </Link>
           </div>
-          <Link
-            to="/admin-login"
-            className="block w-full rounded-xl border border-white/20 bg-black/50 mt-3 py-3 text-center text-sm font-medium text-white transition-all hover:bg-white/10 hover:shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-          >
-            Admin Login
-          </Link>
         </div>
       </div>
     </header>
