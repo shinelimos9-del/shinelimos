@@ -109,22 +109,22 @@ export default function AdminDashboard() {
       return {
         ...prev,
         recent_bookings: prev.recent_bookings.map((r: any) =>
-          r.id === bookingId ? { ...r, ...updates } : r
+          (r.id === bookingId || r._id === bookingId) ? { ...r, ...updates } : r
         ),
       };
     });
 
     try {
       const response = await toggleVehicleTracking(bookingId, updates);
-      if (response.success) {
+      if (response && response.success) {
         fetchDashboardData();
       } else {
-        alert("Failed to update vehicle tracking status");
+        alert(response?.message || "Failed to update vehicle tracking status");
         fetchDashboardData();
       }
-    } catch (err) {
-      console.error(err);
-      alert("Error updating vehicle tracking status");
+    } catch (err: any) {
+      console.error("Error updating tracking:", err);
+      alert(err.response?.data?.message || err.message || "Error updating vehicle tracking status");
       fetchDashboardData();
     }
   };
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
       return {
         ...prev,
         recent_bookings: prev.recent_bookings.map((r: any) =>
-          r.id === bookingId ? { ...r, stop_in_progress: nextState } : r
+          (r.id === bookingId || r._id === bookingId) ? { ...r, stop_in_progress: nextState } : r
         ),
       };
     });
@@ -144,18 +144,18 @@ export default function AdminDashboard() {
     try {
       const action = currentStopInProgress ? 'end' : 'start';
       const response = await toggleStopTimer(bookingId, action);
-      if (response.success) {
+      if (response && response.success) {
         if (action === 'end') {
           alert(response.message || "Stop ended and pricing added to invoice!");
         }
         fetchDashboardData();
       } else {
-        alert(response.message || "Failed to update stop timer");
+        alert(response?.message || "Failed to update stop timer");
         fetchDashboardData();
       }
     } catch (err: any) {
       console.error("Error toggling stop timer:", err);
-      alert(err.response?.data?.message || "Error updating stop timer");
+      alert(err.response?.data?.message || err.message || "Error updating stop timer");
       fetchDashboardData();
     }
   };

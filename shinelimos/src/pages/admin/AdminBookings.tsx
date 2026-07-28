@@ -76,59 +76,41 @@ export default function AdminBookings() {
   };
 
   const handleToggleTracking = async (bookingId: string, updates: { vehicle_running?: boolean; stop_in_progress?: boolean }) => {
-    setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, ...updates } : b));
+    setBookings(prev => prev.map(b => (b._id === bookingId || b.id === bookingId) ? { ...b, ...updates } : b));
     try {
       const response = await toggleVehicleTracking(bookingId, updates);
-      if (response.success) {
+      if (response && response.success) {
         fetchBookings();
       } else {
-        alert("Failed to update vehicle tracking status");
+        alert(response?.message || "Failed to update vehicle tracking status");
         fetchBookings();
       }
-    } catch (err) {
-      console.error(err);
-      alert("Error updating vehicle tracking status");
+    } catch (err: any) {
+      console.error("Error updating tracking:", err);
+      alert(err.response?.data?.message || err.message || "Error updating vehicle tracking status");
       fetchBookings();
     }
   };
 
   const handleToggleStopTimer = async (bookingId: string, currentStopInProgress: boolean) => {
     const nextState = !currentStopInProgress;
-    setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, stop_in_progress: nextState } : b));
+    setBookings(prev => prev.map(b => (b._id === bookingId || b.id === bookingId) ? { ...b, stop_in_progress: nextState } : b));
     try {
       const action = currentStopInProgress ? 'end' : 'start';
       const response = await toggleStopTimer(bookingId, action);
-      if (response.success) {
+      if (response && response.success) {
         if (action === 'end') {
           alert(response.message || "Stop ended and pricing added to invoice!");
         }
         fetchBookings();
       } else {
-        alert(response.message || "Failed to update stop timer");
+        alert(response?.message || "Failed to update stop timer");
         fetchBookings();
       }
     } catch (err: any) {
       console.error("Error toggling stop timer:", err);
-      alert(err.response?.data?.message || "Error updating stop timer");
+      alert(err.response?.data?.message || err.message || "Error updating stop timer");
       fetchBookings();
-    }
-  };
-
-  const handleSendPaymentLink = async (bookingId: string) => {
-    try {
-      setSendingPaymentId(bookingId);
-      const response = await sendPaymentLink(bookingId);
-      if (response.success) {
-        alert("Payment link sent to customer!");
-        fetchBookings();
-      } else {
-        alert(response.message || "Failed to send payment link");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Error sending payment link");
-    } finally {
-      setSendingPaymentId(null);
     }
   };
 

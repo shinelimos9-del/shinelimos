@@ -95,7 +95,6 @@ exports.toggle_vehicleTracking = async (req, res) => {
 		const trackingData = req.body;
 		
 		const result = await bookingService.toggleVehicleTracking(id, trackingData);
-		if (!result.success) return res.status(400).json(result);
 		return res.status(200).json(result);
 	} catch (error) {
 		console.log("toggle_vehicleTracking controller error:", error);
@@ -110,10 +109,6 @@ exports.toggle_stopTimer = async (req, res) => {
 		console.log(`[toggle_stopTimer] Called for booking ID: ${id}, action: ${action}`);
 		
 		const result = await bookingService.toggleStopTimer(id, action);
-		if (!result.success) {
-			console.warn(`[toggle_stopTimer] Failed for ID ${id}:`, result.message);
-			return res.status(400).json(result);
-		}
 		return res.status(200).json(result);
 	} catch (error) {
 		console.error("toggle_stopTimer controller error:", error);
