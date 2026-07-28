@@ -423,7 +423,7 @@ export default function AdminDashboard() {
                   <td className="p-4">
                     <div className="flex flex-col gap-1 text-[10px]">
                       <button
-                        onClick={() => handleToggleTracking(row.id, { vehicle_running: !row.vehicle_running })}
+                        onClick={() => handleToggleTracking(row.id || row._id, { vehicle_running: !row.vehicle_running })}
                         className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 transition-all ${
                           row.vehicle_running
                             ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30 animate-pulse"
@@ -435,7 +435,7 @@ export default function AdminDashboard() {
                         {row.vehicle_running ? "Running" : "Idle"}
                       </button>
                       <button
-                        onClick={() => handleToggleStopTimer(row.id, row.stop_in_progress)}
+                        onClick={() => handleToggleStopTimer(row.id || row._id, row.stop_in_progress)}
                         className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 transition-all ${
                           row.stop_in_progress
                             ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse"

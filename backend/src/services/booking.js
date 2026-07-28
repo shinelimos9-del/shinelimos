@@ -469,6 +469,10 @@ exports.updateBookingStatus = async (id, status) => {
 
 exports.toggleVehicleTracking = async (id, trackingData = {}) => {
 	try {
+		if (!mongoose.Types.ObjectId.isValid(id)) {
+			return { success: false, message: `Invalid booking ID format: ${id}` };
+		}
+
 		const updateFields = { updated_at: Date.now() };
 		if (trackingData.vehicle_running !== undefined) {
 			updateFields.vehicle_running = Boolean(trackingData.vehicle_running);
@@ -483,7 +487,7 @@ exports.toggleVehicleTracking = async (id, trackingData = {}) => {
 			{ new: true }
 		);
 
-		if (!updated) return { success: false, message: "Booking not found" };
+		if (!updated) return { success: false, message: `Booking with ID ${id} not found` };
 		return {
 			success: true,
 			message: "Vehicle tracking status updated",
@@ -493,14 +497,25 @@ exports.toggleVehicleTracking = async (id, trackingData = {}) => {
 		};
 	} catch (error) {
 		console.log("toggleVehicleTracking error:", error);
-		return { success: false, message: error.message || error };
+		return { success: false, message: error.message || String(error) };
 	}
 };
 
-exports.toggleStopTimer = async (id, action) => {
+exports.toggleStopTimer = async (id, inputAction) => {
 	try {
+		if (!mongoose.Types.ObjectId.isValid(id)) {
+			return { success: false, message: `Invalid booking ID format: ${id}` };
+		}
+
 		const booking = await Booking.findById(id);
-		if (!booking) return { success: false, message: "Booking not found" };
+		if (!booking) {
+			return { success: false, message: `Booking with ID ${id} not found` };
+		}
+
+		let action = String(inputAction || "").toLowerCase();
+		if (action !== "start" && action !== "end") {
+			action = booking.stop_in_progress ? "end" : "start";
+		}
 
 		if (action === "start") {
 			booking.stop_in_progress = true;
@@ -510,11 +525,12 @@ exports.toggleStopTimer = async (id, action) => {
 			return {
 				success: true,
 				message: "Stop timer started",
+				action: "start",
 				stop_in_progress: true,
 				active_stop_start: booking.active_stop_start,
 				booking
 			};
-		} else if (action === "end") {
+		} else {
 			const startTime = booking.active_stop_start ? new Date(booking.active_stop_start).getTime() : Date.now();
 			const elapsedMs = Math.max(0, Date.now() - startTime);
 			const elapsedMins = Math.max(1, Math.ceil(elapsedMs / 60000));
@@ -561,6 +577,7 @@ exports.toggleStopTimer = async (id, action) => {
 			return {
 				success: true,
 				message: `Stop ended (${elapsedMins} mins elapsed). Added 1 Additional Stop. Invoice updated to $${quote.formattedGrandTotal}`,
+				action: "end",
 				stop_in_progress: false,
 				elapsed_minutes: elapsedMins,
 				total_waiting_minutes: totalWaitMins,
@@ -569,11 +586,9 @@ exports.toggleStopTimer = async (id, action) => {
 				quote,
 				booking
 			};
-		} else {
-			return { success: false, message: "Invalid action. Use 'start' or 'end'" };
 		}
 	} catch (error) {
 		console.log("toggleStopTimer error:", error);
-		return { success: false, message: error.message || error };
+		return { success: false, message: error.message || String(error) };
 	}
 };
