@@ -954,6 +954,7 @@ function Step3Summary({ data, vehicle }: any) {
         <Detail label="Passengers" value={String(data.pax)} />
         <Detail label="Luggage" value={data.bags > 0 ? `${data.bags} ${data.bagSize ? `(${data.bagSize})` : ""}` : "None"} />
         <Detail label="Occasion" value={data.occasion || "Not specified"} />
+        <Detail label="Estimated Total" value={vehicle?.estimated_price ? `$${vehicle.estimated_price}` : "Calculated at booking"} />
       </div>
     </>
   );

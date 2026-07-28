@@ -4,6 +4,7 @@ const Admin = require("../models/adminModel");
 const moment = require("moment");
 const socketUtil = require("../../socket");
 const { sendEmail } = require("../utils/emailService");
+const pricingEngine = require("../utils/pricingEngine");
 
 // Helper to notify admin via socket and save to DB
 const notifyAdmin = async (booking, type = "Booking", message = "New booking received!") => {
@@ -254,57 +255,36 @@ exports.initiateBooking = async (tripData) => {
 			parseInt(v.luggage_capacity) >= totalLuggage
 		);
 
-		// 5. Calculate pricing for each vehicle
+		// 5. Calculate pricing for each vehicle using Instant Quote Pricing Engine
 		const vehiclesWithPrice = await Promise.all(suitableVehicles.map(async (vehicle) => {
 			let totalPrice = 0;
-
-			// Support for old string-based pricing (fallback)
-			let pricing = {
-				base_price: 0,
-				price_per_minute: 0,
-				price_per_mile: 0,
-				price_per_hour: 0
-			};
-
-			if (vehicle.price && typeof vehicle.price === 'object' && vehicle.price.price_per_hour !== undefined) {
-				pricing = vehicle.price;
-			} else if (vehicle.price) {
-				const priceNum = parseFloat(vehicle.price) || 0;
-				pricing.base_price = priceNum;
-				pricing.price_per_hour = priceNum;
-			}
+			let lastQuote = null;
 
 			for (const segment of processedTripData) {
 				const durationHours = parseDurationToHours(segment.duration);
 				const durationMinutes = parseDurationToMinutes(segment.duration);
-				const distanceMiles = segment.distance_miles || 10;
+				const distanceMiles = segment.distance_miles || 0;
 
-				console.log(`[Pricing] Calculating segment for vehicle: ${vehicle.vehicle_name}`);
-				console.log(`[Pricing] Trip Type: ${segment.trip_type}, Distance: ${distanceMiles.toFixed(2)} mi, Duration: ${segment.duration}`);
+				const quote = pricingEngine.calculateQuote({
+					vehicle: vehicle,
+					bookingType: segment.trip_type,
+					distanceMiles: distanceMiles,
+					durationMinutes: durationMinutes,
+					durationHours: durationHours,
+					pickupLocation: segment.pickup_location,
+					pickupTime: segment.start_time,
+					pickupDate: segment.date,
+					flightInfo: segment.flight_details,
+					occasion: segment.occasion,
+					additionalStopsCount: processedTripData.length > 1 ? processedTripData.length - 1 : 0,
+				});
 
-				if (segment.trip_type === "Hourly") {
-					const segmentPrice = Math.max(1, durationHours) * (pricing.price_per_hour || 0);
-					console.log(`[Pricing] Hourly Calc: ${Math.max(1, durationHours)} hrs * $${pricing.price_per_hour}/hr = $${segmentPrice}`);
-					totalPrice += segmentPrice;
-				} else if (segment.trip_type === "Round Trip") {
-					const base = (pricing.base_price || 0);
-					const distPrice = (distanceMiles * 2 * (pricing.price_per_mile || 0));
-					const timePrice = (durationMinutes * (pricing.price_per_minute || 0));
-					const segmentPrice = base + distPrice + timePrice;
-					
-					console.log(`[Pricing] Round Trip Calc: Base($${base}) + Distance(${distanceMiles.toFixed(2)}*2 * $${pricing.price_per_mile}) + Time(${durationMinutes}m * $${pricing.price_per_minute}) = $${segmentPrice}`);
-					totalPrice += segmentPrice;
-				} else {
-					const base = (pricing.base_price || 0);
-					const distPrice = (distanceMiles * (pricing.price_per_mile || 0));
-					const timePrice = (durationMinutes * (pricing.price_per_minute || 0));
-					const segmentPrice = base + distPrice + timePrice;
-
-					console.log(`[Pricing] One Way Calc: Base($${base}) + Distance(${distanceMiles.toFixed(2)} * $${pricing.price_per_mile}) + Time(${durationMinutes}m * $${pricing.price_per_minute}) = $${segmentPrice}`);
-					totalPrice += segmentPrice;
-				}
+				lastQuote = quote;
+				totalPrice += quote.breakdown.grandTotal;
 			}
-			console.log(`[Pricing] Total Estimated Price for ${vehicle.vehicle_name}: $${totalPrice.toFixed(2)}`);
+
+			const finalEstimatedPrice = pricingEngine.round2(totalPrice).toFixed(2);
+			console.log(`[Pricing Engine] Total Estimated Price for ${vehicle.vehicle_name}: $${finalEstimatedPrice}`);
 
 			return {
 				_id: vehicle._id,
@@ -312,7 +292,8 @@ exports.initiateBooking = async (tripData) => {
 				image: vehicle.image,
 				passenger_capacity: vehicle.passenger_capacity,
 				luggage_capacity: vehicle.luggage_capacity,
-				estimated_price: totalPrice.toFixed(2)
+				estimated_price: finalEstimatedPrice,
+				price_breakdown: lastQuote ? lastQuote.breakdown : null
 			};
 		}));
 
