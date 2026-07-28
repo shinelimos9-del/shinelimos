@@ -517,6 +517,10 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
     }
 
     const tripSegment = booking.trip_details?.[0] || {};
+    const initialBookingPrice = booking.price_breakdown?.mainBookingPrice
+      || booking.price_breakdown?.subtotal
+      || booking.price_breakdown?.rawSubtotal
+      || booking.vehicle_details?.estimated_price;
 
     const quote = pricingEngine.calculateQuote({
       vehicle: booking.vehicle_details,
@@ -538,6 +542,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
       parking: extraOptions.parking,
       isHoliday: extraOptions.isHoliday,
       isLateNight: extraOptions.isLateNight,
+      initialBookingSubtotal: initialBookingPrice,
     });
 
     const finalGrandTotal = quote.breakdown.grandTotal;

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, Car, Play, Square, Clock, X } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, Car, Play, Square, X } from "lucide-react";
 import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendPaymentLink, sendFinalInvoice, toggleVehicleTracking, toggleStopTimer } from "../../utils/api";
-import { calculateQuote } from "../../utils/pricingEngine";
+import { calculateQuote, parseHours } from "../../utils/pricingEngine";
 
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
@@ -147,24 +147,6 @@ export default function AdminDashboard() {
     } catch (error: any) {
       console.error("Error sending payment link:", error);
       alert(error.response?.data?.message || "Failed to send payment link.");
-    } finally {
-      setSendingPaymentId(null);
-    }
-  };
-
-  const handleSendFinalInvoiceQuick = async (bookingId: string) => {
-    try {
-      setSendingPaymentId(bookingId);
-      const response = await sendFinalInvoice(bookingId, {});
-      if (response.success) {
-        alert(`Final trip invoice and payment link sent successfully to booker & passenger!\nGrand Total: $${response.quote?.formattedGrandTotal || ''}`);
-        fetchDashboardData();
-      } else {
-        alert(response.message || "Failed to send final invoice");
-      }
-    } catch (error: any) {
-      console.error("Error sending final invoice:", error);
-      alert(error.response?.data?.message || "Failed to send final invoice.");
     } finally {
       setSendingPaymentId(null);
     }
@@ -573,16 +555,30 @@ export default function AdminDashboard() {
 
       {/* FINAL INVOICE & TRIP EXTRAS TRACKING MODAL */}
       {finalModalBooking && (() => {
+        const tripSegment = finalModalBooking.trip_details?.[0] || {};
+        const distance = tripSegment.distance_miles || tripSegment.miles || finalModalBooking.price_breakdown?.effectiveMiles || 0;
+        const durationMins = tripSegment.duration ? parseHours(tripSegment.duration) * 60 : (finalModalBooking.price_breakdown?.durationMinutes || 0);
+
+        // Stored initial main booking subtotal from database creation time
+        const rawPriceStr = typeof finalModalBooking.price === 'string' ? finalModalBooking.price.replace(/[^0-9.]/g, '') : finalModalBooking.price;
+        const initialSubtotal = finalModalBooking.price_breakdown?.mainBookingPrice
+          || finalModalBooking.price_breakdown?.subtotal
+          || finalModalBooking.price_breakdown?.rawSubtotal
+          || finalModalBooking.vehicle_details?.estimated_price
+          || parseFloat(rawPriceStr)
+          || 0;
+
         const liveQuote = calculateQuote({
           vehicle: finalModalBooking.vehicle_details,
-          bookingType: finalModalBooking.trip_details?.[0]?.trip_type || 'one-way',
-          distanceMiles: finalModalBooking.trip_details?.[0]?.distance_miles || 0,
-          durationMinutes: 0,
-          pickupLocation: finalModalBooking.trip_details?.[0]?.pickup_location,
-          pickupTime: finalModalBooking.trip_details?.[0]?.start_time,
-          pickupDate: finalModalBooking.trip_details?.[0]?.date,
-          flightInfo: finalModalBooking.trip_details?.[0]?.flight_details,
-          occasion: finalModalBooking.trip_details?.[0]?.occasion,
+          bookingType: tripSegment.trip_type || 'one-way',
+          distanceMiles: distance,
+          durationMinutes: durationMins,
+          durationHours: parseHours(tripSegment.duration) || finalModalBooking.price_breakdown?.durationHours || 0,
+          pickupLocation: tripSegment.pickup_location,
+          pickupTime: tripSegment.start_time,
+          pickupDate: tripSegment.date,
+          flightInfo: tripSegment.flight_details,
+          occasion: tripSegment.occasion,
           waitingMinutes: finalOptions.waitingMinutes,
           additionalStopsCount: finalOptions.stopsCount,
           childSeatsCount: finalOptions.childSeatsCount,
@@ -592,6 +588,7 @@ export default function AdminDashboard() {
           parking: finalOptions.parking,
           isHoliday: finalOptions.isHoliday,
           isLateNight: finalOptions.isLateNight,
+          initialBookingSubtotal: initialSubtotal,
         });
 
         return (
@@ -766,9 +763,7 @@ export default function AdminDashboard() {
                   <h4 className="text-xs font-bold uppercase tracking-wider text-gold border-b border-white/10 pb-2 mb-3">
                     📊 Live Final Invoice Calculation Breakdown
                   </h4>
-                  <div className="flex justify-between text-white/70"><span>Base Fare:</span><span>${liveQuote.breakdown.baseFare.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-white/70"><span>Mileage Charge:</span><span>${liveQuote.breakdown.mileageCharge.toFixed(2)}</span></div>
-                  {liveQuote.isHourly && <div className="flex justify-between text-white/70"><span>Hourly Charge:</span><span>${liveQuote.breakdown.hourlyCharge.toFixed(2)}</span></div>}
+                  <div className="flex justify-between font-medium text-white/90"><span>Main Booking Price (Booked Base):</span><span>${liveQuote.breakdown.mainBookingPrice.toFixed(2)}</span></div>
                   {liveQuote.isAirportPickup && <div className="flex justify-between text-emerald-400"><span>Airport Pickup Fee (Meet & Greet Included):</span><span>${liveQuote.breakdown.airportPickupFee.toFixed(2)}</span></div>}
                   {liveQuote.breakdown.additionalStopsFee > 0 && <div className="flex justify-between text-white/70"><span>Additional Stops Fee:</span><span>${liveQuote.breakdown.additionalStopsFee.toFixed(2)}</span></div>}
                   {liveQuote.breakdown.waitingTimeFee > 0 && <div className="flex justify-between text-amber-300"><span>Waiting Time Fee:</span><span>${liveQuote.breakdown.waitingTimeFee.toFixed(2)}</span></div>}
@@ -776,7 +771,6 @@ export default function AdminDashboard() {
                   {liveQuote.breakdown.cleaningFee > 0 && <div className="flex justify-between text-rose-300"><span>Cleaning Fee:</span><span>${liveQuote.breakdown.cleaningFee.toFixed(2)}</span></div>}
                   {liveQuote.breakdown.tolls > 0 && <div className="flex justify-between text-white/70"><span>Tolls:</span><span>${liveQuote.breakdown.tolls.toFixed(2)}</span></div>}
                   {liveQuote.breakdown.parking > 0 && <div className="flex justify-between text-white/70"><span>Parking:</span><span>${liveQuote.breakdown.parking.toFixed(2)}</span></div>}
-                  {liveQuote.breakdown.minimumFareAdjustment > 0 && <div className="flex justify-between text-blue-300"><span>Minimum Fare Adjustment:</span><span>${liveQuote.breakdown.minimumFareAdjustment.toFixed(2)}</span></div>}
                   <div className="flex justify-between font-bold text-white border-t border-white/10 pt-2"><span>Subtotal:</span><span>${liveQuote.breakdown.subtotal.toFixed(2)}</span></div>
                   {liveQuote.breakdown.lateNightSurcharge > 0 && <div className="flex justify-between text-amber-300"><span>Late Night Surcharge (15%):</span><span>${liveQuote.breakdown.lateNightSurcharge.toFixed(2)}</span></div>}
                   {liveQuote.breakdown.holidaySurcharge > 0 && <div className="flex justify-between text-amber-300"><span>Holiday Surcharge (20%):</span><span>${liveQuote.breakdown.holidaySurcharge.toFixed(2)}</span></div>}

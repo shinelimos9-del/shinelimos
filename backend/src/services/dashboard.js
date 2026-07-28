@@ -79,6 +79,7 @@ exports.getDashboardStats = async () => {
             })),
             recent_bookings: recentBookings.map(b => ({
                 id: b._id,
+                _id: b._id,
                 name: b.contact_details?.booker ? `${b.contact_details.booker.first_name || ""} ${b.contact_details.booker.last_name || ""}`.trim() || "Unknown" : "Unknown",
                 email: b.contact_details?.booker?.email || "N/A",
                 trip: b.trip_details?.[0]?.trip_type || "N/A",
@@ -88,7 +89,13 @@ exports.getDashboardStats = async () => {
                 status: b.booking_status || "pending",
                 vehicle_running: Boolean(b.vehicle_running),
                 stop_in_progress: Boolean(b.stop_in_progress),
-                active_stop_start: b.active_stop_start
+                active_stop_start: b.active_stop_start,
+                vehicle_details: b.vehicle_details,
+                trip_details: b.trip_details,
+                contact_details: b.contact_details,
+                price_breakdown: b.price_breakdown,
+                waiting_minutes: b.waiting_minutes || 0,
+                additional_stops_count: b.additional_stops_count || 0
             }))
         };
     } catch (error) {

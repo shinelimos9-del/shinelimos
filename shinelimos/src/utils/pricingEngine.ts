@@ -159,8 +159,8 @@ export interface QuoteOptions {
   type?: string;
   distanceMiles?: number;
   durationMinutes?: number;
-  durationHours?: number | string;
-  duration?: string | number;
+  durationHours?: number;
+  duration?: any;
   pickupLocation?: string;
   pickupTime?: string;
   pickupDate?: string;
@@ -177,9 +177,11 @@ export interface QuoteOptions {
   parking?: number;
   isHoliday?: boolean;
   isLateNight?: boolean;
+  initialBookingSubtotal?: number;
 }
 
 export interface QuoteBreakdown {
+  mainBookingPrice: number;
   baseFare: number;
   mileageCharge: number;
   effectiveMiles: number;
@@ -196,7 +198,6 @@ export interface QuoteBreakdown {
   cleaningFee: number;
   tolls: number;
   parking: number;
-  rawSubtotal: number;
   minimumFare: number;
   minimumFareAdjustment: number;
   subtotal: number;
@@ -224,30 +225,59 @@ export interface QuoteResult {
 
 export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
   const tierKey = typeof options.vehicle === 'string' ? (options.vehicle as 'sedan' | 'suv' | 'sprinter') : getVehicleTierKey(options.vehicle);
-  const rates = VEHICLE_RATES[tierKey] || VEHICLE_RATES.sedan;
+  const defaultRates = VEHICLE_RATES[tierKey] || VEHICLE_RATES.sedan;
+
+  const rates = {
+    name: options.vehicle?.vehicle_name || options.vehicle?.name || defaultRates.name,
+    baseFare: safeNumber(options.vehicle?.price_snapshot?.base_price ?? options.vehicle?.base_price, defaultRates.baseFare),
+    perMile: safeNumber(options.vehicle?.price_snapshot?.price_per_mile ?? options.vehicle?.price_per_mile, defaultRates.perMile),
+    perMinute: safeNumber(options.vehicle?.price_snapshot?.price_per_minute ?? options.vehicle?.price_per_minute, defaultRates.perMinute),
+    minimumFare: safeNumber(options.vehicle?.price_snapshot?.minimum_fare ?? options.vehicle?.minimum_fare, defaultRates.minimumFare),
+    hourlyRate: safeNumber(options.vehicle?.price_snapshot?.price_per_hour ?? options.vehicle?.price_per_hour, defaultRates.hourlyRate),
+    minimumHours: defaultRates.minimumHours,
+    airportFee: defaultRates.airportFee,
+    waitingRatePerMin: defaultRates.waitingRatePerMin,
+    additionalStopRate: defaultRates.additionalStopRate,
+  };
 
   const rawBookingType = String(options.bookingType || options.type || 'one-way').toLowerCase();
   const isHourly = rawBookingType === 'hourly' || rawBookingType === 'as-directed' || rawBookingType === 'as directed';
   const isRoundTrip = rawBookingType === 'round-trip' || rawBookingType === 'round trip';
 
-  const distanceMiles = safeNumber(options.distanceMiles, 0);
-  const durationMinutes = safeNumber(options.durationMinutes, 0);
+  const hasInitialBookingPrice = options.initialBookingSubtotal !== undefined && options.initialBookingSubtotal !== null && safeNumber(options.initialBookingSubtotal, 0) > 0;
 
-  let baseFare = isHourly ? 0 : rates.baseFare;
-
-  let effectiveMiles = isRoundTrip ? distanceMiles * 2 : distanceMiles;
-  let mileageCharge = isHourly ? 0 : round2(effectiveMiles * rates.perMile);
-
+  let baseFare = 0;
+  let mileageCharge = 0;
   let timeCharge = 0;
   let hourlyCharge = 0;
   let billedHours = 0;
+  let minimumFareAdjustment = 0;
+  let mainBookingPrice = 0;
 
-  if (isHourly) {
-    const inputHours = parseHours(options.durationHours || options.duration);
-    billedHours = Math.max(rates.minimumHours, inputHours > 0 ? Math.ceil(inputHours) : rates.minimumHours);
-    hourlyCharge = round2(billedHours * rates.hourlyRate);
+  if (hasInitialBookingPrice) {
+    mainBookingPrice = safeNumber(options.initialBookingSubtotal, 0);
+    baseFare = mainBookingPrice;
   } else {
-    timeCharge = round2(durationMinutes * rates.perMinute);
+    const distanceMiles = safeNumber(options.distanceMiles, 0);
+    const durationMinutes = safeNumber(options.durationMinutes, 0);
+
+    baseFare = isHourly ? 0 : rates.baseFare;
+    let effectiveMiles = isRoundTrip ? distanceMiles * 2 : distanceMiles;
+    mileageCharge = isHourly ? 0 : round2(effectiveMiles * rates.perMile);
+
+    if (isHourly) {
+      const inputHours = parseHours(options.durationHours || options.duration);
+      billedHours = Math.max(rates.minimumHours, inputHours > 0 ? Math.ceil(inputHours) : rates.minimumHours);
+      hourlyCharge = round2(billedHours * rates.hourlyRate);
+    } else {
+      timeCharge = round2(durationMinutes * rates.perMinute);
+    }
+
+    let rawSubtotal = baseFare + mileageCharge + timeCharge + hourlyCharge;
+    if (!isHourly && rawSubtotal < rates.minimumFare) {
+      minimumFareAdjustment = round2(rates.minimumFare - rawSubtotal);
+    }
+    mainBookingPrice = rawSubtotal + minimumFareAdjustment;
   }
 
   const isAirport = isAirportPickup(options.pickupLocation, options.flightInfo, options.occasion);
@@ -261,20 +291,17 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
   const waitingTimeFee = round2(chargeableWaitMins * rates.waitingRatePerMin);
 
   const childSeats = safeNumber(options.childSeatsCount || options.childSeats, 0);
-  const chargeableSeats = Math.max(0, childSeats - 1);
-  const childSeatsFee = round2(chargeableSeats * 15.00);
+  const chargeableChildSeats = Math.max(0, childSeats - 1);
+  const childSeatsFee = round2(chargeableChildSeats * 15.00);
 
-  const cleaningFee = options.hasCleaningFee ? round2(options.cleaningFeeAmount || 150.00) : 0;
+  const hasCleaning = Boolean(options.hasCleaningFee);
+  const cleaningFee = hasCleaning ? Math.max(150.00, safeNumber(options.cleaningFeeAmount, 150.00)) : 0;
 
-  const tolls = round2(options.tolls || 0);
+  const tolls = safeNumber(options.tolls, 0);
+  const parking = safeNumber(options.parking, 0);
 
-  const parking = round2(options.parking || 0);
-
-  let rawSubtotal = round2(
-    baseFare +
-    mileageCharge +
-    timeCharge +
-    hourlyCharge +
+  const subtotal = round2(
+    mainBookingPrice +
     airportPickupFee +
     additionalStopsFee +
     waitingTimeFee +
@@ -284,26 +311,15 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
     parking
   );
 
-  let minimumFareAdjustment = 0;
-  let subtotal = rawSubtotal;
+  const lateNight = options.isLateNight !== undefined ? Boolean(options.isLateNight) : isLateNightTime(options.pickupTime);
+  const holiday = options.isHoliday !== undefined ? Boolean(options.isHoliday) : isHolidayDate(options.pickupDate, options.isHoliday);
 
-  if (!isHourly && subtotal < rates.minimumFare) {
-    minimumFareAdjustment = round2(rates.minimumFare - subtotal);
-    subtotal = rates.minimumFare;
-  }
-
-  const lateNight = options.isLateNight !== undefined ? !!options.isLateNight : isLateNightTime(options.pickupTime);
   const lateNightSurcharge = lateNight ? round2(subtotal * 0.15) : 0;
-
-  const holiday = options.isHoliday !== undefined ? !!options.isHoliday : isHolidayDate(options.pickupDate);
   const holidaySurcharge = holiday ? round2(subtotal * 0.20) : 0;
-
   const subtotalWithSurcharges = round2(subtotal + lateNightSurcharge + holidaySurcharge);
 
   const gratuity = round2(subtotalWithSurcharges * 0.20);
-
   const creditCardFee = round2((subtotalWithSurcharges + gratuity) * 0.03);
-
   const grandTotal = round2(subtotalWithSurcharges + gratuity + creditCardFee);
 
   return {
@@ -315,9 +331,10 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
     meetAndGreetIncluded: isAirport,
     billedHours,
     breakdown: {
+      mainBookingPrice,
       baseFare,
       mileageCharge,
-      effectiveMiles,
+      effectiveMiles: isRoundTrip ? safeNumber(options.distanceMiles, 0) * 2 : safeNumber(options.distanceMiles, 0),
       timeCharge,
       hourlyCharge,
       airportPickupFee,
@@ -331,7 +348,6 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
       cleaningFee,
       tolls,
       parking,
-      rawSubtotal,
       minimumFare: rates.minimumFare,
       minimumFareAdjustment,
       subtotal,
