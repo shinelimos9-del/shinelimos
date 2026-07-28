@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, CreditCard, CheckCircle } from "lucide-react";
+import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, CreditCard, CheckCircle, Loader2 } from "lucide-react";
 import { getAdminProfile, getNotifications, markNotificationsRead, logoutAdmin, sendPaymentLink, ADMIN_BASE_URL } from "../../utils/api";
 import { io } from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
@@ -16,11 +16,20 @@ export default function AdminLayout() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [adminData, setAdminData] = useState<any>(null);
   const [, setSocket] = useState<any>(null);
-
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   useEffect(() => {
+    const token = sessionStorage.getItem("adminToken") || localStorage.getItem("adminToken");
+    if (!token) {
+      setIsAuthenticated(false);
+      setAuthChecked(true);
+      navigate("/admin-login", { replace: true });
+      return;
+    }
+
     fetchAdminProfile();
     fetchNotifications();
     
@@ -161,9 +170,21 @@ export default function AdminLayout() {
       const response = await getAdminProfile();
       if (response.success) {
         setAdminData(response.admin);
+        setIsAuthenticated(true);
+      } else {
+        localStorage.removeItem("adminToken");
+        sessionStorage.removeItem("adminToken");
+        setIsAuthenticated(false);
+        navigate("/admin-login", { replace: true });
       }
     } catch (error) {
       console.error("Error fetching admin profile:", error);
+      localStorage.removeItem("adminToken");
+      sessionStorage.removeItem("adminToken");
+      setIsAuthenticated(false);
+      navigate("/admin-login", { replace: true });
+    } finally {
+      setAuthChecked(true);
     }
   };
 
@@ -222,6 +243,19 @@ export default function AdminLayout() {
     { name: "Vehicle", path: "/admin-dashboard/vehicles", icon: <CarFront size={18} /> },
     { name: "Booking", path: "/admin-dashboard/bookings", icon: <CheckSquare size={18} /> },
   ];
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
+        <Loader2 className="animate-spin text-gold mb-3" size={32} />
+        <p className="text-xs uppercase tracking-widest text-white/50 font-medium">Verifying Admin Access...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="h-screen bg-transparent text-white flex overflow-hidden selection:bg-white/10">
