@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Car, PauseCircle, PlayCircle, Navigation, Play, Square } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Car, Play, Square } from "lucide-react";
 import { getAllBookings, updateBookingStatus, sendPaymentLink, notifyVehicleArrival, sendFinalInvoice, toggleVehicleTracking, toggleStopTimer } from "../../utils/api";
 import { calculateQuote } from "../../utils/pricingEngine";
 import moment from "moment";
@@ -76,20 +76,25 @@ export default function AdminBookings() {
   };
 
   const handleToggleTracking = async (bookingId: string, updates: { vehicle_running?: boolean; stop_in_progress?: boolean }) => {
+    setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, ...updates } : b));
     try {
       const response = await toggleVehicleTracking(bookingId, updates);
       if (response.success) {
         fetchBookings();
       } else {
         alert("Failed to update vehicle tracking status");
+        fetchBookings();
       }
     } catch (err) {
       console.error(err);
       alert("Error updating vehicle tracking status");
+      fetchBookings();
     }
   };
 
   const handleToggleStopTimer = async (bookingId: string, currentStopInProgress: boolean) => {
+    const nextState = !currentStopInProgress;
+    setBookings(prev => prev.map(b => b._id === bookingId ? { ...b, stop_in_progress: nextState } : b));
     try {
       const action = currentStopInProgress ? 'end' : 'start';
       const response = await toggleStopTimer(bookingId, action);
@@ -100,10 +105,12 @@ export default function AdminBookings() {
         fetchBookings();
       } else {
         alert(response.message || "Failed to update stop timer");
+        fetchBookings();
       }
     } catch (err: any) {
       console.error("Error toggling stop timer:", err);
       alert(err.response?.data?.message || "Error updating stop timer");
+      fetchBookings();
     }
   };
 

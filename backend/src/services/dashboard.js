@@ -85,7 +85,10 @@ exports.getDashboardStats = async () => {
                 date: moment(b.created_at).format("DD MMM YYYY"),
                 price: b.vehicle_details?.estimated_price ? `$${b.vehicle_details.estimated_price}` : "N/A",
                 phone: b.contact_details?.booker?.primary_phone?.number || "N/A",
-                status: b.booking_status || "pending"
+                status: b.booking_status || "pending",
+                vehicle_running: Boolean(b.vehicle_running),
+                stop_in_progress: Boolean(b.stop_in_progress),
+                active_stop_start: b.active_stop_start
             }))
         };
     } catch (error) {

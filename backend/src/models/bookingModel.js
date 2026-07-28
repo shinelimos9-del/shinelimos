@@ -161,6 +161,18 @@ const bookingSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     required: false,
   },
+
+  // Live Vehicle Tracking & Extras
+  vehicle_arrived: { type: Boolean, default: false },
+  arrival_time: { type: Date },
+  waiting_minutes: { type: Number, default: 0 },
+  waiting_fee: { type: Number, default: 0 },
+  additional_stops_count: { type: Number, default: 0 },
+  vehicle_running: { type: Boolean, default: false },
+  stop_in_progress: { type: Boolean, default: false },
+  active_stop_start: { type: Date },
+  price_breakdown: { type: Object },
+
   created_at: { 
     type: Date,
     default: Date.now,

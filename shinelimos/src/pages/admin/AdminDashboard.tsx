@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, Car, PauseCircle, Play, Square } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, Car, Play, Square } from "lucide-react";
 import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendPaymentLink, sendFinalInvoice, toggleVehicleTracking, toggleStopTimer } from "../../utils/api";
 
 export default function AdminDashboard() {
@@ -104,20 +104,43 @@ export default function AdminDashboard() {
   };
 
   const handleToggleTracking = async (bookingId: string, updates: { vehicle_running?: boolean; stop_in_progress?: boolean }) => {
+    setData((prev: any) => {
+      if (!prev || !prev.recent_bookings) return prev;
+      return {
+        ...prev,
+        recent_bookings: prev.recent_bookings.map((r: any) =>
+          r.id === bookingId ? { ...r, ...updates } : r
+        ),
+      };
+    });
+
     try {
       const response = await toggleVehicleTracking(bookingId, updates);
       if (response.success) {
         fetchDashboardData();
       } else {
         alert("Failed to update vehicle tracking status");
+        fetchDashboardData();
       }
     } catch (err) {
       console.error(err);
       alert("Error updating vehicle tracking status");
+      fetchDashboardData();
     }
   };
 
   const handleToggleStopTimer = async (bookingId: string, currentStopInProgress: boolean) => {
+    const nextState = !currentStopInProgress;
+    setData((prev: any) => {
+      if (!prev || !prev.recent_bookings) return prev;
+      return {
+        ...prev,
+        recent_bookings: prev.recent_bookings.map((r: any) =>
+          r.id === bookingId ? { ...r, stop_in_progress: nextState } : r
+        ),
+      };
+    });
+
     try {
       const action = currentStopInProgress ? 'end' : 'start';
       const response = await toggleStopTimer(bookingId, action);
@@ -128,10 +151,12 @@ export default function AdminDashboard() {
         fetchDashboardData();
       } else {
         alert(response.message || "Failed to update stop timer");
+        fetchDashboardData();
       }
     } catch (err: any) {
       console.error("Error toggling stop timer:", err);
       alert(err.response?.data?.message || "Error updating stop timer");
+      fetchDashboardData();
     }
   };
 
