@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText } from "lucide-react";
-import { getAllBookings, updateBookingStatus, sendPaymentLink, notifyVehicleArrival, sendFinalInvoice } from "../../utils/api";
+import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Car, PauseCircle, PlayCircle, Navigation } from "lucide-react";
+import { getAllBookings, updateBookingStatus, sendPaymentLink, notifyVehicleArrival, sendFinalInvoice, toggleVehicleTracking } from "../../utils/api";
 import { calculateQuote } from "../../utils/pricingEngine";
 import moment from "moment";
 
@@ -72,6 +72,20 @@ export default function AdminBookings() {
     } catch (error) {
       console.error(error);
       alert("Error updating status");
+    }
+  };
+
+  const handleToggleTracking = async (bookingId: string, updates: { vehicle_running?: boolean; stop_in_progress?: boolean }) => {
+    try {
+      const response = await toggleVehicleTracking(bookingId, updates);
+      if (response.success) {
+        fetchBookings();
+      } else {
+        alert("Failed to update vehicle tracking status");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating vehicle tracking status");
     }
   };
 
@@ -268,6 +282,7 @@ export default function AdminBookings() {
                 <th className="p-4 font-medium">Enquiry Date</th>
                 <th className="p-4 font-medium">Booking Status</th>
                 <th className="p-4 font-medium">Payment Status</th>
+                <th className="p-4 font-medium">Live Tracking</th>
                 <th className="p-4 font-medium text-right">Action</th>
               </tr>
             </thead>
@@ -305,6 +320,34 @@ export default function AdminBookings() {
                       }`}>
                         {b.payment_status || 'Pending'}
                       </span>
+                    </td>
+                    <td className="p-4">
+                      <div className="flex flex-col gap-1.5">
+                        <button
+                          onClick={() => handleToggleTracking(b._id, { vehicle_running: !b.vehicle_running })}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5 transition-all ${
+                            b.vehicle_running
+                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.3)] animate-pulse"
+                              : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white"
+                          }`}
+                          title="Toggle Vehicle Running / En Route status"
+                        >
+                          <Car size={12} />
+                          {b.vehicle_running ? "Running" : "Vehicle Idle"}
+                        </button>
+                        <button
+                          onClick={() => handleToggleTracking(b._id, { stop_in_progress: !b.stop_in_progress })}
+                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5 transition-all ${
+                            b.stop_in_progress
+                              ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.3)]"
+                              : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white"
+                          }`}
+                          title="Toggle Additional Stop / Waiting In Progress"
+                        >
+                          <PauseCircle size={12} />
+                          {b.stop_in_progress ? "Stop Active" : "No Stop"}
+                        </button>
+                      </div>
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">

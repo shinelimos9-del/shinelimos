@@ -466,3 +466,33 @@ exports.updateBookingStatus = async (id, status) => {
 		return { success: false, message: error.message || error };
 	}
 };
+
+exports.toggleVehicleTracking = async (id, trackingData = {}) => {
+	try {
+		const updateFields = { updated_at: Date.now() };
+		if (trackingData.vehicle_running !== undefined) {
+			updateFields.vehicle_running = Boolean(trackingData.vehicle_running);
+		}
+		if (trackingData.stop_in_progress !== undefined) {
+			updateFields.stop_in_progress = Boolean(trackingData.stop_in_progress);
+		}
+
+		const updated = await Booking.findByIdAndUpdate(
+			id,
+			{ $set: updateFields },
+			{ new: true }
+		);
+
+		if (!updated) return { success: false, message: "Booking not found" };
+		return {
+			success: true,
+			message: "Vehicle tracking status updated",
+			booking: updated,
+			vehicle_running: updated.vehicle_running,
+			stop_in_progress: updated.stop_in_progress
+		};
+	} catch (error) {
+		console.log("toggleVehicleTracking error:", error);
+		return { success: false, message: error.message || error };
+	}
+};

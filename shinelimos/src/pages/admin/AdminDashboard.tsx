@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText } from "lucide-react";
-import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendPaymentLink, sendFinalInvoice } from "../../utils/api";
+import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, Car, PauseCircle } from "lucide-react";
+import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendPaymentLink, sendFinalInvoice, toggleVehicleTracking } from "../../utils/api";
 
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
@@ -100,6 +100,20 @@ export default function AdminDashboard() {
       alert(error.response?.data?.message || "Failed to send final invoice.");
     } finally {
       setSendingPaymentId(null);
+    }
+  };
+
+  const handleToggleTracking = async (bookingId: string, updates: { vehicle_running?: boolean; stop_in_progress?: boolean }) => {
+    try {
+      const response = await toggleVehicleTracking(bookingId, updates);
+      if (response.success) {
+        fetchDashboardData();
+      } else {
+        alert("Failed to update vehicle tracking status");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating vehicle tracking status");
     }
   };
 
@@ -338,6 +352,7 @@ export default function AdminDashboard() {
                 <th className="p-4 font-medium">Price</th>
                 <th className="p-4 font-medium">Number</th>
                 <th className="p-4 font-medium">Status</th>
+                <th className="p-4 font-medium">Live Tracking</th>
                 <th className="p-4 font-medium text-right">Action</th>
               </tr>
             </thead>
@@ -361,6 +376,34 @@ export default function AdminDashboard() {
                     <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-wider ${row.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'}`}>
                       {row.status === 'completed' ? 'Complete' : 'Pending'}
                     </span>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex flex-col gap-1 text-[10px]">
+                      <button
+                        onClick={() => handleToggleTracking(row.id, { vehicle_running: !row.vehicle_running })}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 transition-all ${
+                          row.vehicle_running
+                            ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30 animate-pulse"
+                            : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white"
+                        }`}
+                        title="Toggle Vehicle Running status"
+                      >
+                        <Car size={11} />
+                        {row.vehicle_running ? "Running" : "Idle"}
+                      </button>
+                      <button
+                        onClick={() => handleToggleTracking(row.id, { stop_in_progress: !row.stop_in_progress })}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 transition-all ${
+                          row.stop_in_progress
+                            ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30"
+                            : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white"
+                        }`}
+                        title="Toggle Stop Active status"
+                      >
+                        <PauseCircle size={11} />
+                        {row.stop_in_progress ? "Stop Active" : "No Stop"}
+                      </button>
+                    </div>
                   </td>
                   <td className="p-4 text-right">
                     <div className="flex items-center justify-end gap-2">

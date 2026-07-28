@@ -61,6 +61,11 @@ export const sendFinalInvoice = async (bookingId: string, extraOptions: any = {}
   return response.data;
 };
 
+export const toggleVehicleTracking = async (bookingId: string, trackingData: { vehicle_running?: boolean; stop_in_progress?: boolean }) => {
+  const response = await api.patch(`/bookings/${bookingId}/tracking`, trackingData);
+  return response.data;
+};
+
 export const verifyPaymentSession = async (sessionId: string) => {
   const response = await api.get(`/bookings/verify-payment?session_id=${encodeURIComponent(sessionId)}`);
   return response.data;
