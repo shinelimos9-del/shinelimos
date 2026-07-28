@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, Car, Play, Square } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, Car, Play, Square, Clock, X } from "lucide-react";
 import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendPaymentLink, sendFinalInvoice, toggleVehicleTracking, toggleStopTimer } from "../../utils/api";
+import { calculateQuote } from "../../utils/pricingEngine";
 
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
@@ -9,9 +10,75 @@ export default function AdminDashboard() {
   const [notifyingId, setNotifyingId] = useState<string | null>(null);
   const [sendingPaymentId, setSendingPaymentId] = useState<string | null>(null);
 
+  // Final Invoice Modal State
+  const [finalModalBooking, setFinalModalBooking] = useState<any | null>(null);
+  const [finalOptions, setFinalOptions] = useState({
+    stopsCount: 0,
+    waitingMinutes: 0,
+    childSeatsCount: 0,
+    hasCleaningFee: false,
+    cleaningFeeAmount: 150,
+    tolls: 0,
+    parking: 0,
+    isHoliday: false,
+    isLateNight: false,
+  });
+  const [sendingFinalInvoiceState, setSendingFinalInvoiceState] = useState(false);
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const handleOpenFinalModal = (bookingRow: any) => {
+    const bookingObj = {
+      _id: bookingRow.id || bookingRow._id,
+      contact_details: {
+        booker: {
+          first_name: bookingRow.name ? bookingRow.name.split(' ')[0] : 'Customer',
+          last_name: bookingRow.name ? bookingRow.name.split(' ').slice(1).join(' ') : '',
+          email: bookingRow.email || '',
+        }
+      },
+      vehicle_details: bookingRow.vehicle_details || { vehicle_name: bookingRow.vehicle_name || 'Luxury Vehicle' },
+      trip_details: bookingRow.trip_details || [{ trip_type: bookingRow.trip || 'One Way' }],
+      waiting_minutes: bookingRow.waiting_minutes || 0,
+      additional_stops_count: bookingRow.additional_stops_count || 0,
+      price_breakdown: bookingRow.price_breakdown || {},
+    };
+
+    setFinalModalBooking(bookingObj);
+    setFinalOptions({
+      stopsCount: bookingObj.additional_stops_count || 0,
+      waitingMinutes: bookingObj.waiting_minutes || 0,
+      childSeatsCount: bookingObj.price_breakdown?.childSeatsCount || 0,
+      hasCleaningFee: Boolean(bookingObj.price_breakdown?.cleaningFee > 0),
+      cleaningFeeAmount: bookingObj.price_breakdown?.cleaningFee || 150,
+      tolls: bookingObj.price_breakdown?.tolls || 0,
+      parking: bookingObj.price_breakdown?.parking || 0,
+      isHoliday: Boolean(bookingObj.price_breakdown?.isHoliday),
+      isLateNight: Boolean(bookingObj.price_breakdown?.isLateNight),
+    });
+  };
+
+  const handleSendFinalInvoiceSubmit = async () => {
+    if (!finalModalBooking) return;
+    try {
+      setSendingFinalInvoiceState(true);
+      const response = await sendFinalInvoice(finalModalBooking._id, finalOptions);
+      if (response.success) {
+        alert(`Final trip invoice and payment link sent successfully!\nGrand Total: $${response.quote?.formattedGrandTotal || ''}`);
+        setFinalModalBooking(null);
+        fetchDashboardData();
+      } else {
+        alert(response.message || "Failed to send final invoice");
+      }
+    } catch (error: any) {
+      console.error("Error sending final invoice:", error);
+      alert(error.response?.data?.message || "Failed to send final invoice.");
+    } finally {
+      setSendingFinalInvoiceState(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -471,12 +538,12 @@ export default function AdminDashboard() {
                       </button>
 
                       <button
-                        onClick={() => handleSendFinalInvoiceQuick(row.id)}
+                        onClick={() => handleOpenFinalModal(row)}
                         disabled={sendingPaymentId === row.id}
                         className="bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
-                        title="Send final itemized trip invoice & payment link after drop-off"
+                        title="Open interactive invoice form to add extra charges & send final invoice with payment link"
                       >
-                        {sendingPaymentId === row.id ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
+                        <FileText size={12} />
                         Send Final Invoice
                       </button>
 
@@ -503,6 +570,246 @@ export default function AdminDashboard() {
           </table>
         </div>
       </div>
+
+      {/* FINAL INVOICE & TRIP EXTRAS TRACKING MODAL */}
+      {finalModalBooking && (() => {
+        const liveQuote = calculateQuote({
+          vehicle: finalModalBooking.vehicle_details,
+          bookingType: finalModalBooking.trip_details?.[0]?.trip_type || 'one-way',
+          distanceMiles: finalModalBooking.trip_details?.[0]?.distance_miles || 0,
+          durationMinutes: 0,
+          pickupLocation: finalModalBooking.trip_details?.[0]?.pickup_location,
+          pickupTime: finalModalBooking.trip_details?.[0]?.start_time,
+          pickupDate: finalModalBooking.trip_details?.[0]?.date,
+          flightInfo: finalModalBooking.trip_details?.[0]?.flight_details,
+          occasion: finalModalBooking.trip_details?.[0]?.occasion,
+          waitingMinutes: finalOptions.waitingMinutes,
+          additionalStopsCount: finalOptions.stopsCount,
+          childSeatsCount: finalOptions.childSeatsCount,
+          hasCleaningFee: finalOptions.hasCleaningFee,
+          cleaningFeeAmount: finalOptions.cleaningFeeAmount,
+          tolls: finalOptions.tolls,
+          parking: finalOptions.parking,
+          isHoliday: finalOptions.isHoliday,
+          isLateNight: finalOptions.isLateNight,
+        });
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
+            <div className="bg-[#121212] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl my-auto text-left">
+              <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/5 shrink-0">
+                <div className="flex items-center gap-2 text-purple-400">
+                  <FileText size={20} />
+                  <div>
+                    <h3 className="font-semibold text-lg text-white">Final Trip Invoice & Extras Tracking</h3>
+                    <p className="text-xs text-white/50">Track trip extras and send final invoice payment link after drop-off.</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setFinalModalBooking(null)}
+                  className="text-white/50 hover:text-white transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto space-y-6 flex-1 text-white">
+                {/* Trip & Booker Info Header */}
+                <div className="grid sm:grid-cols-2 gap-3 glass p-4 rounded-xl border border-white/5 text-xs">
+                  <div><span className="text-white/50">Customer:</span> <strong className="text-white">{finalModalBooking.contact_details?.booker?.first_name} {finalModalBooking.contact_details?.booker?.last_name}</strong></div>
+                  <div><span className="text-white/50">Email:</span> <span className="text-purple-300 font-mono">{finalModalBooking.contact_details?.booker?.email}</span></div>
+                  <div><span className="text-white/50">Vehicle:</span> <span className="text-white font-medium">{finalModalBooking.vehicle_details?.vehicle_name}</span></div>
+                  <div><span className="text-white/50">Service:</span> <span className="text-gold font-medium">{finalModalBooking.trip_details?.[0]?.trip_type || 'One Way'}</span></div>
+                </div>
+
+                {/* Extras Tracking Controls */}
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-purple-400 border-b border-white/10 pb-2">
+                    🎛️ Trip Extras & Surcharges Tracking
+                  </h4>
+
+                  <div className="grid sm:grid-cols-2 gap-4 text-xs">
+                    {/* Additional Stops */}
+                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
+                      <label className="font-medium text-white/80 flex justify-between">
+                        <span>Additional Stops Count:</span>
+                        <span className="text-purple-300 font-mono">${liveQuote.breakdown.additionalStopsFee.toFixed(2)}</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={finalOptions.stopsCount}
+                        onChange={(e) => setFinalOptions(prev => ({ ...prev, stopsCount: Math.max(0, parseInt(e.target.value) || 0) }))}
+                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                      />
+                      <span className="text-[10px] text-white/40">Rate: Sedan $15 / SUV $20 / Sprinter $30 per stop</span>
+                    </div>
+
+                    {/* Waiting Time Mins */}
+                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
+                      <label className="font-medium text-white/80 flex justify-between">
+                        <span>Waiting Time (Minutes):</span>
+                        <span className="text-purple-300 font-mono">${liveQuote.breakdown.waitingTimeFee.toFixed(2)}</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={finalOptions.waitingMinutes}
+                        onChange={(e) => setFinalOptions(prev => ({ ...prev, waitingMinutes: Math.max(0, parseInt(e.target.value) || 0) }))}
+                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                      />
+                      <span className="text-[10px] text-white/40">First 15 mins FREE. After 15 mins: Sedan $1/m, SUV $1.50/m, Sprinter $2/m</span>
+                    </div>
+
+                    {/* Child Seats */}
+                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
+                      <label className="font-medium text-white/80 flex justify-between">
+                        <span>Total Child Seats:</span>
+                        <span className="text-purple-300 font-mono">${liveQuote.breakdown.childSeatsFee.toFixed(2)}</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={finalOptions.childSeatsCount}
+                        onChange={(e) => setFinalOptions(prev => ({ ...prev, childSeatsCount: Math.max(0, parseInt(e.target.value) || 0) }))}
+                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                      />
+                      <span className="text-[10px] text-white/40">First seat FREE. Additional seats $15 each</span>
+                    </div>
+
+                    {/* Tolls */}
+                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
+                      <label className="font-medium text-white/80 flex justify-between">
+                        <span>Tolls Amount ($):</span>
+                        <span className="text-purple-300 font-mono">${liveQuote.breakdown.tolls.toFixed(2)}</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={finalOptions.tolls}
+                        onChange={(e) => setFinalOptions(prev => ({ ...prev, tolls: Math.max(0, parseFloat(e.target.value) || 0) }))}
+                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                      />
+                    </div>
+
+                    {/* Parking */}
+                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
+                      <label className="font-medium text-white/80 flex justify-between">
+                        <span>Parking Amount ($):</span>
+                        <span className="text-purple-300 font-mono">${liveQuote.breakdown.parking.toFixed(2)}</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={finalOptions.parking}
+                        onChange={(e) => setFinalOptions(prev => ({ ...prev, parking: Math.max(0, parseFloat(e.target.value) || 0) }))}
+                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                      />
+                    </div>
+
+                    {/* Cleaning Fee */}
+                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
+                      <label className="flex items-center gap-2 font-medium text-white/80 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={finalOptions.hasCleaningFee}
+                          onChange={(e) => setFinalOptions(prev => ({ ...prev, hasCleaningFee: e.target.checked }))}
+                          className="rounded accent-purple-500 w-4 h-4"
+                        />
+                        <span>Apply Cleaning Fee</span>
+                      </label>
+                      {finalOptions.hasCleaningFee && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className="text-white/50">$</span>
+                          <input
+                            type="number"
+                            min={150}
+                            value={finalOptions.cleaningFeeAmount}
+                            onChange={(e) => setFinalOptions(prev => ({ ...prev, cleaningFeeAmount: Math.max(0, parseFloat(e.target.value) || 150) }))}
+                            className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-white font-mono text-xs outline-none"
+                            placeholder="150"
+                          />
+                        </div>
+                      )}
+                      <span className="text-[10px] text-white/40 block">Starts at $150 if vehicle cleaning required</span>
+                    </div>
+                  </div>
+
+                  {/* Manual Surcharge Toggles */}
+                  <div className="flex flex-wrap gap-4 pt-2">
+                    <label className="flex items-center gap-2 text-xs text-white/80 cursor-pointer bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                      <input
+                        type="checkbox"
+                        checked={finalOptions.isLateNight || liveQuote.breakdown.isLateNight}
+                        onChange={(e) => setFinalOptions(prev => ({ ...prev, isLateNight: e.target.checked }))}
+                        className="rounded accent-purple-500 w-4 h-4"
+                      />
+                      <span>🌙 Late Night Surcharge (15% for 12 AM - 5 AM)</span>
+                    </label>
+
+                    <label className="flex items-center gap-2 text-xs text-white/80 cursor-pointer bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                      <input
+                        type="checkbox"
+                        checked={finalOptions.isHoliday || liveQuote.breakdown.isHoliday}
+                        onChange={(e) => setFinalOptions(prev => ({ ...prev, isHoliday: e.target.checked }))}
+                        className="rounded accent-purple-500 w-4 h-4"
+                      />
+                      <span>🎆 Holiday Surcharge (20%)</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Live Itemized Breakdown Table */}
+                <div className="bg-black/60 border border-white/10 rounded-xl p-5 space-y-2 text-xs">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-gold border-b border-white/10 pb-2 mb-3">
+                    📊 Live Final Invoice Calculation Breakdown
+                  </h4>
+                  <div className="flex justify-between text-white/70"><span>Base Fare:</span><span>${liveQuote.breakdown.baseFare.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-white/70"><span>Mileage Charge:</span><span>${liveQuote.breakdown.mileageCharge.toFixed(2)}</span></div>
+                  {liveQuote.isHourly && <div className="flex justify-between text-white/70"><span>Hourly Charge:</span><span>${liveQuote.breakdown.hourlyCharge.toFixed(2)}</span></div>}
+                  {liveQuote.isAirportPickup && <div className="flex justify-between text-emerald-400"><span>Airport Pickup Fee (Meet & Greet Included):</span><span>${liveQuote.breakdown.airportPickupFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.additionalStopsFee > 0 && <div className="flex justify-between text-white/70"><span>Additional Stops Fee:</span><span>${liveQuote.breakdown.additionalStopsFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.waitingTimeFee > 0 && <div className="flex justify-between text-amber-300"><span>Waiting Time Fee:</span><span>${liveQuote.breakdown.waitingTimeFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.childSeatsFee > 0 && <div className="flex justify-between text-white/70"><span>Child Seats Fee:</span><span>${liveQuote.breakdown.childSeatsFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.cleaningFee > 0 && <div className="flex justify-between text-rose-300"><span>Cleaning Fee:</span><span>${liveQuote.breakdown.cleaningFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.tolls > 0 && <div className="flex justify-between text-white/70"><span>Tolls:</span><span>${liveQuote.breakdown.tolls.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.parking > 0 && <div className="flex justify-between text-white/70"><span>Parking:</span><span>${liveQuote.breakdown.parking.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.minimumFareAdjustment > 0 && <div className="flex justify-between text-blue-300"><span>Minimum Fare Adjustment:</span><span>${liveQuote.breakdown.minimumFareAdjustment.toFixed(2)}</span></div>}
+                  <div className="flex justify-between font-bold text-white border-t border-white/10 pt-2"><span>Subtotal:</span><span>${liveQuote.breakdown.subtotal.toFixed(2)}</span></div>
+                  {liveQuote.breakdown.lateNightSurcharge > 0 && <div className="flex justify-between text-amber-300"><span>Late Night Surcharge (15%):</span><span>${liveQuote.breakdown.lateNightSurcharge.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.holidaySurcharge > 0 && <div className="flex justify-between text-amber-300"><span>Holiday Surcharge (20%):</span><span>${liveQuote.breakdown.holidaySurcharge.toFixed(2)}</span></div>}
+                  <div className="flex justify-between text-white/70"><span>Gratuity (20%):</span><span>${liveQuote.breakdown.gratuity.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-white/70"><span>Credit Card Fee (3%):</span><span>${liveQuote.breakdown.creditCardFee.toFixed(2)}</span></div>
+                  <div className="flex justify-between font-bold text-lg text-gold border-t-2 border-gold/50 pt-3 mt-2">
+                    <span>Final Total Due:</span>
+                    <span>${liveQuote.formattedGrandTotal}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-5 border-t border-white/10 flex justify-end gap-3 bg-white/2 shrink-0">
+                <button
+                  onClick={() => setFinalModalBooking(null)}
+                  className="px-4 py-2 rounded-xl text-sm font-medium border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSendFinalInvoiceSubmit}
+                  disabled={sendingFinalInvoiceState}
+                  className="px-6 py-2.5 rounded-xl text-sm font-bold bg-purple-500 hover:bg-purple-600 text-white transition-all flex items-center gap-2 disabled:opacity-50 shadow-lg"
+                >
+                  {sendingFinalInvoiceState ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  Send Final Invoice & Payment Link
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
