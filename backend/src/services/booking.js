@@ -496,3 +496,84 @@ exports.toggleVehicleTracking = async (id, trackingData = {}) => {
 		return { success: false, message: error.message || error };
 	}
 };
+
+exports.toggleStopTimer = async (id, action) => {
+	try {
+		const booking = await Booking.findById(id);
+		if (!booking) return { success: false, message: "Booking not found" };
+
+		if (action === "start") {
+			booking.stop_in_progress = true;
+			booking.active_stop_start = new Date();
+			booking.updated_at = Date.now();
+			await booking.save();
+			return {
+				success: true,
+				message: "Stop timer started",
+				stop_in_progress: true,
+				active_stop_start: booking.active_stop_start,
+				booking
+			};
+		} else if (action === "end") {
+			const startTime = booking.active_stop_start ? new Date(booking.active_stop_start).getTime() : Date.now();
+			const elapsedMs = Math.max(0, Date.now() - startTime);
+			const elapsedMins = Math.max(1, Math.ceil(elapsedMs / 60000));
+
+			const prevWaitMins = parseInt(booking.waiting_minutes || 0, 10);
+			const totalWaitMins = prevWaitMins + elapsedMins;
+
+			const prevStopsCount = parseInt(booking.additional_stops_count || 0, 10);
+			const newStopsCount = prevStopsCount + 1;
+
+			booking.stop_in_progress = false;
+			booking.active_stop_start = null;
+			booking.waiting_minutes = totalWaitMins;
+			booking.additional_stops_count = newStopsCount;
+			booking.updated_at = Date.now();
+
+			// Recalculate quote with updated stops and wait time
+			const tripSegment = booking.trip_details?.[0] || {};
+			const quote = pricingEngine.calculateQuote({
+				vehicle: booking.vehicle_details,
+				bookingType: tripSegment.trip_type || 'one-way',
+				distanceMiles: tripSegment.distance_miles || 0,
+				durationMinutes: pricingEngine.parseHours(tripSegment.duration) * 60,
+				durationHours: pricingEngine.parseHours(tripSegment.duration),
+				pickupLocation: tripSegment.pickup_location,
+				pickupTime: tripSegment.start_time,
+				pickupDate: tripSegment.date,
+				flightInfo: tripSegment.flight_details,
+				occasion: tripSegment.occasion,
+				waitingMinutes: totalWaitMins,
+				additionalStopsCount: newStopsCount,
+				childSeatsCount: booking.price_breakdown?.childSeatsCount || 0,
+				hasCleaningFee: Boolean(booking.price_breakdown?.cleaningFee > 0),
+				tolls: booking.price_breakdown?.tolls || 0,
+				parking: booking.price_breakdown?.parking || 0,
+			});
+
+			booking.price_breakdown = quote.breakdown;
+			if (booking.vehicle_details) {
+				booking.vehicle_details.estimated_price = quote.formattedGrandTotal;
+			}
+			await booking.save();
+
+			return {
+				success: true,
+				message: `Stop ended (${elapsedMins} mins elapsed). Added 1 Additional Stop. Invoice updated to $${quote.formattedGrandTotal}`,
+				stop_in_progress: false,
+				elapsed_minutes: elapsedMins,
+				total_waiting_minutes: totalWaitMins,
+				additional_stops_count: newStopsCount,
+				updated_price: quote.formattedGrandTotal,
+				quote,
+				booking
+			};
+		} else {
+			return { success: false, message: "Invalid action. Use 'start' or 'end'" };
+		}
+	} catch (error) {
+		console.log("toggleStopTimer error:", error);
+		return { success: false, message: error.message || error };
+	}
+};

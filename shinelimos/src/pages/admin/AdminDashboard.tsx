@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, Car, PauseCircle } from "lucide-react";
-import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendPaymentLink, sendFinalInvoice, toggleVehicleTracking } from "../../utils/api";
+import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, Car, PauseCircle, Play, Square } from "lucide-react";
+import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendPaymentLink, sendFinalInvoice, toggleVehicleTracking, toggleStopTimer } from "../../utils/api";
 
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
@@ -114,6 +114,24 @@ export default function AdminDashboard() {
     } catch (err) {
       console.error(err);
       alert("Error updating vehicle tracking status");
+    }
+  };
+
+  const handleToggleStopTimer = async (bookingId: string, currentStopInProgress: boolean) => {
+    try {
+      const action = currentStopInProgress ? 'end' : 'start';
+      const response = await toggleStopTimer(bookingId, action);
+      if (response.success) {
+        if (action === 'end') {
+          alert(response.message || "Stop ended and pricing added to invoice!");
+        }
+        fetchDashboardData();
+      } else {
+        alert(response.message || "Failed to update stop timer");
+      }
+    } catch (err: any) {
+      console.error("Error toggling stop timer:", err);
+      alert(err.response?.data?.message || "Error updating stop timer");
     }
   };
 
@@ -392,16 +410,16 @@ export default function AdminDashboard() {
                         {row.vehicle_running ? "Running" : "Idle"}
                       </button>
                       <button
-                        onClick={() => handleToggleTracking(row.id, { stop_in_progress: !row.stop_in_progress })}
+                        onClick={() => handleToggleStopTimer(row.id, row.stop_in_progress)}
                         className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1 transition-all ${
                           row.stop_in_progress
-                            ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30"
+                            ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 animate-pulse"
                             : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white"
                         }`}
-                        title="Toggle Stop Active status"
+                        title={row.stop_in_progress ? "Click to END stop & calculate stop duration pricing onto invoice" : "Click to START tracking an additional stop"}
                       >
-                        <PauseCircle size={11} />
-                        {row.stop_in_progress ? "Stop Active" : "No Stop"}
+                        {row.stop_in_progress ? <Square size={11} className="text-amber-400 fill-amber-400" /> : <Play size={11} className="text-emerald-400 fill-emerald-400" />}
+                        {row.stop_in_progress ? "End Stop & Price" : "Start Stop"}
                       </button>
                     </div>
                   </td>

@@ -102,3 +102,17 @@ exports.toggle_vehicleTracking = async (req, res) => {
 		return res.status(500).json({ success: false, message: "Internal server error" });
 	}
 };
+
+exports.toggle_stopTimer = async (req, res) => {
+	try {
+		const { id } = req.params;
+		const { action } = req.body; // 'start' or 'end'
+		
+		const result = await bookingService.toggleStopTimer(id, action);
+		if (!result.success) return res.status(400).json(result);
+		return res.status(200).json(result);
+	} catch (error) {
+		console.log("toggle_stopTimer controller error:", error);
+		return res.status(500).json({ success: false, message: "Internal server error" });
+	}
+};

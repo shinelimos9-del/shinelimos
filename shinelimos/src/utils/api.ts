@@ -66,6 +66,11 @@ export const toggleVehicleTracking = async (bookingId: string, trackingData: { v
   return response.data;
 };
 
+export const toggleStopTimer = async (bookingId: string, action: 'start' | 'end') => {
+  const response = await api.post(`/bookings/${bookingId}/stop-timer`, { action });
+  return response.data;
+};
+
 export const verifyPaymentSession = async (sessionId: string) => {
   const response = await api.get(`/bookings/verify-payment?session_id=${encodeURIComponent(sessionId)}`);
   return response.data;

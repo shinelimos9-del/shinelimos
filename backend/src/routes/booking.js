@@ -21,4 +21,7 @@ router.patch("/bookings/:id/status",admin_auth, bookingController.update_booking
 // Toggle vehicle running & stop in progress tracking
 router.patch("/bookings/:id/tracking",admin_auth, bookingController.toggle_vehicleTracking);
 
+// Admin stop timer start/end calculation
+router.post("/bookings/:id/stop-timer",admin_auth, bookingController.toggle_stopTimer);
+
 module.exports = router;
