@@ -509,3 +509,157 @@ exports.notifyVehicleArrival = async (bookingId, waitingMinutes = 0) => {
   }
 };
 
+exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
+  try {
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return { success: false, message: "Booking not found" };
+    }
+
+    const tripSegment = booking.trip_details?.[0] || {};
+
+    const quote = pricingEngine.calculateQuote({
+      vehicle: booking.vehicle_details,
+      bookingType: tripSegment.trip_type || 'one-way',
+      distanceMiles: tripSegment.distance_miles || 0,
+      durationMinutes: pricingEngine.parseHours(tripSegment.duration) * 60,
+      durationHours: pricingEngine.parseHours(tripSegment.duration),
+      pickupLocation: tripSegment.pickup_location,
+      pickupTime: tripSegment.start_time,
+      pickupDate: tripSegment.date,
+      flightInfo: tripSegment.flight_details,
+      occasion: tripSegment.occasion,
+      waitingMinutes: extraOptions.waitingMinutes,
+      additionalStopsCount: extraOptions.additionalStopsCount !== undefined ? extraOptions.additionalStopsCount : (booking.trip_details?.length > 1 ? booking.trip_details.length - 1 : 0),
+      childSeatsCount: extraOptions.childSeatsCount,
+      hasCleaningFee: extraOptions.hasCleaningFee,
+      cleaningFeeAmount: extraOptions.cleaningFeeAmount,
+      tolls: extraOptions.tolls,
+      parking: extraOptions.parking,
+      isHoliday: extraOptions.isHoliday,
+      isLateNight: extraOptions.isLateNight,
+    });
+
+    const finalGrandTotal = quote.breakdown.grandTotal;
+
+    // Update booking in DB
+    booking.price_breakdown = quote.breakdown;
+    if (booking.vehicle_details) {
+      booking.vehicle_details.estimated_price = quote.formattedGrandTotal;
+    }
+    booking.payment_status = "requested";
+    booking.updated_at = Date.now();
+    await booking.save();
+
+    const bookerEmail = booking.contact_details?.booker?.email;
+    const passengerEmail = booking.contact_details?.passenger?.email;
+    const recipients = Array.from(new Set([bookerEmail, passengerEmail].filter(Boolean)));
+
+    if (recipients.length === 0) {
+      return { success: false, message: "No email address found for booker or passenger" };
+    }
+
+    const bookerName = `${booking.contact_details?.booker?.first_name || 'Valued'} ${booking.contact_details?.booker?.last_name || 'Customer'}`;
+    const frontendUrl = (process.env.FRONTEND_URL || "https://shinelimosllc.com").replace(/\/$/, "");
+
+    // Create Stripe Checkout Session for final invoice amount
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `Final Invoice - Limo Reservation #${booking._id}`,
+              description: `Vehicle: ${quote.vehicleName}. ${quote.isAirportPickup ? 'Complimentary Meet & Greet Included.' : ''}`,
+            },
+            unit_amount: Math.round(finalGrandTotal * 100),
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: `${frontendUrl}/#/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${frontendUrl}/#/payment-cancelled`,
+      customer_email: bookerEmail,
+      metadata: {
+        booking_id: booking._id.toString(),
+        is_final_invoice: "true",
+      },
+    });
+
+    // Send Itemized Final Invoice Email
+    for (const email of recipients) {
+      await sendEmail({
+        to: email,
+        subject: `Final Invoice & Payment Request - Shine Limos (#${booking._id})`,
+        html: `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 25px;">
+              <h1 style="color: #000; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">Shine Limos</h1>
+              <div style="height: 2px; width: 50px; background-color: #d4af37; margin: 10px auto;"></div>
+              <h3 style="color: #d4af37; font-size: 18px; margin-top: 15px;">Final Trip Invoice</h3>
+            </div>
+
+            <p>Dear ${bookerName},</p>
+            <p>Thank you for traveling with Shine Limos. Below is your complete itemized final invoice for trip <strong>#${booking._id}</strong>.</p>
+
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #eee;">
+              <h4 style="margin-top: 0; font-size: 15px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 8px;">Trip Details</h4>
+              <p style="margin: 6px 0; font-size: 13px;"><strong>Vehicle:</strong> ${quote.vehicleName}</p>
+              <p style="margin: 6px 0; font-size: 13px;"><strong>Pickup Location:</strong> ${tripSegment.pickup_location || 'N/A'}</p>
+              <p style="margin: 6px 0; font-size: 13px;"><strong>Drop-off Location:</strong> ${tripSegment.dropoff_location || 'N/A'}</p>
+              <p style="margin: 6px 0; font-size: 13px;"><strong>Date/Time:</strong> ${tripSegment.date} at ${tripSegment.start_time}</p>
+            </div>
+
+            <div style="background-color: #1a1a1a; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h4 style="margin-top: 0; font-size: 15px; color: #d4af37; border-bottom: 1px solid #333; padding-bottom: 8px;">Itemized Pricing Breakdown</h4>
+              <table style="width: 100%; font-size: 13px; color: #ccc; border-collapse: collapse;">
+                ${quote.breakdown.baseFare > 0 ? `<tr><td style="padding: 4px 0;">Base Fare</td><td style="text-align: right;">$${quote.breakdown.baseFare.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.mileageCharge > 0 ? `<tr><td style="padding: 4px 0;">Mileage Charge (${quote.breakdown.effectiveMiles.toFixed(1)} miles)</td><td style="text-align: right;">$${quote.breakdown.mileageCharge.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.hourlyCharge > 0 ? `<tr><td style="padding: 4px 0;">Hourly Charge (${quote.breakdown.billedHours} hrs)</td><td style="text-align: right;">$${quote.breakdown.hourlyCharge.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.airportPickupFee > 0 ? `<tr><td style="padding: 4px 0;">Airport Pickup Fee (Meet & Greet Included)</td><td style="text-align: right;">$${quote.breakdown.airportPickupFee.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.additionalStopsFee > 0 ? `<tr><td style="padding: 4px 0;">Additional Stops (${quote.breakdown.stopsCount})</td><td style="text-align: right;">$${quote.breakdown.additionalStopsFee.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.waitingTimeFee > 0 ? `<tr><td style="padding: 4px 0;">Waiting Time (${quote.breakdown.totalWaitMins} mins, ${quote.breakdown.chargeableWaitMins} chargeable)</td><td style="text-align: right;">$${quote.breakdown.waitingTimeFee.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.childSeatsFee > 0 ? `<tr><td style="padding: 4px 0;">Child Seats (${quote.breakdown.childSeatsCount})</td><td style="text-align: right;">$${quote.breakdown.childSeatsFee.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.cleaningFee > 0 ? `<tr><td style="padding: 4px 0;">Cleaning Fee</td><td style="text-align: right;">$${quote.breakdown.cleaningFee.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.tolls > 0 ? `<tr><td style="padding: 4px 0;">Tolls</td><td style="text-align: right;">$${quote.breakdown.tolls.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.parking > 0 ? `<tr><td style="padding: 4px 0;">Parking</td><td style="text-align: right;">$${quote.breakdown.parking.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.minimumFareAdjustment > 0 ? `<tr><td style="padding: 4px 0;">Minimum Fare Adjustment</td><td style="text-align: right;">$${quote.breakdown.minimumFareAdjustment.toFixed(2)}</td></tr>` : ''}
+                <tr style="border-top: 1px dashed #444;"><td style="padding: 6px 0; font-weight: bold; color: white;">Subtotal</td><td style="text-align: right; font-weight: bold; color: white;">$${quote.breakdown.subtotal.toFixed(2)}</td></tr>
+                ${quote.breakdown.lateNightSurcharge > 0 ? `<tr><td style="padding: 4px 0;">Late Night Surcharge (15%)</td><td style="text-align: right;">$${quote.breakdown.lateNightSurcharge.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.holidaySurcharge > 0 ? `<tr><td style="padding: 4px 0;">Holiday Surcharge (20%)</td><td style="text-align: right;">$${quote.breakdown.holidaySurcharge.toFixed(2)}</td></tr>` : ''}
+                <tr><td style="padding: 4px 0;">Gratuity (20%)</td><td style="text-align: right;">$${quote.breakdown.gratuity.toFixed(2)}</td></tr>
+                <tr><td style="padding: 4px 0;">Credit Card Fee (3%)</td><td style="text-align: right;">$${quote.breakdown.creditCardFee.toFixed(2)}</td></tr>
+                <tr style="border-top: 2px solid #d4af37; font-size: 16px;"><td style="padding: 10px 0; font-weight: bold; color: #d4af37;">Grand Total Due</td><td style="text-align: right; font-weight: bold; color: #d4af37;">$${quote.breakdown.grandTotal.toFixed(2)}</td></tr>
+              </table>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${session.url}" style="background-color: #d4af37; color: white; padding: 16px 35px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+                Pay Final Invoice ($${quote.formattedGrandTotal}) Now
+              </a>
+            </div>
+
+            <p style="text-align: center; font-size: 12px; color: #888;">If the button above does not work, copy & paste this link into your browser: <br/><a href="${session.url}" style="color: #d4af37;">${session.url}</a></p>
+
+            <p style="line-height: 1.6; color: #555; margin-top: 30px;">We appreciate your business and look forward to hosting you again soon!</p>
+            <p style="margin-top: 20px;">Warm regards,<br><strong>Shine Limos Team</strong></p>
+          </div>
+        `,
+      });
+    }
+
+    return {
+      success: true,
+      message: "Final invoice and payment link sent successfully",
+      quote: quote,
+      payment_url: session.url
+    };
+  } catch (error) {
+    console.error("sendFinalInvoicePaymentLink error:", error);
+    return { success: false, message: error.message };
+  }
+};
+
+

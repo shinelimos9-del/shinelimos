@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send } from "lucide-react";
-import { getDashboardData, updateBookingStatus, notifyVehicleArrival } from "../../utils/api";
+import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText } from "lucide-react";
+import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendPaymentLink, sendFinalInvoice } from "../../utils/api";
 
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notifyingId, setNotifyingId] = useState<string | null>(null);
+  const [sendingPaymentId, setSendingPaymentId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -53,7 +54,7 @@ export default function AdminDashboard() {
       setNotifyingId(bookingId);
       const response = await notifyVehicleArrival(bookingId, 0);
       if (response.success) {
-        alert("Vehicle arrival notification with waiting policy and payment link sent successfully to customer!");
+        alert("Vehicle arrival notification with waiting policy sent successfully to customer!");
         fetchDashboardData();
       } else {
         alert(response.message || "Failed to send arrival notification");
@@ -63,6 +64,42 @@ export default function AdminDashboard() {
       alert(error.response?.data?.message || "Error sending arrival notification.");
     } finally {
       setNotifyingId(null);
+    }
+  };
+
+  const handleSendPayment = async (bookingId: string) => {
+    try {
+      setSendingPaymentId(bookingId);
+      const response = await sendPaymentLink(bookingId);
+      if (response.success) {
+        alert("Stripe payment link sent to customer!");
+        fetchDashboardData();
+      } else {
+        alert(response.message || "Failed to send payment link");
+      }
+    } catch (error: any) {
+      console.error("Error sending payment link:", error);
+      alert(error.response?.data?.message || "Failed to send payment link.");
+    } finally {
+      setSendingPaymentId(null);
+    }
+  };
+
+  const handleSendFinalInvoiceQuick = async (bookingId: string) => {
+    try {
+      setSendingPaymentId(bookingId);
+      const response = await sendFinalInvoice(bookingId, {});
+      if (response.success) {
+        alert(`Final trip invoice and payment link sent successfully to booker & passenger!\nGrand Total: $${response.quote?.formattedGrandTotal || ''}`);
+        fetchDashboardData();
+      } else {
+        alert(response.message || "Failed to send final invoice");
+      }
+    } catch (error: any) {
+      console.error("Error sending final invoice:", error);
+      alert(error.response?.data?.message || "Failed to send final invoice.");
+    } finally {
+      setSendingPaymentId(null);
     }
   };
 
@@ -336,6 +373,27 @@ export default function AdminDashboard() {
                         {notifyingId === row.id ? <Loader2 size={12} className="animate-spin" /> : <Bell size={12} />}
                         Notify Arrival
                       </button>
+
+                      <button
+                        onClick={() => handleSendPayment(row.id)}
+                        disabled={sendingPaymentId === row.id}
+                        className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                        title="Send Stripe Payment Link for trip / waiting time"
+                      >
+                        {sendingPaymentId === row.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                        Send Payment Link
+                      </button>
+
+                      <button
+                        onClick={() => handleSendFinalInvoiceQuick(row.id)}
+                        disabled={sendingPaymentId === row.id}
+                        className="bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                        title="Send final itemized trip invoice & payment link after drop-off"
+                      >
+                        {sendingPaymentId === row.id ? <Loader2 size={12} className="animate-spin" /> : <FileText size={12} />}
+                        Send Final Invoice
+                      </button>
+
                       {row.status === 'completed' ? (
                         <button 
                           onClick={() => handleUpdateStatus(row.id, 'pending')}

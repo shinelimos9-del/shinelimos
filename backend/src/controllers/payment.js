@@ -77,3 +77,22 @@ exports.notify_vehicleArrival = async (req, res) => {
   }
 };
 
+exports.send_finalInvoice = async (req, res) => {
+  try {
+    const { booking_id, extra_options } = req.body;
+    if (!booking_id) {
+      return res.status(400).json({ success: false, message: "booking_id is required" });
+    }
+
+    const result = await paymentService.sendFinalInvoicePaymentLink(booking_id, extra_options || {});
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("send_finalInvoice controller error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+

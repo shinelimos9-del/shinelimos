@@ -9,6 +9,9 @@ router.post("/admin/send-payment-link", admin_auth, paymentController.send_payme
 // Admin triggers vehicle arrival notification with waiting policy & payment link
 router.post("/admin/notify-vehicle-arrival", admin_auth, paymentController.notify_vehicleArrival);
 
+// Admin sends final trip invoice & payment link after drop-off
+router.post("/admin/send-final-invoice", admin_auth, paymentController.send_finalInvoice);
+
 // Stripe webhook (raw body handled in index.js)
 router.post("/stripe/webhook", paymentController.stripe_webhook);
 
