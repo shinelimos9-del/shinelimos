@@ -58,3 +58,22 @@ exports.verify_payment = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+exports.notify_vehicleArrival = async (req, res) => {
+  try {
+    const { booking_id, waiting_minutes } = req.body;
+    if (!booking_id) {
+      return res.status(400).json({ success: false, message: "booking_id is required" });
+    }
+
+    const result = await paymentService.notifyVehicleArrival(booking_id, waiting_minutes);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("notify_vehicleArrival controller error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+

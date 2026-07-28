@@ -51,6 +51,11 @@ export const sendPaymentLink = async (bookingId: string) => {
   return response.data;
 };
 
+export const notifyVehicleArrival = async (bookingId: string, waitingMinutes: number = 0) => {
+  const response = await api.post('/admin/notify-vehicle-arrival', { booking_id: bookingId, waiting_minutes: waitingMinutes });
+  return response.data;
+};
+
 export const verifyPaymentSession = async (sessionId: string) => {
   const response = await api.get(`/bookings/verify-payment?session_id=${encodeURIComponent(sessionId)}`);
   return response.data;

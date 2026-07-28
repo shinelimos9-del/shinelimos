@@ -4,6 +4,7 @@ const Payment = require("../models/paymentModel");
 const Admin = require("../models/adminModel");
 const { sendEmail } = require("../utils/emailService");
 const moment = require("moment");
+const pricingEngine = require("../utils/pricingEngine");
 
 exports.sendStripePaymentLink = async (bookingId) => {
   try {
@@ -352,3 +353,159 @@ exports.verifyStripePayment = async (sessionId) => {
     return { success: false, message: error.message };
   }
 };
+
+exports.notifyVehicleArrival = async (bookingId, waitingMinutes = 0) => {
+  try {
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return { success: false, message: "Booking not found" };
+    }
+
+    const tierKey = pricingEngine.getVehicleTierKey(booking.vehicle_details);
+    const rates = pricingEngine.VEHICLE_RATES[tierKey] || pricingEngine.VEHICLE_RATES.sedan;
+
+    const totalWaitMins = Math.max(0, parseInt(waitingMinutes || 0, 10));
+    const chargeableWaitMins = Math.max(0, totalWaitMins - 15);
+    const waitingFee = pricingEngine.round2(chargeableWaitMins * rates.waitingRatePerMin);
+
+    // Update vehicle arrival status & wait time in booking
+    booking.vehicle_arrived = true;
+    booking.arrival_time = new Date();
+    booking.waiting_minutes = totalWaitMins;
+    booking.waiting_fee = waitingFee;
+
+    const baseAmount = parseFloat(booking.vehicle_details?.estimated_price || "0");
+    const totalAmountWithWait = pricingEngine.round2(baseAmount + waitingFee);
+
+    await booking.save();
+
+    const bookerEmail = booking.contact_details?.booker?.email;
+    const passengerEmail = booking.contact_details?.passenger?.email;
+
+    const recipients = Array.from(new Set([bookerEmail, passengerEmail].filter(Boolean)));
+
+    if (recipients.length === 0) {
+      return { success: false, message: "No email address found for booker or passenger" };
+    }
+
+    const bookerName = `${booking.contact_details?.booker?.first_name || 'Valued'} ${booking.contact_details?.booker?.last_name || 'Customer'}`;
+    const frontendUrl = (process.env.FRONTEND_URL || "https://shinelimosllc.com").replace(/\/$/, "");
+
+    // Create a new Stripe Checkout session for payment if payment link needed or extra fee applies
+    let sessionUrl = "";
+    try {
+      const chargeAmount = waitingFee > 0 ? waitingFee : totalAmountWithWait;
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: waitingFee > 0 ? `Waiting Time Fee - Limo Booking #${booking._id}` : `Limo Booking #${booking._id}`,
+                description: `Vehicle: ${rates.name}. ${waitingFee > 0 ? `Includes ${chargeableWaitMins} mins waiting time charge ($${waitingFee}).` : 'Vehicle arrival confirmation.'}`,
+              },
+              unit_amount: Math.round(chargeAmount * 100),
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        success_url: `${frontendUrl}/#/payment-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${frontendUrl}/#/payment-cancelled`,
+        customer_email: bookerEmail,
+        metadata: {
+          booking_id: booking._id.toString(),
+          waiting_minutes: totalWaitMins.toString(),
+          waiting_fee: waitingFee.toString(),
+        },
+      });
+
+      sessionUrl = session.url;
+
+      // Update payment status
+      booking.payment_status = "requested";
+      await booking.save();
+    } catch (stripeErr) {
+      console.warn("Stripe Checkout Session generation warning in vehicle arrival:", stripeErr.message);
+    }
+
+    // Send Email to Booker & Passenger
+    for (const email of recipients) {
+      await sendEmail({
+        to: email,
+        subject: `Your Vehicle Has Arrived! - Shine Limos (#${booking._id})`,
+        html: `
+          <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
+            <div style="text-align: center; margin-bottom: 25px;">
+              <h1 style="color: #000; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">Shine Limos</h1>
+              <div style="height: 2px; width: 50px; background-color: #d4af37; margin: 10px auto;"></div>
+            </div>
+
+            <div style="background-color: #10b981; color: white; text-align: center; padding: 15px; border-radius: 8px; font-size: 18px; font-weight: bold; margin-bottom: 20px;">
+              🚗 Your Chauffeur & Vehicle Have Arrived!
+            </div>
+
+            <p>Dear ${bookerName},</p>
+            <p>We are pleased to inform you that your chauffeur has arrived at the pickup location and is ready to serve you.</p>
+
+            <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #eee;">
+              <h3 style="margin-top: 0; font-size: 16px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Vehicle & Location Information</h3>
+              <p style="margin: 8px 0; font-size: 14px;"><strong>Booking ID:</strong> #${booking._id}</p>
+              <p style="margin: 8px 0; font-size: 14px;"><strong>Vehicle Reserved:</strong> ${booking.vehicle_details?.vehicle_name || rates.name}</p>
+              <p style="margin: 8px 0; font-size: 14px;"><strong>Pickup Location:</strong> ${booking.trip_details[0]?.pickup_location}</p>
+              <p style="margin: 8px 0; font-size: 14px;"><strong>Drop-off Location:</strong> ${booking.trip_details[0]?.dropoff_location}</p>
+            </div>
+
+            <!-- WAITING TIME POLICY NOTICE -->
+            <div style="background-color: #fffbeb; border: 1px solid #fef3c7; border-left: 5px solid #f59e0b; padding: 18px; border-radius: 8px; margin: 20px 0;">
+              <h4 style="margin-top: 0; color: #b45309; font-size: 15px; text-transform: uppercase; letter-spacing: 1px;">⏱️ Waiting Time Policy</h4>
+              <p style="margin: 6px 0; font-size: 13px; color: #92400e;">• <strong>First 15 minutes:</strong> FREE ($0.00)</p>
+              <p style="margin: 6px 0; font-size: 13px; color: #92400e;">• <strong>After 15 minutes:</strong></p>
+              <ul style="margin: 4px 0 8px 20px; padding: 0; font-size: 13px; color: #92400e;">
+                <li><strong>Sedan:</strong> $1.00 / minute</li>
+                <li><strong>SUV:</strong> $1.50 / minute</li>
+                <li><strong>Sprinter:</strong> $2.00 / minute</li>
+              </ul>
+              <p style="margin-top: 8px; font-size: 12px; color: #b45309; font-style: italic;">Your vehicle rate tier: <strong>${rates.name}</strong> (${rates.waitingRatePerMin > 0 ? `$${rates.waitingRatePerMin.toFixed(2)}/min after 15 free mins` : 'Free'}).</p>
+            </div>
+
+            ${waitingFee > 0 ? `
+              <div style="background-color: #fef2f2; border: 1px solid #fee2e2; border-left: 5px solid #ef4444; padding: 18px; border-radius: 8px; margin: 20px 0;">
+                <h4 style="margin-top: 0; color: #991b1b; font-size: 15px;">Additional Waiting Time Charge</h4>
+                <p style="margin: 6px 0; font-size: 13px;">• Total Wait Time: <strong>${totalWaitMins} minutes</strong></p>
+                <p style="margin: 6px 0; font-size: 13px;">• Chargeable Wait Time (after 15 free mins): <strong>${chargeableWaitMins} minutes</strong></p>
+                <p style="margin: 6px 0; font-size: 15px; font-weight: bold; color: #991b1b;">• Additional Waiting Charge: $${waitingFee.toFixed(2)}</p>
+              </div>
+            ` : ''}
+
+            ${sessionUrl ? `
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${sessionUrl}" style="background-color: #d4af37; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">
+                  ${waitingFee > 0 ? `Pay $${waitingFee.toFixed(2)} Waiting Fee Now` : `Pay / Confirm Booking ($${totalAmountWithWait.toFixed(2)})`}
+                </a>
+              </div>
+              <p style="text-align: center; font-size: 12px; color: #888;">Payment link: <a href="${sessionUrl}" style="color: #d4af37;">${sessionUrl}</a></p>
+            ` : ''}
+
+            <p style="line-height: 1.6; color: #555; margin-top: 25px;">Thank you for choosing Shine Limos. Please board your vehicle when ready.</p>
+            
+            <p style="margin-top: 25px;">Warm regards,<br><strong>Shine Limos Team</strong></p>
+          </div>
+        `,
+      });
+    }
+
+    return {
+      success: true,
+      message: "Vehicle arrival notification sent to customer",
+      waiting_minutes: totalWaitMins,
+      waiting_fee: waitingFee,
+      payment_url: sessionUrl
+    };
+  } catch (error) {
+    console.error("notifyVehicleArrival error:", error);
+    return { success: false, message: error.message };
+  }
+};
+

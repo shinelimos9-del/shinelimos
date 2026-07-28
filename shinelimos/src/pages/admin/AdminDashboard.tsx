@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2 } from "lucide-react";
-import { getDashboardData, updateBookingStatus } from "../../utils/api";
+import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send } from "lucide-react";
+import { getDashboardData, updateBookingStatus, notifyVehicleArrival } from "../../utils/api";
 
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notifyingId, setNotifyingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboardData();
@@ -44,6 +45,24 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error(error);
       alert("Error updating status");
+    }
+  };
+
+  const handleNotifyArrival = async (bookingId: string) => {
+    try {
+      setNotifyingId(bookingId);
+      const response = await notifyVehicleArrival(bookingId, 0);
+      if (response.success) {
+        alert("Vehicle arrival notification with waiting policy and payment link sent successfully to customer!");
+        fetchDashboardData();
+      } else {
+        alert(response.message || "Failed to send arrival notification");
+      }
+    } catch (error: any) {
+      console.error("Error sending arrival notification:", error);
+      alert(error.response?.data?.message || "Error sending arrival notification.");
+    } finally {
+      setNotifyingId(null);
     }
   };
 
@@ -307,21 +326,32 @@ export default function AdminDashboard() {
                     </span>
                   </td>
                   <td className="p-4 text-right">
-                    {row.status === 'completed' ? (
-                      <button 
-                        onClick={() => handleUpdateStatus(row.id, 'pending')}
-                        className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 border border-yellow-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => handleNotifyArrival(row.id)}
+                        disabled={notifyingId === row.id}
+                        className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                        title="Notify booker & passenger that vehicle has arrived at pickup location"
                       >
-                        Pending
+                        {notifyingId === row.id ? <Loader2 size={12} className="animate-spin" /> : <Bell size={12} />}
+                        Notify Arrival
                       </button>
-                    ) : (
-                      <button 
-                        onClick={() => handleUpdateStatus(row.id, 'completed')}
-                        className="bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                      >
-                        Complete
-                      </button>
-                    )}
+                      {row.status === 'completed' ? (
+                        <button 
+                          onClick={() => handleUpdateStatus(row.id, 'pending')}
+                          className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 border border-yellow-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                        >
+                          Pending
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => handleUpdateStatus(row.id, 'completed')}
+                          className="bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                        >
+                          Complete
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2 } from "lucide-react";
-import { getAllBookings, updateBookingStatus, sendPaymentLink } from "../../utils/api";
+import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, MapPin, Clock, X, Bell } from "lucide-react";
+import { getAllBookings, updateBookingStatus, sendPaymentLink, notifyVehicleArrival } from "../../utils/api";
 import moment from "moment";
 
 export default function AdminBookings() {
@@ -10,6 +10,9 @@ export default function AdminBookings() {
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [sendingPaymentId, setSendingPaymentId] = useState<string | null>(null);
+  const [arrivalModalBooking, setArrivalModalBooking] = useState<any | null>(null);
+  const [waitingMinutes, setWaitingMinutes] = useState<number>(0);
+  const [notifyingArrival, setNotifyingArrival] = useState(false);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -67,6 +70,27 @@ export default function AdminBookings() {
       alert("Error sending payment link");
     } finally {
       setSendingPaymentId(null);
+    }
+  };
+
+  const handleSendArrivalNotification = async () => {
+    if (!arrivalModalBooking) return;
+    try {
+      setNotifyingArrival(true);
+      const response = await notifyVehicleArrival(arrivalModalBooking._id, waitingMinutes);
+      if (response.success) {
+        alert(`Vehicle arrival notification & payment link sent successfully to customer!\nWait fee calculated: $${response.waiting_fee || 0}`);
+        setArrivalModalBooking(null);
+        setWaitingMinutes(0);
+        fetchBookings();
+      } else {
+        alert(response.message || "Failed to send arrival notification");
+      }
+    } catch (error: any) {
+      console.error("Error sending arrival notification:", error);
+      alert(error.response?.data?.message || "Failed to send arrival notification.");
+    } finally {
+      setNotifyingArrival(false);
     }
   };
 
@@ -196,6 +220,21 @@ export default function AdminBookings() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setArrivalModalBooking(b);
+                            setWaitingMinutes(b.waiting_minutes || 0);
+                          }}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${
+                            b.vehicle_arrived
+                              ? "bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30"
+                              : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30"
+                          }`}
+                          title="Notify booker & passenger that vehicle has arrived on pickup location"
+                        >
+                          <Bell size={12} />
+                          {b.vehicle_arrived ? "Vehicle Arrived" : "Notify Arrival"}
+                        </button>
                         {b.payment_status === 'requested' && (
                           <button 
                             onClick={() => handleSendPaymentLink(b._id)}
@@ -278,6 +317,105 @@ export default function AdminBookings() {
           </div>
         )}
       </div>
+
+      {/* Arrival Notification & Waiting Time Modal */}
+      {arrivalModalBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="bg-[#121212] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+            <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/5">
+              <div className="flex items-center gap-2 text-gold">
+                <Bell size={18} />
+                <h3 className="font-semibold text-lg text-white">Notify Vehicle Arrival</h3>
+              </div>
+              <button 
+                onClick={() => setArrivalModalBooking(null)}
+                className="text-white/50 hover:text-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div className="glass rounded-xl p-4 space-y-2 border border-white/5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-white/50">Booker Name:</span>
+                  <span className="text-white font-medium">{arrivalModalBooking.contact_details?.booker?.first_name} {arrivalModalBooking.contact_details?.booker?.last_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/50">Recipient Email:</span>
+                  <span className="text-gold font-mono text-xs">{arrivalModalBooking.contact_details?.booker?.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/50">Vehicle:</span>
+                  <span className="text-white">{arrivalModalBooking.vehicle_details?.vehicle_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-white/50">Pickup Address:</span>
+                  <span className="text-white truncate max-w-[220px]">{arrivalModalBooking.trip_details?.[0]?.pickup_location}</span>
+                </div>
+              </div>
+
+              {/* Waiting Time Policy Reminder */}
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 text-xs space-y-1.5">
+                <div className="font-bold text-amber-400 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+                  <Clock size={14} /> Waiting Time Policy Rules
+                </div>
+                <p className="text-amber-200/90">• First 15 minutes: <strong className="text-white">FREE ($0.00)</strong></p>
+                <p className="text-amber-200/90">• After 15 minutes:</p>
+                <ul className="pl-4 list-disc text-amber-200/80 space-y-0.5">
+                  <li>Sedan: $1.00 / minute</li>
+                  <li>SUV: $1.50 / minute</li>
+                  <li>Sprinter: $2.00 / minute</li>
+                </ul>
+              </div>
+
+              {/* Waiting Minutes Input */}
+              <div className="space-y-2">
+                <label className="block text-xs font-medium text-white/70 uppercase tracking-wider">
+                  Total Waiting Time Elapsed (Minutes):
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="number"
+                    min={0}
+                    value={waitingMinutes}
+                    onChange={(e) => setWaitingMinutes(Math.max(0, parseInt(e.target.value) || 0))}
+                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-white font-mono text-sm focus:outline-none focus:border-gold/60"
+                    placeholder="0"
+                  />
+                  <span className="text-xs text-white/50 shrink-0">mins</span>
+                </div>
+                <p className="text-[11px] text-white/40">
+                  {waitingMinutes <= 15 ? (
+                    <span className="text-green-400">✓ Within 15 minutes free window ($0.00 extra charge).</span>
+                  ) : (
+                    <span className="text-amber-400">
+                      ⚡ {waitingMinutes - 15} chargeable minutes. New payment link will be sent.
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-5 border-t border-white/10 flex justify-end gap-3 bg-white/2">
+              <button
+                onClick={() => setArrivalModalBooking(null)}
+                className="px-4 py-2 rounded-xl text-sm font-medium border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSendArrivalNotification}
+                disabled={notifyingArrival}
+                className="px-5 py-2 rounded-xl text-sm font-medium bg-gold text-black hover:bg-gold/90 transition-all flex items-center gap-2 disabled:opacity-50 font-bold"
+              >
+                {notifyingArrival ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                Send Arrival Notification & Payment Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
