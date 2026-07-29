@@ -473,7 +473,7 @@ export default function Booking() {
           <div class="section">
             <h2>Estimated Price</h2>
             <div class="row"><div class="label">Vehicle Estimate:</div><div class="val" style="font-weight:bold; color:#d4af37; font-size:18px;">$${selectedVehicle?.estimated_price || "0.00"}</div></div>
-            <p style="font-size:12px; color:#888; margin-top:10px;">* Includes tolls, gratuity, fuel surcharges and 15 minutes of complimentary wait time. Final charges may vary based on actual trip duration and additional stops.</p>
+            <p style="font-size:12px; color:#888; margin-top:10px;">All-inclusive estimate: Your final quote includes tolls, gratuity, and fuel surcharges. Airport pickups include 60 minutes of complimentary wait time after your flight lands. Non-airport pickups include 15 minutes of complimentary wait time. No charge will be made until 24 hours before pickup.</p>
           </div>
 
           <div class="footer">
@@ -1061,7 +1061,7 @@ function Step3Summary({ data, vehicle }: any) {
         <Detail label="Estimated Total" value={vehicle?.estimated_price ? `$${vehicle.estimated_price}` : "Calculated at booking"} />
       </div>
       <p className="mt-3 text-xs text-white/50 leading-relaxed font-light px-1">
-        * Estimated total automatically includes 20% driver gratuity, fuel surcharges, tolls, and 15 minutes of complimentary wait time. Additional stops are calculated per vehicle tier (Sedan: $15/stop, SUV: $20/stop, Sprinter: $30/stop).
+        All-inclusive estimate: Your final quote includes tolls, gratuity, and fuel surcharges. Airport pickups include 60 minutes of complimentary wait time after your flight lands. Non-airport pickups include 15 minutes of complimentary wait time. No charge will be made until 24 hours before pickup.
       </p>
     </>
   );
