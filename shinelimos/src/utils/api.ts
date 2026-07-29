@@ -46,28 +46,18 @@ export const requestPayment = async (bookingId: string) => {
   return response.data;
 };
 
-export const sendPaymentLink = async (bookingId: string) => {
-  const response = await api.post('/admin/send-payment-link', { booking_id: bookingId });
-  return response.data;
-};
-
 export const notifyVehicleArrival = async (bookingId: string, waitingMinutes: number = 0) => {
   const response = await api.post('/admin/notify-vehicle-arrival', { booking_id: bookingId, waiting_minutes: waitingMinutes });
   return response.data;
 };
 
+export const startRide = async (bookingId: string) => {
+  const response = await api.post('/admin/start-ride', { booking_id: bookingId });
+  return response.data;
+};
+
 export const sendFinalInvoice = async (bookingId: string, extraOptions: any = {}) => {
   const response = await api.post('/admin/send-final-invoice', { booking_id: bookingId, extra_options: extraOptions });
-  return response.data;
-};
-
-export const toggleVehicleTracking = async (bookingId: string, trackingData: { vehicle_running?: boolean; stop_in_progress?: boolean }) => {
-  const response = await api.patch(`/bookings/${bookingId}/tracking`, trackingData);
-  return response.data;
-};
-
-export const toggleStopTimer = async (bookingId: string, action: 'start' | 'end') => {
-  const response = await api.post(`/bookings/${bookingId}/stop-timer`, { action });
   return response.data;
 };
 

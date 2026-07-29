@@ -178,15 +178,17 @@ const getCoordsFromAddressMapbox = async (loc, details) => {
 	}
 };
 
-// Helper to get accurate road distance using Mapbox Directions API
-const getRoadDistanceMapbox = async (origin, destination) => {
+// Helper to get accurate road distance using Mapbox Directions API with support for multi-stop waypoints
+const getRoadDistanceMapbox = async (waypoints) => {
 	const token = process.env.MAPBOX_ACCESS_TOKEN;
-	if (!token || !origin || !destination) return 10; // Fallback distance
+	const validWaypoints = (Array.isArray(waypoints) ? waypoints : []).filter(w => w && typeof w.lat === 'number' && typeof w.lng === 'number');
+	if (!token || validWaypoints.length < 2) return 10; // Fallback distance
 
 	try {
 		// Mapbox coordinates format is [longitude, latitude]
-		const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}`;
-		console.log(`[Mapbox Directions] Requesting route: ${origin.lat},${origin.lng} to ${destination.lat},${destination.lng}`);
+		const waypointsStr = validWaypoints.map(w => `${w.lng},${w.lat}`).join(';');
+		const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${waypointsStr}`;
+		console.log(`[Mapbox Directions] Requesting route for ${validWaypoints.length} waypoints: ${waypointsStr}`);
 		
 		const response = await axios.get(url, {
 			params: {
@@ -198,7 +200,7 @@ const getRoadDistanceMapbox = async (origin, destination) => {
 		if (response.data && response.data.routes && response.data.routes.length > 0) {
 			const distanceInMeters = response.data.routes[0].distance;
 			const distanceInMiles = distanceInMeters / 1609.34;
-			console.log(`[Mapbox Directions] Found road distance: ${distanceInMiles.toFixed(2)} miles`);
+			console.log(`[Mapbox Directions] Found multi-stop road distance: ${distanceInMiles.toFixed(2)} miles`);
 			
 			return distanceInMiles;
 		}
@@ -214,12 +216,32 @@ exports.initiateBooking = async (tripData) => {
 	try {
 		// 1. Process trip data with accurate Mapbox distance calculation
 		const processedTripData = await Promise.all(tripData.map(async (segment) => {
-			// Get coordinates for both pickup and dropoff using Mapbox Geocoding
+			// Get coordinates for pickup
 			const pickupCoords = await getCoordsFromAddressMapbox(segment.pickup_location, segment.pickup_details);
+
+			// Geocode intermediate stops if present
+			const rawStops = Array.isArray(segment.stops) ? segment.stops : [];
+			const processedStops = await Promise.all(rawStops.map(async (stop) => {
+				const stopLocation = typeof stop === 'string' ? stop : (stop.location || stop.address || "");
+				const stopDetails = typeof stop === 'object' ? (stop.details || {}) : {};
+				const stopCoords = await getCoordsFromAddressMapbox(stopLocation, stopDetails);
+				return {
+					location: stopLocation,
+					details: {
+						...stopDetails,
+						latitude: stopCoords ? stopCoords.lat : 0,
+						longitude: stopCoords ? stopCoords.lng : 0
+					},
+					coords: stopCoords
+				};
+			}));
+
+			// Get coordinates for dropoff
 			const dropoffCoords = await getCoordsFromAddressMapbox(segment.dropoff_location, segment.dropoff_details);
 
-			// Calculate road distance using Mapbox Directions API
-			const distance = await getRoadDistanceMapbox(pickupCoords, dropoffCoords);
+			// Calculate multi-stop road distance
+			const waypoints = [pickupCoords, ...processedStops.map(s => s.coords), dropoffCoords].filter(Boolean);
+			const distance = await getRoadDistanceMapbox(waypoints);
 
 			return {
 				...segment,
@@ -228,6 +250,7 @@ exports.initiateBooking = async (tripData) => {
 					latitude: pickupCoords ? pickupCoords.lat : 0,
 					longitude: pickupCoords ? pickupCoords.lng : 0
 				},
+				stops: processedStops.map(s => ({ location: s.location, details: s.details })),
 				dropoff_details: {
 					...segment.dropoff_details,
 					latitude: dropoffCoords ? dropoffCoords.lat : 0,
@@ -277,7 +300,7 @@ exports.initiateBooking = async (tripData) => {
 					pickupDate: segment.date,
 					flightInfo: segment.flight_details,
 					occasion: segment.occasion,
-					additionalStopsCount: processedTripData.length > 1 ? processedTripData.length - 1 : 0,
+					additionalStopsCount: (Array.isArray(segment.stops) ? segment.stops.length : 0) + (processedTripData.length > 1 ? processedTripData.length - 1 : 0),
 				});
 
 				lastQuote = quote;
@@ -465,131 +488,5 @@ exports.updateBookingStatus = async (id, status) => {
 	} catch (error) {
 		console.log("updateBookingStatus error:", error);
 		return { success: false, message: error.message || error };
-	}
-};
-
-exports.toggleVehicleTracking = async (id, trackingData = {}) => {
-	try {
-		if (!mongoose.Types.ObjectId.isValid(id)) {
-			return { success: false, message: `Invalid booking ID format: ${id}` };
-		}
-
-		const updateFields = { updated_at: Date.now() };
-		if (trackingData.vehicle_running !== undefined) {
-			updateFields.vehicle_running = Boolean(trackingData.vehicle_running);
-		}
-		if (trackingData.stop_in_progress !== undefined) {
-			updateFields.stop_in_progress = Boolean(trackingData.stop_in_progress);
-		}
-
-		const updated = await Booking.findByIdAndUpdate(
-			id,
-			{ $set: updateFields },
-			{ new: true }
-		);
-
-		if (!updated) return { success: false, message: `Booking with ID ${id} not found` };
-		return {
-			success: true,
-			message: "Vehicle tracking status updated",
-			booking: updated,
-			vehicle_running: updated.vehicle_running,
-			stop_in_progress: updated.stop_in_progress
-		};
-	} catch (error) {
-		console.log("toggleVehicleTracking error:", error);
-		return { success: false, message: error.message || String(error) };
-	}
-};
-
-exports.toggleStopTimer = async (id, inputAction) => {
-	try {
-		if (!mongoose.Types.ObjectId.isValid(id)) {
-			return { success: false, message: `Invalid booking ID format: ${id}` };
-		}
-
-		const booking = await Booking.findById(id);
-		if (!booking) {
-			return { success: false, message: `Booking with ID ${id} not found` };
-		}
-
-		let action = String(inputAction || "").toLowerCase();
-		if (action !== "start" && action !== "end") {
-			action = booking.stop_in_progress ? "end" : "start";
-		}
-
-		if (action === "start") {
-			booking.stop_in_progress = true;
-			booking.active_stop_start = new Date();
-			booking.updated_at = Date.now();
-			await booking.save();
-			return {
-				success: true,
-				message: "Stop timer started",
-				action: "start",
-				stop_in_progress: true,
-				active_stop_start: booking.active_stop_start,
-				booking
-			};
-		} else {
-			const startTime = booking.active_stop_start ? new Date(booking.active_stop_start).getTime() : Date.now();
-			const elapsedMs = Math.max(0, Date.now() - startTime);
-			const elapsedMins = Math.max(1, Math.ceil(elapsedMs / 60000));
-
-			const prevWaitMins = parseInt(booking.waiting_minutes || 0, 10);
-			const totalWaitMins = prevWaitMins + elapsedMins;
-
-			const prevStopsCount = parseInt(booking.additional_stops_count || 0, 10);
-			const newStopsCount = prevStopsCount + 1;
-
-			booking.stop_in_progress = false;
-			booking.active_stop_start = null;
-			booking.waiting_minutes = totalWaitMins;
-			booking.additional_stops_count = newStopsCount;
-			booking.updated_at = Date.now();
-
-			// Recalculate quote with updated stops and wait time
-			const tripSegment = booking.trip_details?.[0] || {};
-			const quote = pricingEngine.calculateQuote({
-				vehicle: booking.vehicle_details,
-				bookingType: tripSegment.trip_type || 'one-way',
-				distanceMiles: tripSegment.distance_miles || 0,
-				durationMinutes: pricingEngine.parseHours(tripSegment.duration) * 60,
-				durationHours: pricingEngine.parseHours(tripSegment.duration),
-				pickupLocation: tripSegment.pickup_location,
-				pickupTime: tripSegment.start_time,
-				pickupDate: tripSegment.date,
-				flightInfo: tripSegment.flight_details,
-				occasion: tripSegment.occasion,
-				waitingMinutes: totalWaitMins,
-				additionalStopsCount: newStopsCount,
-				childSeatsCount: booking.price_breakdown?.childSeatsCount || 0,
-				hasCleaningFee: Boolean(booking.price_breakdown?.cleaningFee > 0),
-				tolls: booking.price_breakdown?.tolls || 0,
-				parking: booking.price_breakdown?.parking || 0,
-			});
-
-			booking.price_breakdown = quote.breakdown;
-			if (booking.vehicle_details) {
-				booking.vehicle_details.estimated_price = quote.formattedGrandTotal;
-			}
-			await booking.save();
-
-			return {
-				success: true,
-				message: `Stop ended (${elapsedMins} mins elapsed). Added 1 Additional Stop. Invoice updated to $${quote.formattedGrandTotal}`,
-				action: "end",
-				stop_in_progress: false,
-				elapsed_minutes: elapsedMins,
-				total_waiting_minutes: totalWaitMins,
-				additional_stops_count: newStopsCount,
-				updated_price: quote.formattedGrandTotal,
-				quote,
-				booking
-			};
-		}
-	} catch (error) {
-		console.log("toggleStopTimer error:", error);
-		return { success: false, message: error.message || String(error) };
 	}
 };

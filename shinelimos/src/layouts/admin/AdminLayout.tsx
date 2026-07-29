@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, CreditCard, CheckCircle, Loader2 } from "lucide-react";
-import { getAdminProfile, getNotifications, markNotificationsRead, logoutAdmin, sendPaymentLink, ADMIN_BASE_URL } from "../../utils/api";
+import { getAdminProfile, getNotifications, markNotificationsRead, logoutAdmin, ADMIN_BASE_URL } from "../../utils/api";
 import { io } from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
 
@@ -118,29 +118,12 @@ export default function AdminLayout() {
               </div>
             </div>
           </div>
-          <div className="flex flex-col border-l border-white/5">
-            <button
-              onClick={async () => {
-                toast.dismiss(t.id);
-                try {
-                  const res = await sendPaymentLink(data.booking_id);
-                  if (res.success) toast.success("Payment link sent!");
-                  else toast.error(res.message);
-                } catch (err) {
-                  toast.error("Failed to send link");
-                }
-              }}
-              className="flex-1 w-full border-b border-white/5 p-4 flex items-center justify-center text-xs font-medium text-blue-400 hover:text-blue-300"
-            >
-              Send Link
-            </button>
             <button
               onClick={() => toast.dismiss(t.id)}
-              className="flex-1 w-full p-4 flex items-center justify-center text-xs font-medium text-white/40 hover:text-white/60"
+              className="flex-1 w-full p-4 flex items-center justify-center text-xs font-medium text-white/60 hover:text-white"
             >
-              Close
+              Dismiss
             </button>
-          </div>
         </div>
       ), { duration: 8000 });
     });

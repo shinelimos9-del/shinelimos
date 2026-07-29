@@ -31,6 +31,12 @@ interface FlightInfo {
   airline_flight_no: string;
 }
 
+interface StopLocation {
+  id: number;
+  address: string;
+  details: LocationDetails;
+}
+
 interface Segment {
   id: number;
   date: string;
@@ -38,6 +44,7 @@ interface Segment {
   duration: string;
   pickup: string;
   pickup_details: LocationDetails;
+  stops?: StopLocation[];
   dropoff: string;
   dropoff_details: LocationDetails;
   comments: string;
@@ -206,6 +213,10 @@ export default function Booking() {
           duration: s.duration,
           pickup_location: s.pickup,
           pickup_details: s.pickup_details,
+          stops: (s.stops || []).filter(st => st.address.trim() !== "").map(st => ({
+            location: st.address,
+            details: st.details
+          })),
           dropoff_location: s.dropoff,
           dropoff_details: s.dropoff_details,
           comment: s.comments || "",
@@ -717,6 +728,56 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
     }));
   };
 
+  const addStopLocation = (segmentId: number) => {
+    update("segments", data.segments.map((s: Segment) => {
+      if (s.id === segmentId) {
+        const existingStops = s.stops || [];
+        const newStop: StopLocation = {
+          id: Date.now(),
+          address: "",
+          details: { flat_no: "", area: "", landmark: "", postal_code: "", city: "", state: "" }
+        };
+        return { ...s, stops: [...existingStops, newStop] };
+      }
+      return s;
+    }));
+  };
+
+  const removeStopLocation = (segmentId: number, stopId: number) => {
+    update("segments", data.segments.map((s: Segment) => {
+      if (s.id === segmentId) {
+        return { ...s, stops: (s.stops || []).filter(st => st.id !== stopId) };
+      }
+      return s;
+    }));
+  };
+
+  const updateStopLocation = (segmentId: number, stopId: number, address: string, details: any) => {
+    update("segments", data.segments.map((s: Segment) => {
+      if (s.id === segmentId) {
+        const updatedStops = (s.stops || []).map(st => {
+          if (st.id === stopId) {
+            return {
+              ...st,
+              address,
+              details: {
+                ...st.details,
+                city: details?.city || "",
+                state: details?.state || "",
+                postal_code: details?.postal_code || "",
+                lat: details?.lat || undefined,
+                lng: details?.lng || undefined
+              }
+            };
+          }
+          return st;
+        });
+        return { ...s, stops: updatedStops };
+      }
+      return s;
+    }));
+  };
+
   return (
     <>
       <div className="text-[10px] tracking-[0.25em] text-gold uppercase py-3 px-5 rounded-t-2xl border border-white/10 border-b-0 bg-white/5 font-medium">Itinerary</div>
@@ -778,10 +839,50 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
                     </Field>
                   </div>
                 </div>
+
+                {(seg.stops || []).map((stop: StopLocation, sIdx: number) => (
+                  <div key={stop.id} className="flex items-start gap-4">
+                    <div className="w-9 h-9 mt-5 shrink-0 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold text-sm border border-amber-500/30">
+                      {index + 1}{String.fromCharCode(66 + sIdx)}
+                    </div>
+                    <div className="flex-1">
+                      <Field icon={MapPin} label={`Address (Stop ${sIdx + 1})`}>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <AddressSearch
+                              value={stop.address}
+                              onChange={(addr, details) => updateStopLocation(seg.id, stop.id, addr, details)}
+                              placeholder={`Enter stop location address #${sIdx + 1}`}
+                              className={inputCls()}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeStopLocation(seg.id, stop.id)}
+                            className="shrink-0 aspect-square w-[46px] border border-red-500/20 hover:border-red-500/50 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl flex items-center justify-center transition-all mt-6"
+                            title="Remove Stop Location"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </Field>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    type="button"
+                    onClick={() => addStopLocation(seg.id)}
+                    className="flex items-center gap-1.5 border border-gold/30 hover:border-gold bg-gold/10 hover:bg-gold/20 text-gold px-3.5 py-2 rounded-xl text-xs font-medium transition-all"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Add Stop Location
+                  </button>
+                </div>
                 
                 <div className="flex items-start gap-4">
                   <div className="w-9 h-9 mt-5 shrink-0 rounded-full bg-gold/10 text-gold flex items-center justify-center font-bold text-sm border border-gold/30">
-                    {index + 1}B
+                    {index + 1}{String.fromCharCode(66 + (seg.stops?.length || 0))}
                   </div>
                   <div className="flex-1">
                     <Field icon={MapPin} label="Address (Drop-off) *">
@@ -940,6 +1041,9 @@ function Step3Summary({ data, vehicle }: any) {
               <Detail label="Date" value={seg.date} />
               <Detail label="Time" value={seg.time} />
               <Detail label="Pickup" value={formatAddress(seg.pickup, seg.pickup_details)} />
+              {(seg.stops || []).map((stop: any, sIdx: number) => (
+                <Detail key={stop.id || sIdx} label={`Stop ${sIdx + 1}`} value={formatAddress(stop.address || stop.location, stop.details || {})} />
+              ))}
               <Detail label="Drop-off" value={formatAddress(seg.dropoff, seg.dropoff_details)} />
               {seg.duration && <Detail label="Duration" value={seg.duration} />}
               {seg.comments && <Detail label="Comments" value={seg.comments} />}
@@ -956,6 +1060,9 @@ function Step3Summary({ data, vehicle }: any) {
         <Detail label="Occasion" value={data.occasion || "Not specified"} />
         <Detail label="Estimated Total" value={vehicle?.estimated_price ? `$${vehicle.estimated_price}` : "Calculated at booking"} />
       </div>
+      <p className="mt-3 text-xs text-white/50 leading-relaxed font-light px-1">
+        * Estimated total automatically includes 20% driver gratuity, fuel surcharges, tolls, and 15 minutes of complimentary wait time. Additional stops are calculated per vehicle tier (Sedan: $15/stop, SUV: $20/stop, Sprinter: $30/stop).
+      </p>
     </>
   );
 }

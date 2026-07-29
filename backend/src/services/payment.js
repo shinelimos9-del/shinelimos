@@ -391,45 +391,6 @@ exports.notifyVehicleArrival = async (bookingId, waitingMinutes = 0) => {
     const bookerName = `${booking.contact_details?.booker?.first_name || 'Valued'} ${booking.contact_details?.booker?.last_name || 'Customer'}`;
     const frontendUrl = (process.env.FRONTEND_URL || "https://shinelimosllc.com").replace(/\/$/, "");
 
-    // Create a new Stripe Checkout session for payment if payment link needed or extra fee applies
-    let sessionUrl = "";
-    try {
-      const chargeAmount = waitingFee > 0 ? waitingFee : totalAmountWithWait;
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ["card"],
-        line_items: [
-          {
-            price_data: {
-              currency: "usd",
-              product_data: {
-                name: waitingFee > 0 ? `Waiting Time Fee - Limo Booking #${booking._id}` : `Limo Booking #${booking._id}`,
-                description: `Vehicle: ${rates.name}. ${waitingFee > 0 ? `Includes ${chargeableWaitMins} mins waiting time charge ($${waitingFee}).` : 'Vehicle arrival confirmation.'}`,
-              },
-              unit_amount: Math.round(chargeAmount * 100),
-            },
-            quantity: 1,
-          },
-        ],
-        mode: "payment",
-        success_url: `${frontendUrl}/#/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${frontendUrl}/#/payment-cancelled`,
-        customer_email: bookerEmail,
-        metadata: {
-          booking_id: booking._id.toString(),
-          waiting_minutes: totalWaitMins.toString(),
-          waiting_fee: waitingFee.toString(),
-        },
-      });
-
-      sessionUrl = session.url;
-
-      // Update payment status
-      booking.payment_status = "requested";
-      await booking.save();
-    } catch (stripeErr) {
-      console.warn("Stripe Checkout Session generation warning in vehicle arrival:", stripeErr.message);
-    }
-
     // Send Email to Booker & Passenger
     for (const email of recipients) {
       await sendEmail({
@@ -479,15 +440,6 @@ exports.notifyVehicleArrival = async (bookingId, waitingMinutes = 0) => {
               </div>
             ` : ''}
 
-            ${sessionUrl ? `
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${sessionUrl}" style="background-color: #d4af37; color: white; padding: 15px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">
-                  ${waitingFee > 0 ? `Pay $${waitingFee.toFixed(2)} Waiting Fee Now` : `Pay / Confirm Booking ($${totalAmountWithWait.toFixed(2)})`}
-                </a>
-              </div>
-              <p style="text-align: center; font-size: 12px; color: #888;">Payment link: <a href="${sessionUrl}" style="color: #d4af37;">${sessionUrl}</a></p>
-            ` : ''}
-
             <p style="line-height: 1.6; color: #555; margin-top: 25px;">Thank you for choosing Shine Limos. Please board your vehicle when ready.</p>
             
             <p style="margin-top: 25px;">Warm regards,<br><strong>Shine Limos Team</strong></p>
@@ -500,8 +452,7 @@ exports.notifyVehicleArrival = async (bookingId, waitingMinutes = 0) => {
       success: true,
       message: "Vehicle arrival notification sent to customer",
       waiting_minutes: totalWaitMins,
-      waiting_fee: waitingFee,
-      payment_url: sessionUrl
+      waiting_fee: waitingFee
     };
   } catch (error) {
     console.error("notifyVehicleArrival error:", error);
@@ -534,7 +485,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
       flightInfo: tripSegment.flight_details,
       occasion: tripSegment.occasion,
       waitingMinutes: extraOptions.waitingMinutes,
-      additionalStopsCount: extraOptions.additionalStopsCount !== undefined ? extraOptions.additionalStopsCount : (booking.trip_details?.length > 1 ? booking.trip_details.length - 1 : 0),
+      additionalStopsCount: extraOptions.additionalStopsCount !== undefined ? extraOptions.additionalStopsCount : ((tripSegment.stops?.length || 0) + (booking.trip_details?.length > 1 ? booking.trip_details.length - 1 : 0)),
       childSeatsCount: extraOptions.childSeatsCount,
       hasCleaningFee: extraOptions.hasCleaningFee,
       cleaningFeeAmount: extraOptions.cleaningFeeAmount,
@@ -663,6 +614,43 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
     };
   } catch (error) {
     console.error("sendFinalInvoicePaymentLink error:", error);
+    return { success: false, message: error.message };
+  }
+};
+
+exports.startRide = async (bookingId) => {
+  try {
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
+      return { success: false, message: "Booking not found" };
+    }
+
+    const arrivalTime = booking.arrival_time ? new Date(booking.arrival_time).getTime() : Date.now();
+    const elapsedMs = Math.max(0, Date.now() - arrivalTime);
+    const totalWaitMins = Math.max(0, Math.ceil(elapsedMs / 60000));
+
+    const tierKey = pricingEngine.getVehicleTierKey(booking.vehicle_details);
+    const rates = pricingEngine.VEHICLE_RATES[tierKey] || pricingEngine.VEHICLE_RATES.sedan;
+    const chargeableWaitMins = Math.max(0, totalWaitMins - 15);
+    const waitingFee = pricingEngine.round2(chargeableWaitMins * rates.waitingRatePerMin);
+
+    booking.ride_started = true;
+    booking.ride_start_time = new Date();
+    booking.waiting_minutes = totalWaitMins;
+    booking.waiting_fee = waitingFee;
+    booking.updated_at = Date.now();
+
+    await booking.save();
+
+    return {
+      success: true,
+      message: `Ride started! Total waiting time: ${totalWaitMins} mins ($${waitingFee} wait fee)`,
+      waiting_minutes: totalWaitMins,
+      waiting_fee: waitingFee,
+      booking
+    };
+  } catch (error) {
+    console.error("startRide error:", error);
     return { success: false, message: error.message };
   }
 };

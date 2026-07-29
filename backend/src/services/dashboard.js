@@ -87,14 +87,16 @@ exports.getDashboardStats = async () => {
                 price: b.vehicle_details?.estimated_price ? `$${b.vehicle_details.estimated_price}` : "N/A",
                 phone: b.contact_details?.booker?.primary_phone?.number || "N/A",
                 status: b.booking_status || "pending",
-                vehicle_running: Boolean(b.vehicle_running),
-                stop_in_progress: Boolean(b.stop_in_progress),
-                active_stop_start: b.active_stop_start,
+                vehicle_arrived: Boolean(b.vehicle_arrived),
+                arrival_time: b.arrival_time,
+                ride_started: Boolean(b.ride_started),
+                ride_start_time: b.ride_start_time,
                 vehicle_details: b.vehicle_details,
                 trip_details: b.trip_details,
                 contact_details: b.contact_details,
                 price_breakdown: b.price_breakdown,
                 waiting_minutes: b.waiting_minutes || 0,
+                waiting_fee: b.waiting_fee || 0,
                 additional_stops_count: b.additional_stops_count || 0
             }))
         };

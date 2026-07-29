@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Car, Play, Square } from "lucide-react";
-import { getAllBookings, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, toggleVehicleTracking, toggleStopTimer } from "../../utils/api";
+import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Play } from "lucide-react";
+import { getAllBookings, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide } from "../../utils/api";
 import { calculateQuote, parseHours } from "../../utils/pricingEngine";
 import moment from "moment";
 
@@ -10,14 +10,18 @@ export default function AdminBookings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [sendingPaymentId, setSendingPaymentId] = useState<string | null>(null);
   const [arrivalModalBooking, setArrivalModalBooking] = useState<any | null>(null);
   const [waitingMinutes, setWaitingMinutes] = useState<number>(0);
   const [notifyingArrival, setNotifyingArrival] = useState(false);
+  const [startingRideId, setStartingRideId] = useState<string | null>(null);
+  const [now, setNow] = useState(Date.now());
 
-  const [paymentModalBooking, setPaymentModalBooking] = useState<any | null>(null);
-  const [paymentWaitingMins, setPaymentWaitingMins] = useState<number>(0);
-  const [sendingCustomPayment, setSendingCustomPayment] = useState(false);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+
 
   // Final Invoice Modal State
   const [finalModalBooking, setFinalModalBooking] = useState<any | null>(null);
@@ -75,44 +79,6 @@ export default function AdminBookings() {
     }
   };
 
-  const handleToggleTracking = async (bookingId: string, updates: { vehicle_running?: boolean; stop_in_progress?: boolean }) => {
-    setBookings(prev => prev.map(b => (b._id === bookingId || b.id === bookingId) ? { ...b, ...updates } : b));
-    try {
-      const response = await toggleVehicleTracking(bookingId, updates);
-      if (response && response.success) {
-        fetchBookings();
-      } else {
-        alert(response?.message || "Failed to update vehicle tracking status");
-        fetchBookings();
-      }
-    } catch (err: any) {
-      console.error("Error updating tracking:", err);
-      alert(err.response?.data?.message || err.message || "Error updating vehicle tracking status");
-      fetchBookings();
-    }
-  };
-
-  const handleToggleStopTimer = async (bookingId: string, currentStopInProgress: boolean) => {
-    const nextState = !currentStopInProgress;
-    setBookings(prev => prev.map(b => (b._id === bookingId || b.id === bookingId) ? { ...b, stop_in_progress: nextState } : b));
-    try {
-      const action = currentStopInProgress ? 'end' : 'start';
-      const response = await toggleStopTimer(bookingId, action);
-      if (response && response.success) {
-        if (action === 'end') {
-          alert(response.message || "Stop ended and pricing added to invoice!");
-        }
-        fetchBookings();
-      } else {
-        alert(response?.message || "Failed to update stop timer");
-        fetchBookings();
-      }
-    } catch (err: any) {
-      console.error("Error toggling stop timer:", err);
-      alert(err.response?.data?.message || err.message || "Error updating stop timer");
-      fetchBookings();
-    }
-  };
 
   const handleSendArrivalNotification = async () => {
     if (!arrivalModalBooking) return;
@@ -135,26 +101,33 @@ export default function AdminBookings() {
     }
   };
 
-  const handleSendPaymentLinkWithWait = async () => {
-    if (!paymentModalBooking) return;
+  const getLiveWaitMins = (arrivalTime?: string | Date) => {
+    if (!arrivalTime) return 0;
+    const arrivalMs = new Date(arrivalTime).getTime();
+    if (isNaN(arrivalMs)) return 0;
+    const elapsedMs = Math.max(0, now - arrivalMs);
+    return Math.floor(elapsedMs / 60000);
+  };
+
+  const handleStartRide = async (bookingId: string) => {
     try {
-      setSendingCustomPayment(true);
-      const response = await notifyVehicleArrival(paymentModalBooking._id, paymentWaitingMins);
-      if (response.success) {
-        alert(`Payment link sent to customer!\nWaiting Time: ${paymentWaitingMins} mins (Chargeable Wait Fee: $${response.waiting_fee || 0})`);
-        setPaymentModalBooking(null);
-        setPaymentWaitingMins(0);
+      setStartingRideId(bookingId);
+      const response = await startRide(bookingId);
+      if (response && response.success) {
+        alert(`Ride started successfully!\nTotal waiting time locked at ${response.waiting_minutes || 0} mins (Wait Fee: $${response.waiting_fee || 0}).`);
         fetchBookings();
       } else {
-        alert(response.message || "Failed to send payment link");
+        alert(response?.message || "Failed to start ride");
       }
     } catch (error: any) {
-      console.error("Error sending payment link:", error);
-      alert(error.response?.data?.message || "Failed to send payment link.");
+      console.error("Error starting ride:", error);
+      alert(error.response?.data?.message || "Failed to start ride.");
     } finally {
-      setSendingCustomPayment(false);
+      setStartingRideId(null);
     }
   };
+
+
 
   const handleOpenFinalModal = (booking: any) => {
     setFinalModalBooking(booking);
@@ -289,7 +262,6 @@ export default function AdminBookings() {
                 <th className="p-4 font-medium">Enquiry Date</th>
                 <th className="p-4 font-medium">Booking Status</th>
                 <th className="p-4 font-medium">Payment Status</th>
-                <th className="p-4 font-medium">Live Tracking</th>
                 <th className="p-4 font-medium text-right">Action</th>
               </tr>
             </thead>
@@ -328,64 +300,43 @@ export default function AdminBookings() {
                         {b.payment_status || 'Pending'}
                       </span>
                     </td>
-                    <td className="p-4">
-                      <div className="flex flex-col gap-1.5">
-                        <button
-                          onClick={() => handleToggleTracking(b._id, { vehicle_running: !b.vehicle_running })}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5 transition-all ${
-                            b.vehicle_running
-                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.3)] animate-pulse"
-                              : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white"
-                          }`}
-                          title="Toggle Vehicle Running / En Route status"
-                        >
-                          <Car size={12} />
-                          {b.vehicle_running ? "Running" : "Vehicle Idle"}
-                        </button>
-                        <button
-                          onClick={() => handleToggleStopTimer(b._id, b.stop_in_progress)}
-                          className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border flex items-center gap-1.5 transition-all ${
-                            b.stop_in_progress
-                              ? "bg-amber-500/20 text-amber-300 border-amber-500/40 hover:bg-amber-500/30 shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse"
-                              : "bg-white/5 text-white/50 border-white/10 hover:bg-white/10 hover:text-white"
-                          }`}
-                          title={b.stop_in_progress ? "Click to END stop & calculate stop duration pricing onto invoice" : "Click to START tracking an additional stop"}
-                        >
-                          {b.stop_in_progress ? <Square size={12} className="text-amber-400 fill-amber-400" /> : <Play size={12} className="text-emerald-400 fill-emerald-400" />}
-                          {b.stop_in_progress ? "End Stop & Price" : "Start Stop"}
-                        </button>
-                      </div>
-                    </td>
+
                     <td className="p-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => {
-                            setArrivalModalBooking(b);
-                            setWaitingMinutes(b.waiting_minutes || 0);
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 border ${
-                            b.vehicle_arrived
-                              ? "bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30"
-                              : "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30"
-                          }`}
-                          title="Notify booker & passenger that vehicle has arrived at pickup location"
-                        >
-                          <Bell size={12} />
-                          {b.vehicle_arrived ? "Vehicle Arrived" : "Notify Arrival"}
-                        </button>
+                        {!b.ride_started && !b.vehicle_arrived && (
+                          <button
+                            onClick={() => {
+                              setArrivalModalBooking(b);
+                              setWaitingMinutes(b.waiting_minutes || 0);
+                            }}
+                            className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                            title="Notify booker & passenger that vehicle has arrived at pickup location"
+                          >
+                            <Bell size={12} />
+                            Notify Arrival
+                          </button>
+                        )}
 
-                        <button 
-                          onClick={() => {
-                            setPaymentModalBooking(b);
-                            setPaymentWaitingMins(b.waiting_minutes || 0);
-                          }}
-                          disabled={sendingPaymentId === b._id}
-                          className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
-                          title="Send Stripe Payment Link for trip / waiting time"
-                        >
-                          {sendingPaymentId === b._id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
-                          Send Payment Link
-                        </button>
+                        {b.vehicle_arrived && !b.ride_started && (
+                          <button
+                            onClick={() => handleStartRide(b._id)}
+                            disabled={startingRideId === b._id}
+                            className="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 animate-pulse"
+                            title="Click to START RIDE and STOP waiting timer calculation"
+                          >
+                            {startingRideId === b._id ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
+                            Start Ride ({getLiveWaitMins(b.arrival_time)}m wait)
+                          </button>
+                        )}
+
+                        {b.ride_started && (
+                          <div className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
+                            <CheckCircle2 size={12} />
+                            Ride Started ({b.waiting_minutes || 0}m wait)
+                          </div>
+                        )}
+
+
 
                         <button 
                           onClick={() => handleOpenFinalModal(b)}
@@ -568,86 +519,7 @@ export default function AdminBookings() {
         </div>
       )}
 
-      {/* SEPARATE PAYMENT LINK MODAL */}
-      {paymentModalBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-[#121212] border border-white/10 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/5">
-              <div className="flex items-center gap-2 text-blue-400">
-                <Send size={18} />
-                <h3 className="font-semibold text-lg text-white">Send Stripe Payment Link</h3>
-              </div>
-              <button 
-                onClick={() => setPaymentModalBooking(null)}
-                className="text-white/50 hover:text-white transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </div>
 
-            <div className="p-6 space-y-5">
-              <div className="glass rounded-xl p-4 space-y-2 border border-white/5 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-white/50">Booker Name:</span>
-                  <span className="text-white font-medium">{paymentModalBooking.contact_details?.booker?.first_name} {paymentModalBooking.contact_details?.booker?.last_name}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/50">Booker Email:</span>
-                  <span className="text-blue-400 font-mono text-xs">{paymentModalBooking.contact_details?.booker?.email}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-white/50">Trip Base Price:</span>
-                  <span className="text-gold font-bold">${paymentModalBooking.vehicle_details?.estimated_price || "0.00"}</span>
-                </div>
-              </div>
-
-              {/* Waiting Time Fee Calculator Option */}
-              <div className="space-y-2">
-                <label className="block text-xs font-medium text-white/70 uppercase tracking-wider">
-                  Include Waiting Time Charge (Minutes):
-                </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    min={0}
-                    value={paymentWaitingMins}
-                    onChange={(e) => setPaymentWaitingMins(Math.max(0, parseInt(e.target.value) || 0))}
-                    className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2.5 text-white font-mono text-sm focus:outline-none focus:border-blue-500/60"
-                    placeholder="0"
-                  />
-                  <span className="text-xs text-white/50 shrink-0">mins</span>
-                </div>
-                <div className="bg-white/5 p-3 rounded-xl border border-white/10 text-xs text-white/70 space-y-1">
-                  <p>• First 15 minutes free window.</p>
-                  <p>• Charges after 15 mins: Sedan $1.00/m | SUV $1.50/m | Sprinter $2.00/m</p>
-                  {paymentWaitingMins > 15 && (
-                    <p className="text-blue-400 font-bold mt-1">
-                      ⚡ Chargeable waiting time: {paymentWaitingMins - 15} minutes.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="p-5 border-t border-white/10 flex justify-end gap-3 bg-white/2">
-              <button
-                onClick={() => setPaymentModalBooking(null)}
-                className="px-4 py-2 rounded-xl text-sm font-medium border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSendPaymentLinkWithWait}
-                disabled={sendingCustomPayment}
-                className="px-5 py-2 rounded-xl text-sm font-medium bg-blue-500 hover:bg-blue-600 text-white transition-all flex items-center gap-2 disabled:opacity-50 font-bold"
-              >
-                {sendingCustomPayment ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                Send Payment Link to Email
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* FINAL INVOICE & TRIP EXTRAS TRACKING MODAL */}
       {finalModalBooking && (() => {

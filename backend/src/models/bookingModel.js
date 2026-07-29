@@ -20,6 +20,18 @@ const bookingSchema = new mongoose.Schema({
       latitude: Number,
       longitude: Number,
     },
+    stops: [{
+      location: String,
+      details: {
+        flat_no: String,
+        area: String,
+        landmark: String,
+        postal_code: String,
+        city: String,
+        latitude: Number,
+        longitude: Number,
+      }
+    }],
     dropoff_location: {
       type: String,
       required: true,
@@ -165,12 +177,11 @@ const bookingSchema = new mongoose.Schema({
   // Live Vehicle Tracking & Extras
   vehicle_arrived: { type: Boolean, default: false },
   arrival_time: { type: Date },
+  ride_started: { type: Boolean, default: false },
+  ride_start_time: { type: Date },
   waiting_minutes: { type: Number, default: 0 },
   waiting_fee: { type: Number, default: 0 },
   additional_stops_count: { type: Number, default: 0 },
-  vehicle_running: { type: Boolean, default: false },
-  stop_in_progress: { type: Boolean, default: false },
-  active_stop_start: { type: Date },
   price_breakdown: { type: Object },
 
   created_at: { 

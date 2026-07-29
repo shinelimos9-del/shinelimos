@@ -6,8 +6,11 @@ const admin_auth = require("../../middleware/user_auth");
 // Admin triggers sending payment link to booker
 router.post("/admin/send-payment-link", admin_auth, paymentController.send_paymentLink);
 
-// Admin triggers vehicle arrival notification with waiting policy & payment link
+// Admin triggers vehicle arrival notification
 router.post("/admin/notify-vehicle-arrival", admin_auth, paymentController.notify_vehicleArrival);
+
+// Admin starts ride & stops waiting timer calculation
+router.post("/admin/start-ride", admin_auth, paymentController.start_ride);
 
 // Admin sends final trip invoice & payment link after drop-off
 router.post("/admin/send-final-invoice", admin_auth, paymentController.send_finalInvoice);

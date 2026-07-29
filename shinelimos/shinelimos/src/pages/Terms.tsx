@@ -40,6 +40,7 @@ export default function Terms() {
       title: "Payment",
       content: [
         "Payment is due before or at the time of service unless other arrangements have been made in advance.",
+        "A 20% driver gratuity is automatically calculated and added to all reservations.",
         "We accept major credit cards and other approved payment methods.",
         "Note: A 3% credit card processing fee applies to all credit card payments."
       ]
@@ -177,7 +178,10 @@ export default function Terms() {
       num: "13",
       title: "Additional Stops",
       content: [
-        "Additional stops not included in the original reservation may result in additional charges."
+        "Additional stops are billed according to your selected vehicle tier:",
+        "• Luxury Sedan: $15.00 per stop",
+        "• Luxury SUV: $20.00 per stop",
+        "• Mercedes Sprinter: $30.00 per stop"
       ]
     },
     {

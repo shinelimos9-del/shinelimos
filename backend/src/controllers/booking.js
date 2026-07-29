@@ -88,30 +88,3 @@ exports.update_bookingStatus = async (req, res) => {
 		return res.status(500).json({ success: false, message: "Internal server error" });
 	}
 };
-
-exports.toggle_vehicleTracking = async (req, res) => {
-	try {
-		const { id } = req.params;
-		const trackingData = req.body;
-		
-		const result = await bookingService.toggleVehicleTracking(id, trackingData);
-		return res.status(200).json(result);
-	} catch (error) {
-		console.log("toggle_vehicleTracking controller error:", error);
-		return res.status(500).json({ success: false, message: "Internal server error" });
-	}
-};
-
-exports.toggle_stopTimer = async (req, res) => {
-	try {
-		const { id } = req.params;
-		const { action } = req.body || {};
-		console.log(`[toggle_stopTimer] Called for booking ID: ${id}, action: ${action}`);
-		
-		const result = await bookingService.toggleStopTimer(id, action);
-		return res.status(200).json(result);
-	} catch (error) {
-		console.error("toggle_stopTimer controller error:", error);
-		return res.status(500).json({ success: false, message: error.message || "Internal server error" });
-	}
-};
