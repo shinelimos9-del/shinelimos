@@ -1,7 +1,7 @@
 import { PageHero, SectionHeading, GoldButton, GlassCard, GoldDivider } from "../components/ui";
 import SectionBackground from "../components/SectionBackground";
 import Reveal from "../components/Reveal";
-import { Award, Shield, Users, Sparkles, Clock, Heart } from "lucide-react";
+import { Award, Shield, Sparkles, Clock, Heart, CheckCircle } from "lucide-react";
 import SEO from "../components/SEO";
 
 const values = [
@@ -126,13 +126,13 @@ export default function About() {
                 <h3 className="font-serif-lux text-2xl text-white mt-1">Trusted by every standard</h3>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-xs text-white/65">
-              <div className="flex items-center gap-2"><Shield className="h-3 w-3 text-white" />NLA Member</div>
-              <div className="flex items-center gap-2"><Shield className="h-3 w-3 text-white" />WMATC Licensed</div>
-              <div className="flex items-center gap-2"><Shield className="h-3 w-3 text-white" />$5M Liability Insured</div>
-              <div className="flex items-center gap-2"><Shield className="h-3 w-3 text-white" />DOT Approved</div>
-              <div className="flex items-center gap-2"><Shield className="h-3 w-3 text-white" />TSA-Cleared Drivers</div>
-              <div className="flex items-center gap-2"><Users className="h-3 w-3 text-white" />24/7 Live Dispatch</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-white/80 font-medium">
+              <div className="flex items-center gap-2.5"><CheckCircle className="h-4 w-4 text-gold shrink-0" />$1 Million Commercial Liability Insurance</div>
+              <div className="flex items-center gap-2.5"><CheckCircle className="h-4 w-4 text-gold shrink-0" />DFHV Permitted Vehicles</div>
+              <div className="flex items-center gap-2.5"><CheckCircle className="h-4 w-4 text-gold shrink-0" />Background-Checked Professional Chauffeurs</div>
+              <div className="flex items-center gap-2.5"><CheckCircle className="h-4 w-4 text-gold shrink-0" />Licensed & Commercially Insured Fleet</div>
+              <div className="flex items-center gap-2.5"><CheckCircle className="h-4 w-4 text-gold shrink-0" />Real-Time Flight Tracking</div>
+              <div className="flex items-center gap-2.5"><CheckCircle className="h-4 w-4 text-gold shrink-0" />24/7 Reservations & Live Customer Support</div>
             </div>
           </div>
         </Reveal>
