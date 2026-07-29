@@ -9,6 +9,7 @@ import AddressSearch from "../components/AddressSearch";
 const BG = "/images/pexels-photo-8605325.webp";
 import { CheckCircle, ArrowRight, ArrowLeft, MapPin, Calendar, Users, Car, User, Mail, Phone, Clock, Trash2, Plus, Briefcase, Download, Plane, Globe, X, CreditCard, Loader2 } from "lucide-react";
 import SEO from "../components/SEO";
+import { COMPANY } from "../data";
 
 const STEPS = ["Trip Itinerary", "Vehicle Selection", "Summary", "Contact Info"];
 
@@ -973,43 +974,84 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
     <>
       <h3 className="font-serif-lux text-3xl gradient-gold-text">Select Your Vehicle</h3>
       <p className="text-white/55 mt-1 text-sm">Available vehicles that fit your itinerary.</p>
+      
       <div className="mt-6 grid gap-4 md:grid-cols-2">
-        {availableVehicles.length === 0 ? (
-          <div className="glass rounded-3xl p-8 text-center text-white/75">
-            No vehicles available for the selected itinerary. Please go back and adjust your trip details.
-          </div>
-        ) : (
-          availableVehicles.map((v) => {
-            const active = data.vehicle_id === v._id;
-            return (
-              <button
-                key={v._id}
-                onClick={() => onSelectVehicle(v)}
-                className={`text-left rounded-2xl overflow-hidden border transition-all ${
-                  active ? "border-gold/60 bg-gold/5 scale-[1.01]" : "border-white/10 hover:border-white/30 bg-white/2"
-                }`}
-              >
-                <div className="flex gap-4 p-4">
-                  <img 
-                    src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`} 
-                    alt={v.vehicle_name} 
-                    className="w-28 h-20 object-cover rounded-lg shrink-0" 
-                    loading="lazy" 
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[10px] tracking-[0.25em] text-gold uppercase">Vehicle</div>
-                    <div className="font-serif-lux text-lg text-white mt-0.5">{v.vehicle_name}</div>
-                    <div className="text-xs text-white/55 mt-1 flex gap-3">
-                      <span><Users className="inline h-3 w-3 mr-1 text-gold" />Fits {v.passenger_capacity} Passengers</span>
-                      <span><Car className="inline h-3 w-3 mr-1 text-gold" />{v.luggage_capacity} Bags</span>
-                    </div>
-                    <div className="mt-3 text-sm text-white/70">Estimated price: ${v.estimated_price}</div>
+        {availableVehicles.map((v) => {
+          const active = data.vehicle_id === v._id;
+          return (
+            <button
+              key={v._id}
+              onClick={() => onSelectVehicle(v)}
+              className={`text-left rounded-2xl overflow-hidden border transition-all ${
+                active ? "border-gold/60 bg-gold/5 scale-[1.01]" : "border-white/10 hover:border-white/30 bg-white/2"
+              }`}
+            >
+              <div className="flex gap-4 p-4">
+                <img 
+                  src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`} 
+                  alt={v.vehicle_name} 
+                  className="w-28 h-20 object-cover rounded-lg shrink-0" 
+                  loading="lazy" 
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] tracking-[0.25em] text-gold uppercase">Vehicle</div>
+                  <div className="font-serif-lux text-lg text-white mt-0.5">{v.vehicle_name}</div>
+                  <div className="text-xs text-white/55 mt-1 flex gap-3">
+                    <span><Users className="inline h-3 w-3 mr-1 text-gold" />Fits {v.passenger_capacity} Passengers</span>
+                    <span><Car className="inline h-3 w-3 mr-1 text-gold" />{v.luggage_capacity} Bags</span>
                   </div>
+                  <div className="mt-3 text-sm text-white/70">Estimated price: ${v.estimated_price}</div>
                 </div>
-              </button>
-            );
-          })
-        )}
+              </div>
+            </button>
+          );
+        })}
+
+        {/* OTHER Vehicle Option Card */}
+        <a
+          href={`tel:${COMPANY.phoneRaw}`}
+          className="text-left rounded-2xl overflow-hidden border border-gold/40 hover:border-gold bg-gold/5 hover:bg-gold/10 transition-all flex flex-col justify-between group"
+        >
+          <div className="flex gap-4 p-4">
+            <img 
+              src="/images/car service.webp" 
+              alt="Custom & Fleet Vehicles" 
+              className="w-28 h-20 object-cover rounded-lg shrink-0 border border-white/10" 
+              loading="lazy" 
+            />
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] tracking-[0.25em] text-gold uppercase font-bold">Specialty / Custom</div>
+              <div className="font-serif-lux text-lg text-white mt-0.5 group-hover:text-gold transition-colors">OTHER</div>
+              <div className="text-xs text-white/80 mt-1 flex items-center gap-1.5 font-mono">
+                <Phone className="h-3 w-3 text-gold shrink-0" />
+                Call us at {COMPANY.phone}
+              </div>
+              <div className="mt-2 text-xs text-white/50">
+                Stretch Limos, Party Buses, Executive Vans & Motor Coaches.
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+
+      {/* LOOKING FOR OTHER CAR OPTIONS Banner */}
+      <div className="mt-8 p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h4 className="font-serif-lux text-base sm:text-lg text-white font-semibold flex items-center gap-2 uppercase tracking-wide">
+            <Phone className="w-4 h-4 text-gold shrink-0" />
+            LOOKING FOR OTHER CAR OPTIONS?
+          </h4>
+          <p className="text-white/60 text-xs mt-1">
+            Need more seats? Please contact <a href={`tel:${COMPANY.phoneRaw}`} className="text-gold underline hover:text-gold/80 font-mono">{COMPANY.phone}</a>
+          </p>
+        </div>
+        <a
+          href={`tel:${COMPANY.phoneRaw}`}
+          className="shrink-0 bg-gold hover:bg-gold/90 text-black font-semibold px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 shadow-md hover:scale-105 active:scale-95"
+        >
+          <Phone className="w-3.5 h-3.5" />
+          {COMPANY.phone}
+        </a>
       </div>
     </>
   );
