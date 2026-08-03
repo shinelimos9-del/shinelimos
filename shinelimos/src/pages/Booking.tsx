@@ -1013,11 +1013,11 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
           className="text-left rounded-2xl overflow-hidden border border-gold/40 hover:border-gold bg-gold/5 hover:bg-gold/10 transition-all flex flex-col justify-between group"
         >
           <div className="flex gap-4 p-4 items-center">
-            <div className="w-28 h-20 sm:w-32 sm:h-24 shrink-0 rounded-lg overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center p-1">
+            <div className="w-32 sm:w-36 h-20 sm:h-24 shrink-0 rounded-lg overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center p-1.5">
               <img 
-                src="/other_vehicles.avif" 
+                src="/other_vehicles.png" 
                 alt="Custom & Fleet Vehicles" 
-                className="w-full h-full object-contain max-h-full max-w-full rounded-md" 
+                className="w-full h-full object-contain" 
                 loading="lazy" 
               />
             </div>
