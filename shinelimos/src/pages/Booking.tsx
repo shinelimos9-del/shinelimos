@@ -1012,13 +1012,15 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
           href={`tel:${COMPANY.phoneRaw}`}
           className="text-left rounded-2xl overflow-hidden border border-gold/40 hover:border-gold bg-gold/5 hover:bg-gold/10 transition-all flex flex-col justify-between group"
         >
-          <div className="flex gap-4 p-4">
-            <img 
-              src="/images/car service.webp" 
-              alt="Custom & Fleet Vehicles" 
-              className="w-28 h-20 object-cover rounded-lg shrink-0 border border-white/10" 
-              loading="lazy" 
-            />
+          <div className="flex gap-4 p-4 items-center">
+            <div className="w-28 h-20 sm:w-32 sm:h-24 shrink-0 rounded-lg overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center p-1">
+              <img 
+                src="/other_vehicles.avif" 
+                alt="Custom & Fleet Vehicles" 
+                className="w-full h-full object-contain max-h-full max-w-full rounded-md" 
+                loading="lazy" 
+              />
+            </div>
             <div className="flex-1 min-w-0">
               <div className="text-[10px] tracking-[0.25em] text-gold uppercase font-bold">Specialty / Custom</div>
               <div className="font-serif-lux text-lg text-white mt-0.5 group-hover:text-gold transition-colors">OTHER</div>
