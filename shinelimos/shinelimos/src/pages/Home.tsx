@@ -209,14 +209,32 @@ export default function Home() {
           {/* Left Content */}
           <div className="flex-1 text-left relative z-10 ml-0 lg:ml-24">
 
-            <h1 className="text-5xl md:text-6xl lg:text-[4.5rem] font-bold text-white leading-[1.2] tracking-wide" data-home-fade style={{ fontFamily: "'Orbitron', sans-serif" }}>
-              LUXURY <br />
-              <span className="text-[#ff1100]">TRAVEL</span> EXPERIENCE
+            <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.15] tracking-wide uppercase" data-home-fade style={{ fontFamily: "'Orbitron', sans-serif" }}>
+              PREMIUM <span className="text-[#ff1100]">CHAUFFEUR</span> SERVICE
             </h1>
 
-            <p className="mt-8 text-white/80 text-sm max-w-sm font-light leading-relaxed tracking-wider" data-home-fade>
-              Our professional chauffeur service provides executive airport car service and luxury ground transportation for those who demand the very best.
+            <div className="mt-4 space-y-1.5" data-home-fade>
+              <p className="text-[#ff1100] text-sm sm:text-base md:text-lg font-semibold tracking-widest uppercase">
+                Washington DC • Virginia • Maryland
+              </p>
+              <p className="text-white/90 text-xs sm:text-sm md:text-base font-medium tracking-wide">
+                Airport Transfers • Corporate Travel • Weddings • Hourly Charters
+              </p>
+            </div>
+
+            <p className="mt-6 text-white/80 text-sm sm:text-base max-w-xl font-light leading-relaxed tracking-wider" data-home-fade>
+              Travel with confidence in a luxury vehicle driven by a professional chauffeur. Shine Limos delivers dependable, first-class transportation with attention to detail, comfort, and service you can trust.
             </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs sm:text-sm text-white/90 font-medium border-t border-white/10 pt-4 max-w-2xl" data-home-fade>
+              <span className="flex items-center gap-1.5"><span className="text-[#ff1100] font-bold">✓</span> $1 Million Commercial Insurance</span>
+              <span className="text-white/30 hidden sm:inline">|</span>
+              <span className="flex items-center gap-1.5"><span className="text-[#ff1100] font-bold">✓</span> Professionally Trained Chauffeurs</span>
+              <span className="text-white/30 hidden sm:inline">|</span>
+              <span className="flex items-center gap-1.5"><span className="text-[#ff1100] font-bold">✓</span> Luxury Fleet</span>
+              <span className="text-white/30 hidden sm:inline">|</span>
+              <span className="flex items-center gap-1.5"><span className="text-[#ff1100] font-bold">✓</span> DMV Licensed Vehicles</span>
+            </div>
 
 
 

@@ -467,7 +467,7 @@ export default function Booking() {
 
           <div class="footer">
             <p>Thank you for choosing ShineLimos LLC. We look forward to serving you.</p>
-            <p>For support, contact us at info@shinelimos.com</p>
+            <p>For support, contact us at booking@shinelimos.com</p>
           </div>
         </body>
       </html>
