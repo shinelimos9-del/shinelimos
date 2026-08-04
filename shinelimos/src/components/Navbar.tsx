@@ -146,6 +146,14 @@ export default function Navbar() {
 
           {/* Right CTAs */}
           <div className="hidden xl:flex items-center gap-4">
+            <a
+              href={`tel:${COMPANY.phoneRaw}`}
+              className="flex h-[42px] items-center justify-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 text-xs font-semibold uppercase tracking-wider text-gold hover:bg-gold hover:text-black transition-all duration-300 shadow-md hover:scale-105"
+              title={`Call ${COMPANY.phone}`}
+            >
+              <Phone className="h-3.5 w-3.5 shrink-0" />
+              <span className="font-mono text-xs">{COMPANY.phone}</span>
+            </a>
             <Link
               to="/booking"
               className="relative flex h-[42px] items-center justify-center rounded-full bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#aa7c11] px-6 text-xs font-bold tracking-[0.15em] uppercase text-black transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(212,175,55,0.6)] pulse-gold"
@@ -154,14 +162,24 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile burger */}
-          <button
-            onClick={() => setOpen((v) => !v)}
-            className="xl:hidden glass rounded-full p-2.5"
-            aria-label="Toggle menu"
-          >
-            {open ? <X className="h-5 w-5 text-gold" /> : <Menu className="h-5 w-5 text-gold" />}
-          </button>
+          {/* Mobile Right Controls */}
+          <div className="flex xl:hidden items-center gap-2">
+            <a
+              href={`tel:${COMPANY.phoneRaw}`}
+              className="glass rounded-full p-2.5 flex items-center justify-center text-gold hover:text-white transition-colors"
+              aria-label="Call Us"
+              title={`Call ${COMPANY.phone}`}
+            >
+              <Phone className="h-5 w-5" />
+            </a>
+            <button
+              onClick={() => setOpen((v) => !v)}
+              className="glass rounded-full p-2.5"
+              aria-label="Toggle menu"
+            >
+              {open ? <X className="h-5 w-5 text-gold" /> : <Menu className="h-5 w-5 text-gold" />}
+            </button>
+          </div>
         </nav>
       </div>
 
