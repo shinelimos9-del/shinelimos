@@ -975,35 +975,57 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
       <h3 className="font-serif-lux text-3xl gradient-gold-text">Select Your Vehicle</h3>
       <p className="text-white/55 mt-1 text-sm">Available vehicles that fit your itinerary.</p>
       
-      <div className="mt-6 grid gap-4 md:grid-cols-2">
+      <div className="mt-6 grid gap-6 grid-cols-1 md:grid-cols-2">
         {availableVehicles.map((v) => {
           const active = data.vehicle_id === v._id;
           return (
             <button
               key={v._id}
               onClick={() => onSelectVehicle(v)}
-              className={`text-left rounded-2xl overflow-hidden border transition-all ${
-                active ? "border-gold/60 bg-gold/5 scale-[1.01]" : "border-white/10 hover:border-white/30 bg-white/2"
+              className={`text-left rounded-2xl overflow-hidden border p-4 sm:p-5 transition-all flex flex-col justify-between group ${
+                active 
+                  ? "border-gold bg-gold/10 shadow-[0_0_30px_rgba(212,175,55,0.15)] scale-[1.01]" 
+                  : "border-white/10 hover:border-white/30 bg-white/2 hover:bg-white/5"
               }`}
             >
-              <div className="flex gap-4 p-4 items-center">
-                <div className="w-32 sm:w-36 h-20 sm:h-24 shrink-0 rounded-lg overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center p-1.5">
+              <div>
+                {/* Large Vehicle Image Showcase Box */}
+                <div className="w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-white/10 bg-black/60 flex items-center justify-center p-3 relative group-hover:border-gold/30 transition-colors">
                   <img 
                     src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`} 
                     alt={v.vehicle_name} 
-                    className="w-full h-full object-contain" 
+                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" 
                     loading="lazy" 
                   />
+                  {active && (
+                    <div className="absolute top-3 right-3 bg-gold text-black text-[10px] uppercase font-bold tracking-widest px-3 py-1 rounded-full shadow-md">
+                      Selected
+                    </div>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[10px] tracking-[0.25em] text-gold uppercase">Vehicle</div>
-                  <div className="font-serif-lux text-lg text-white mt-0.5">{v.vehicle_name}</div>
-                  <div className="text-xs text-white/55 mt-1 flex gap-3">
-                    <span><Users className="inline h-3 w-3 mr-1 text-gold" />Fits {v.passenger_capacity} Passengers</span>
-                    <span><Car className="inline h-3 w-3 mr-1 text-gold" />{v.luggage_capacity} Bags</span>
+
+                {/* Vehicle Details */}
+                <div className="mt-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] tracking-[0.25em] text-gold uppercase font-semibold">Vehicle</span>
+                    <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
                   </div>
-                  <div className="mt-3 text-sm text-white/70">Estimated price: ${v.estimated_price}</div>
+                  <h4 className="font-serif-lux text-xl text-white mt-1 group-hover:text-gold transition-colors">{v.vehicle_name}</h4>
+                  
+                  <div className="text-xs text-white/70 mt-3 flex items-center gap-4 border-t border-white/5 pt-3">
+                    <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-gold shrink-0" />Fits {v.passenger_capacity} Passengers</span>
+                    <span className="flex items-center gap-1.5"><Car className="h-3.5 w-3.5 text-gold shrink-0" />{v.luggage_capacity} Bags</span>
+                  </div>
                 </div>
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+                <span className="text-xs text-white/50">Estimated price: <strong className="text-white font-mono">${v.estimated_price}</strong></span>
+                <span className={`text-xs px-4 py-1.5 rounded-lg font-medium transition-all ${
+                  active ? "bg-gold text-black" : "bg-white/10 text-white group-hover:bg-white/20"
+                }`}>
+                  {active ? "Selected" : "Select Vehicle"}
+                </span>
               </div>
             </button>
           );
@@ -1012,28 +1034,34 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
         {/* OTHER Vehicle Option Card */}
         <a
           href={`tel:${COMPANY.phoneRaw}`}
-          className="text-left rounded-2xl overflow-hidden border border-gold/40 hover:border-gold bg-gold/5 hover:bg-gold/10 transition-all flex flex-col justify-between group"
+          className="text-left rounded-2xl overflow-hidden border border-gold/40 hover:border-gold bg-gold/5 hover:bg-gold/10 transition-all p-4 sm:p-5 flex flex-col justify-between group"
         >
-          <div className="flex gap-4 p-4 items-center">
-            <div className="w-32 sm:w-36 h-20 sm:h-24 shrink-0 rounded-lg overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center p-1.5">
+          <div>
+            <div className="w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-white/10 bg-black/60 flex items-center justify-center p-3 relative group-hover:border-gold/30 transition-colors">
               <img 
                 src="/other_vehicles.png" 
                 alt="Custom & Fleet Vehicles" 
-                className="w-full h-full object-contain" 
+                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" 
                 loading="lazy" 
               />
             </div>
-            <div className="flex-1 min-w-0">
+            <div className="mt-4">
               <div className="text-[10px] tracking-[0.25em] text-gold uppercase font-bold">Specialty / Custom</div>
-              <div className="font-serif-lux text-lg text-white mt-0.5 group-hover:text-gold transition-colors">OTHER</div>
-              <div className="text-xs text-white/80 mt-1 flex items-center gap-1.5 font-mono">
-                <Phone className="h-3 w-3 text-gold shrink-0" />
+              <h4 className="font-serif-lux text-xl text-white mt-1 group-hover:text-gold transition-colors">OTHER</h4>
+              <div className="text-xs text-white/80 mt-2 flex items-center gap-1.5 font-mono">
+                <Phone className="h-3.5 w-3.5 text-gold shrink-0" />
                 Call us at {COMPANY.phone}
               </div>
-              <div className="mt-2 text-xs text-white/50">
+              <p className="mt-2 text-xs text-white/50">
                 Stretch Limos, Party Buses, Executive Vans & Motor Coaches.
-              </div>
+              </p>
             </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+            <span className="text-xs text-white/60 font-mono">Custom Quote Required</span>
+            <span className="text-xs bg-gold text-black px-4 py-1.5 rounded-lg font-medium">
+              Call to Book
+            </span>
           </div>
         </a>
       </div>
