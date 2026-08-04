@@ -148,11 +148,11 @@ export default function Navbar() {
           <div className="hidden xl:flex items-center gap-4">
             <a
               href={`tel:${COMPANY.phoneRaw}`}
-              className="flex h-[42px] items-center justify-center gap-2 rounded-full border border-gold/40 bg-gold/10 px-4 text-xs font-semibold uppercase tracking-wider text-gold hover:bg-gold hover:text-black transition-all duration-300 shadow-md hover:scale-105"
+              className="flex h-[42px] w-[42px] items-center justify-center rounded-full border border-gold/40 bg-gold/10 text-gold hover:bg-gold hover:text-black transition-all duration-300 shadow-md hover:scale-105"
+              aria-label={`Call ${COMPANY.phone}`}
               title={`Call ${COMPANY.phone}`}
             >
-              <Phone className="h-3.5 w-3.5 shrink-0" />
-              <span className="font-mono text-xs">{COMPANY.phone}</span>
+              <Phone className="h-4 w-4 shrink-0 fill-gold/20" />
             </a>
             <Link
               to="/booking"
