@@ -163,18 +163,18 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Right Controls */}
-          <div className="flex xl:hidden items-center gap-2">
+          <div className="flex xl:hidden items-center gap-2.5">
             <a
               href={`tel:${COMPANY.phoneRaw}`}
-              className="glass rounded-full p-2.5 flex items-center justify-center text-gold hover:text-white transition-colors"
-              aria-label="Call Us"
+              className="flex items-center justify-center rounded-full bg-gold/15 border border-gold/40 p-2.5 text-gold hover:bg-gold hover:text-black transition-all active:scale-95 shadow-[0_0_12px_rgba(212,175,55,0.3)]"
+              aria-label={`Call ${COMPANY.phone}`}
               title={`Call ${COMPANY.phone}`}
             >
-              <Phone className="h-5 w-5" />
+              <Phone className="h-5 w-5 fill-gold/20" />
             </a>
             <button
               onClick={() => setOpen((v) => !v)}
-              className="glass rounded-full p-2.5"
+              className="glass rounded-full p-2.5 flex items-center justify-center text-gold hover:text-white transition-colors"
               aria-label="Toggle menu"
             >
               {open ? <X className="h-5 w-5 text-gold" /> : <Menu className="h-5 w-5 text-gold" />}
