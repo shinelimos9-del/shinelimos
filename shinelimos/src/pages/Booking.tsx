@@ -1064,27 +1064,6 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
             </span>
           </div>
         </a>
-      </div>
-
-      {/* LOOKING FOR OTHER CAR OPTIONS Banner */}
-      <div className="mt-8 p-6 rounded-2xl border border-white/10 bg-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <h4 className="font-serif-lux text-base sm:text-lg text-white font-semibold flex items-center gap-2 uppercase tracking-wide">
-            <Phone className="w-4 h-4 text-gold shrink-0" />
-            LOOKING FOR OTHER CAR OPTIONS?
-          </h4>
-          <p className="text-white/60 text-xs mt-1">
-            Need more seats? Please contact <a href={`tel:${COMPANY.phoneRaw}`} className="text-gold underline hover:text-gold/80 font-mono">{COMPANY.phone}</a>
-          </p>
-        </div>
-        <a
-          href={`tel:${COMPANY.phoneRaw}`}
-          className="shrink-0 bg-gold hover:bg-gold/90 text-black font-semibold px-5 py-2.5 rounded-xl text-xs transition-all flex items-center gap-2 shadow-md hover:scale-105 active:scale-95"
-        >
-          <Phone className="w-3.5 h-3.5" />
-          {COMPANY.phone}
-        </a>
-      </div>
     </>
   );
 }
