@@ -889,13 +889,15 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
                   active ? "border-gold/60 bg-gold/5 scale-[1.01]" : "border-white/10 hover:border-white/30 bg-white/2"
                 }`}
               >
-                <div className="flex gap-4 p-4">
-                  <img 
-                    src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`} 
-                    alt={v.vehicle_name} 
-                    className="w-28 h-20 object-cover rounded-lg shrink-0" 
-                    loading="lazy" 
-                  />
+                <div className="flex gap-4 p-4 items-center">
+                  <div className="w-32 sm:w-36 h-20 sm:h-24 shrink-0 rounded-lg overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center p-1.5">
+                    <img 
+                      src={v.image.startsWith('http') ? v.image : `${ADMIN_BASE_URL}${v.image}`} 
+                      alt={v.vehicle_name} 
+                      className="w-full h-full object-contain" 
+                      loading="lazy" 
+                    />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-[10px] tracking-[0.25em] text-gold uppercase">Vehicle</div>
                     <div className="font-serif-lux text-lg text-white mt-0.5">{v.vehicle_name}</div>
