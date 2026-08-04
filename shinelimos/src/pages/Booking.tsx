@@ -1030,6 +1030,40 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
             </button>
           );
         })}
+
+        {/* OTHER Vehicle Option Card */}
+        <a
+          href={`tel:${COMPANY.phoneRaw}`}
+          className="text-left rounded-2xl overflow-hidden border border-gold/40 hover:border-gold bg-gold/5 hover:bg-gold/10 transition-all p-4 sm:p-5 flex flex-col justify-between group"
+        >
+          <div>
+            <div className="w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-white/10 bg-black/60 flex items-center justify-center p-3 relative group-hover:border-gold/30 transition-colors">
+              <img 
+                src="/other_vehicles.png" 
+                alt="Custom & Fleet Vehicles" 
+                className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" 
+                loading="lazy" 
+              />
+            </div>
+            <div className="mt-4">
+              <div className="text-[10px] tracking-[0.25em] text-gold uppercase font-bold">Specialty / Custom</div>
+              <h4 className="font-serif-lux text-xl text-white mt-1 group-hover:text-gold transition-colors">OTHER</h4>
+              <div className="text-xs text-white/80 mt-2 flex items-center gap-1.5 font-mono">
+                <Phone className="h-3.5 w-3.5 text-gold shrink-0" />
+                Call us at {COMPANY.phone}
+              </div>
+              <p className="mt-2 text-xs text-white/50">
+                Stretch Limos, Party Buses, Executive Vans & Motor Coaches.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between">
+            <span className="text-xs text-white/60 font-mono">Custom Quote Required</span>
+            <span className="text-xs bg-gold text-black px-4 py-1.5 rounded-lg font-medium">
+              Call to Book
+            </span>
+          </div>
+        </a>
       </div>
     </>
   );
