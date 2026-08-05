@@ -1,6 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import { Plus, X, Trash2, Loader2, Upload } from "lucide-react";
+import { Plus, X, Trash2, Loader2, Upload, Check, Edit2 } from "lucide-react";
 import { getVehicles, addVehicle, updateVehicle, deleteVehicle, ADMIN_BASE_URL } from "../../utils/api";
+
+const DEFAULT_FEATURES = [
+  "Perfect Position Seats", "Revel® Audio", "ActiveMotion Massage", "Ambient Lighting",
+  "Stand-Up Cabin", "LED Mood Lighting", "Dance Floor", "Laser Lighting",
+  "Premium Bar", "Subwoofer Audio", "Under-Coach Luggage", "Reclining Seats",
+  "Overhead Storage", "PA System", "Heated Nappa Leather", "Burmester® Audio",
+  "Privacy Glass", "Massage Seats", "Executive Headrests", "Captain's Chairs",
+  "Panoramic Roof", "AKG Studio Audio", "Privacy Partition", "Bose® Sound System",
+  "Tri-Zone Climate Control", "Rear Entertainment", "Sunroof", "Onboard Bar",
+  "Restroom Onboard", "DVD Entertainment", "Free Wi-Fi", "USB-C Charging Ports"
+];
 
 interface VehiclePrice {
   base_price: string;
@@ -53,12 +64,67 @@ export default function AdminVehicles() {
     luggage_capacity: "",
   });
 
-  const availableFeatures = [
-    "Perfect Position Seats", "Revel® Audio", "ActiveMotion Massage", "Ambient Lighting",
-    "Stand-Up Cabin", "LED Mood Lighting", "Dance Floor", "Laser Lighting",
-    "Premium Bar", "Subwoofer Audio", "Under-Coach Luggage", "Reclining Seats",
-    "Overhead Storage", "PA System"
-  ];
+  const [availableFeatures, setAvailableFeatures] = useState<string[]>(DEFAULT_FEATURES);
+  const [newFeatureInput, setNewFeatureInput] = useState("");
+  const [editingFeatureName, setEditingFeatureName] = useState<string | null>(null);
+  const [editingFeatureText, setEditingFeatureText] = useState("");
+
+  const handleAddCustomFeature = () => {
+    const trimmed = newFeatureInput.trim();
+    if (!trimmed) return;
+
+    if (!availableFeatures.includes(trimmed)) {
+      setAvailableFeatures(prev => [...prev, trimmed]);
+    }
+
+    if (!formData.features.includes(trimmed)) {
+      setFormData(prev => ({
+        ...prev,
+        features: [...prev.features, trimmed]
+      }));
+    }
+
+    setNewFeatureInput("");
+  };
+
+  const handleToggleFeature = (feature: string) => {
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.includes(feature)
+        ? prev.features.filter(f => f !== feature)
+        : [...prev.features, feature]
+    }));
+  };
+
+  const handleStartEditFeature = (feature: string) => {
+    setEditingFeatureName(feature);
+    setEditingFeatureText(feature);
+  };
+
+  const handleSaveEditedFeature = (oldFeature: string) => {
+    const trimmed = editingFeatureText.trim();
+    if (!trimmed) {
+      setEditingFeatureName(null);
+      return;
+    }
+    
+    if (trimmed !== oldFeature) {
+      setAvailableFeatures(prev => prev.map(f => f === oldFeature ? trimmed : f));
+      setFormData(prev => ({
+        ...prev,
+        features: prev.features.map(f => f === oldFeature ? trimmed : f)
+      }));
+    }
+    setEditingFeatureName(null);
+  };
+
+  const handleDeleteFeatureTag = (feature: string) => {
+    setAvailableFeatures(prev => prev.filter(f => f !== feature));
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.filter(f => f !== feature)
+    }));
+  };
 
   useEffect(() => {
     fetchVehicles();
@@ -83,6 +149,11 @@ export default function AdminVehicles() {
   };
 
   const handleOpenModal = (vehicle?: Vehicle) => {
+    const vFeatures = vehicle?.features || [];
+    setAvailableFeatures(prev => Array.from(new Set([...DEFAULT_FEATURES, ...prev, ...vFeatures])));
+    setNewFeatureInput("");
+    setEditingFeatureName(null);
+
     if (vehicle) {
       setEditingVehicle(vehicle);
       setFormData({
@@ -446,30 +517,125 @@ export default function AdminVehicles() {
                     />
                   </div>
 
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-bold text-white mb-2 uppercase tracking-wider">Features</label>
-                    <div className="flex flex-wrap gap-2 p-3 bg-black border border-white/5 rounded-xl min-h-[50px]">
-                      {availableFeatures.map(feature => (
-                        <button
-                          key={feature}
-                          type="button"
-                          onClick={() => {
-                            setFormData(prev => ({
-                              ...prev,
-                              features: prev.features.includes(feature)
-                                ? prev.features.filter(f => f !== feature)
-                                : [...prev.features, feature]
-                            }));
-                          }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                            formData.features.includes(feature)
-                              ? "bg-white text-black"
-                              : "bg-white/5 text-white/60 hover:bg-white/10"
-                          }`}
-                        >
-                          {feature}
-                        </button>
-                      ))}
+                  <div className="md:col-span-2 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-white uppercase tracking-wider">Vehicle Features</label>
+                      <span className="text-[11px] text-white/50">{formData.features.length} feature(s) selected</span>
+                    </div>
+
+                    {/* Custom feature input & Add button */}
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newFeatureInput}
+                        onChange={(e) => setNewFeatureInput(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleAddCustomFeature();
+                          }
+                        }}
+                        placeholder="Type new custom feature and click Add (e.g. Wi-Fi, Champagne Bar)..."
+                        className="flex-1 bg-black border border-white/10 rounded-xl px-4 py-2.5 text-white text-xs focus:border-white/30 focus:outline-none transition-colors placeholder:text-white/30"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddCustomFeature}
+                        className="bg-white/10 hover:bg-white text-white hover:text-black border border-white/10 px-4 py-2.5 rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 shrink-0"
+                      >
+                        <Plus size={14} /> Add Feature
+                      </button>
+                    </div>
+
+                    {/* Features tags list */}
+                    <div className="p-3 bg-black border border-white/5 rounded-xl min-h-[65px] max-h-[220px] overflow-y-auto space-y-2 no-scrollbar">
+                      <div className="text-[10px] text-white/40 mb-1">Click a tag to select/deselect. Hover over any tag to edit name or delete it.</div>
+                      <div className="flex flex-wrap gap-2">
+                        {availableFeatures.map(feature => {
+                          const isSelected = formData.features.includes(feature);
+                          const isEditing = editingFeatureName === feature;
+
+                          if (isEditing) {
+                            return (
+                              <div key={feature} className="inline-flex items-center gap-1 bg-white/10 border border-white/20 rounded-lg p-1">
+                                <input
+                                  type="text"
+                                  value={editingFeatureText}
+                                  onChange={(e) => setEditingFeatureText(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      handleSaveEditedFeature(feature);
+                                    } else if (e.key === "Escape") {
+                                      setEditingFeatureName(null);
+                                    }
+                                  }}
+                                  autoFocus
+                                  className="bg-black text-white text-xs px-2 py-1 rounded outline-none w-36 border border-white/20"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveEditedFeature(feature)}
+                                  className="text-green-400 hover:text-green-300 p-1"
+                                  title="Save feature"
+                                >
+                                  <Check size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingFeatureName(null)}
+                                  className="text-white/40 hover:text-white p-1"
+                                  title="Cancel"
+                                >
+                                  <X size={12} />
+                                </button>
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div key={feature} className="group relative inline-flex items-center">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleFeature(feature)}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 ${
+                                  isSelected
+                                    ? "bg-white text-black font-semibold shadow-md"
+                                    : "bg-white/5 text-white/60 hover:bg-white/10 border border-white/5"
+                                }`}
+                              >
+                                {isSelected && <Check size={12} className="text-black stroke-[3]" />}
+                                {feature}
+                              </button>
+                              
+                              <div className="absolute right-0 top-0 -translate-y-1/2 translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-[#222] border border-white/20 rounded-full px-1.5 py-0.5 shadow-lg z-10">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleStartEditFeature(feature);
+                                  }}
+                                  className="text-white/60 hover:text-white p-0.5"
+                                  title="Edit feature name"
+                                >
+                                  <Edit2 size={10} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteFeatureTag(feature);
+                                  }}
+                                  className="text-white/60 hover:text-red-400 p-0.5"
+                                  title="Delete feature tag"
+                                >
+                                  <Trash2 size={10} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                   
