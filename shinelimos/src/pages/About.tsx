@@ -54,18 +54,60 @@ export default function About() {
             <SectionHeading
               align="left"
               eyebrow="Our Story"
-              title={<>Built by Washington, <span className="text-white">for Washington.</span></>}
+              title={<>Luxury Transportation <span className="text-white">You Can Trust</span></>}
             />
-            <div className="mt-8 space-y-5 text-white/70 leading-relaxed">
+            <div className="mt-8 space-y-6 text-white/70 leading-relaxed">
               <p>
-                Founded on strict safety standards and a commitment to excellence, our experienced team provides exceptional service.
+                At Shine Limos, we provide premium chauffeur services throughout Washington DC, Northern Virginia, and Maryland. Whether you’re traveling for business, airport transfers, weddings, or special events, we deliver a first-class experience with professionalism, reliability, and attention to detail.
               </p>
               <p>
-                Our experienced chauffeurs and professional drivers undergo rigorous training to ensure your peace of mind. We have grown to become the premier luxury transportation company across DC, Northern Virginia, and Maryland.
+                Unlike rideshare services, every trip is professionally managed from booking to drop-off. Our experienced chauffeurs, luxury fleet, and commitment to punctuality ensure a smooth, comfortable, and stress-free journey.
               </p>
-              <p>
-                We move quietly. We move correctly. And we prioritize your complete customer satisfaction.
-              </p>
+
+              <hr className="border-white/10 my-6" />
+
+              <div>
+                <h3 className="font-serif-lux text-xl text-white font-semibold mb-4 tracking-wide uppercase text-gold">
+                  WHY SHINE LIMOS
+                </h3>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <h4 className="text-white font-medium text-base">We Prioritize Safety</h4>
+                    <p className="text-sm text-white/60 mt-1">Professionally maintained vehicles and experienced chauffeurs.</p>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <h4 className="text-white font-medium text-base">We Deliver Reliability</h4>
+                    <p className="text-sm text-white/60 mt-1">On-time pickups with flight tracking and real-time trip monitoring.</p>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <h4 className="text-white font-medium text-base">We Provide Luxury</h4>
+                    <p className="text-sm text-white/60 mt-1">Premium sedans, luxury SUVs, and executive transportation for every occasion.</p>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+                    <h4 className="text-white font-medium text-base">We Put Customers First</h4>
+                    <p className="text-sm text-white/60 mt-1">Personalized service with transparent pricing and 24/7 support.</p>
+                  </div>
+                </div>
+              </div>
+
+              <hr className="border-white/10 my-6" />
+
+              <div>
+                <h3 className="font-serif-lux text-xl text-white font-semibold mb-3 tracking-wide uppercase text-gold">
+                  RIDE WITH CONFIDENCE
+                </h3>
+                <p className="mb-3">
+                  From airport transfers and corporate travel to weddings and private events, Shine Limos is committed to delivering luxury transportation you can depend on.
+                </p>
+                <p className="font-semibold text-white tracking-wide mb-3">
+                  Professional. Reliable. Luxurious.
+                </p>
+                <p>
+                  Book your ride today and experience the Shine Limos difference.
+                </p>
+              </div>
+
+              <hr className="border-white/10 my-6" />
             </div>
             <div className="mt-8">
               <GoldButton to="/contact">Speak With Our Concierge</GoldButton>
