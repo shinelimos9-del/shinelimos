@@ -310,7 +310,7 @@ const fulfillPayment = async (sessionOrId, bookingIdParam) => {
               </div>
 
               <div style="text-align: center; margin-top: 30px;">
-                <a href="${process.env.ADMIN_DASHBOARD_URL || ((process.env.FRONTEND_URL || 'https://shinelimosllc.com') + '/#/admin-dashboard/notifications')}" 
+                <a href="${process.env.ADMIN_DASHBOARD_URL || 'https://shinelimosllc.com/admin-login'}" 
                    style="background-color: #3b82f6; color: white; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
                   Open Admin Dashboard
                 </a>

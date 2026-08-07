@@ -48,7 +48,7 @@ const notifyAdmin = async (booking, type = "Booking", message = "New booking rec
 			const adminList = await Admin.find({});
 			const adminEmails = adminList.map(a => a.email);
 			
-			const adminDashboardUrl = process.env.ADMIN_DASHBOARD_URL || "http://localhost:3000/admin";
+			const adminDashboardUrl = process.env.ADMIN_DASHBOARD_URL || "https://shinelimosllc.com/admin-login";
 			
 			for (const email of adminEmails) {
 				await sendEmail({
@@ -66,7 +66,7 @@ const notifyAdmin = async (booking, type = "Booking", message = "New booking rec
 								<p><strong>Vehicle:</strong> ${notificationData.vehicle_name}</p>
 							</div>
 							<div style="text-align: center; margin-top: 30px;">
-								<a href="${adminDashboardUrl}/bookings/${booking._id}" style="background-color: #d4af37; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Booking & Send Payment Link</a>
+								<a href="${adminDashboardUrl}" style="background-color: #d4af37; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">View Booking & Send Payment Link</a>
 							</div>
 							<p style="font-size: 12px; color: #888; text-align: center; margin-top: 30px;">This is an automated notification from Shine Limos.</p>
 						</div>
