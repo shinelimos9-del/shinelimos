@@ -408,8 +408,45 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 					`
 				});
 			}
+
+			// Send notification email to Admin as well
+			const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
+			if (adminEmail) {
+				console.log(`[BOOKING] Sending new booking notification email to admin: ${adminEmail}`);
+				await sendEmail({
+					to: adminEmail,
+					subject: `🚨 New Reservation Request Received (#${updated._id})`,
+					html: `
+						<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
+							<div style="text-align: center; margin-bottom: 20px;">
+								<h1 style="color: #000; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 2px;">Shine Limos Admin</h1>
+								<div style="height: 2px; width: 50px; background-color: #d4af37; margin: 10px auto;"></div>
+							</div>
+
+							<h2 style="color: #d4af37; text-align: center; font-size: 20px;">New Booking Request Received!</h2>
+							
+							<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #eee;">
+								<h3 style="margin-top: 0; font-size: 16px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Booking Details</h3>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Booking Ref:</strong> #${updated._id}</p>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Booker Name:</strong> ${bookerName}</p>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Booker Email:</strong> ${bookerEmail || 'N/A'}</p>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Phone:</strong> ${updated.contact_details?.booker?.primary_phone?.number || 'N/A'}</p>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Vehicle Requested:</strong> ${updated.vehicle_details?.vehicle_name || 'N/A'}</p>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Pickup:</strong> ${updated.trip_details[0]?.pickup_location}</p>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Drop-off:</strong> ${updated.trip_details[0]?.dropoff_location}</p>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Date & Time:</strong> ${moment(updated.trip_details[0]?.date).format("MMM DD, YYYY")} at ${updated.trip_details[0]?.start_time}</p>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Estimated Price:</strong> $${updated.vehicle_details?.estimated_price || 'N/A'}</p>
+							</div>
+
+							<div style="text-align: center; margin-top: 25px;">
+								<a href="${process.env.ADMIN_DASHBOARD_URL || 'https://shinelimosllc.com/admin-login'}" style="background-color: #d4af37; color: #ffffff; padding: 12px 25px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">View in Admin Panel</a>
+							</div>
+						</div>
+					`
+				});
+			}
 		} catch (mailErr) {
-			console.error("[BOOKING] Error sending initial booking email to booker:", mailErr.message);
+			console.error("[BOOKING] Error sending initial booking email:", mailErr.message);
 		}
 
 		return { success: true, message: "Booking finalized successfully", booking: updated };
