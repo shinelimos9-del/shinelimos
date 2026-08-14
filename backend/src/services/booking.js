@@ -527,3 +527,21 @@ exports.updateBookingStatus = async (id, status) => {
 		return { success: false, message: error.message || error };
 	}
 };
+
+exports.deleteBooking = async (id) => {
+	try {
+		const deleted = await Booking.findByIdAndDelete(id);
+		if (!deleted) return { success: false, message: "Booking not found" };
+
+		// Remove any associated notifications for this booking across all admin accounts
+		await Admin.updateMany(
+			{},
+			{ $pull: { notifications: { booking_id: id } } }
+		);
+
+		return { success: true, message: "Booking deleted successfully", booking: deleted };
+	} catch (error) {
+		console.log("deleteBooking error:", error);
+		return { success: false, message: error.message || error };
+	}
+};

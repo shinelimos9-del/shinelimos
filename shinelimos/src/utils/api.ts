@@ -158,4 +158,9 @@ export const updateBookingStatus = async (id: string, status: string) => {
   return response.data;
 };
 
+export const deleteBooking = async (id: string) => {
+  const response = await api.delete(`/bookings/${encodeURIComponent(id)}`);
+  return response.data;
+};
+
 export default api;

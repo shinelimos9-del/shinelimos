@@ -18,4 +18,7 @@ router.get("/bookings/today",admin_auth, bookingController.get_todayBookings);
 // Update booking status
 router.patch("/bookings/:id/status",admin_auth, bookingController.update_bookingStatus);
 
+// Delete booking
+router.delete("/bookings/:id", admin_auth, bookingController.delete_booking);
+
 module.exports = router;

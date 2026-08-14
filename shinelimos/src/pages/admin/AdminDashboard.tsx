@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, X, Play, CheckCircle2 } from "lucide-react";
-import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide } from "../../utils/api";
+import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, X, Play, CheckCircle2, Trash2 } from "lucide-react";
+import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide, deleteBooking } from "../../utils/api";
 import { calculateQuote, parseHours } from "../../utils/pricingEngine";
 
 export default function AdminDashboard() {
@@ -119,6 +119,22 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error(error);
       alert("Error updating status");
+    }
+  };
+
+  const handleDeleteBooking = async (id: string) => {
+    if (window.confirm("Are you sure you want to permanently delete this booking from the database?")) {
+      try {
+        const response = await deleteBooking(id);
+        if (response.success) {
+          fetchDashboardData();
+        } else {
+          alert(response.message || "Failed to delete booking");
+        }
+      } catch (error) {
+        console.error(error);
+        alert("Error deleting booking");
+      }
     }
   };
 
@@ -488,6 +504,15 @@ export default function AdminDashboard() {
                           Complete
                         </button>
                       )}
+
+                      <button 
+                        onClick={() => handleDeleteBooking(row.id || row._id)}
+                        className="bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                        title="Delete booking permanently from database"
+                      >
+                        <Trash2 size={12} />
+                        Delete
+                      </button>
                     </div>
                   </td>
                 </tr>
