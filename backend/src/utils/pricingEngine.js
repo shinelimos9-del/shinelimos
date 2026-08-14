@@ -180,6 +180,27 @@ function parseHours(durationStrOrNum) {
 }
 
 /**
+ * Safely extract nested pricing fields from vehicle object/snapshot
+ */
+function getNestedPrice(vehicle, fieldName) {
+  if (!vehicle || typeof vehicle !== 'object') return undefined;
+  if (vehicle.price_snapshot && vehicle.price_snapshot[fieldName] !== undefined) {
+    return vehicle.price_snapshot[fieldName];
+  }
+  let priceObj = vehicle.price;
+  if (typeof priceObj === 'string') {
+    try { priceObj = JSON.parse(priceObj); } catch (e) {}
+  }
+  if (priceObj && typeof priceObj === 'object' && priceObj[fieldName] !== undefined) {
+    return priceObj[fieldName];
+  }
+  if (vehicle[fieldName] !== undefined) {
+    return vehicle[fieldName];
+  }
+  return undefined;
+}
+
+/**
  * Main Pricing Engine Calculation Function
  *
  * @param {Object} options Calculation parameters:
@@ -208,14 +229,20 @@ function calculateQuote(options = {}) {
   const tierKey = typeof options.vehicle === 'string' ? options.vehicle : getVehicleTierKey(options.vehicle);
   const defaultRates = VEHICLE_RATES[tierKey] || VEHICLE_RATES.sedan;
 
+  const baseFareVal = getNestedPrice(options.vehicle, 'base_price');
+  const perMileVal = getNestedPrice(options.vehicle, 'price_per_mile');
+  const perMinuteVal = getNestedPrice(options.vehicle, 'price_per_minute');
+  const minimumFareVal = getNestedPrice(options.vehicle, 'minimum_fare');
+  const hourlyRateVal = getNestedPrice(options.vehicle, 'price_per_hour');
+
   // Database pricing rates with fallback to tier defaults
   const rates = {
     name: options.vehicle?.vehicle_name || options.vehicle?.name || defaultRates.name,
-    baseFare: safeNumber(options.vehicle?.price_snapshot?.base_price ?? options.vehicle?.base_price, defaultRates.baseFare),
-    perMile: safeNumber(options.vehicle?.price_snapshot?.price_per_mile ?? options.vehicle?.price_per_mile, defaultRates.perMile),
-    perMinute: safeNumber(options.vehicle?.price_snapshot?.price_per_minute ?? options.vehicle?.price_per_minute, defaultRates.perMinute),
-    minimumFare: safeNumber(options.vehicle?.price_snapshot?.minimum_fare ?? options.vehicle?.minimum_fare, defaultRates.minimumFare),
-    hourlyRate: safeNumber(options.vehicle?.price_snapshot?.price_per_hour ?? options.vehicle?.price_per_hour, defaultRates.hourlyRate),
+    baseFare: safeNumber(baseFareVal, defaultRates.baseFare),
+    perMile: safeNumber(perMileVal, defaultRates.perMile),
+    perMinute: safeNumber(perMinuteVal, defaultRates.perMinute),
+    minimumFare: safeNumber(minimumFareVal, defaultRates.minimumFare),
+    hourlyRate: safeNumber(hourlyRateVal, defaultRates.hourlyRate),
     minimumHours: defaultRates.minimumHours,
     airportFee: defaultRates.airportFee,
     waitingRatePerMin: defaultRates.waitingRatePerMin,
@@ -236,6 +263,7 @@ function calculateQuote(options = {}) {
   let billedHours = 0;
   let minimumFareAdjustment = 0;
   let mainBookingPrice = 0;
+  let rawSubtotal = 0;
 
   if (hasInitialBookingPrice) {
     // USE STORED MAIN BOOKING PRICE FROM DATABASE CREATION TIME
@@ -258,7 +286,7 @@ function calculateQuote(options = {}) {
       timeCharge = round2(durationMinutes * rates.perMinute);
     }
 
-    let rawSubtotal = baseFare + mileageCharge + timeCharge + hourlyCharge;
+    rawSubtotal = baseFare + mileageCharge + timeCharge + hourlyCharge;
     if (!isHourly && rawSubtotal < rates.minimumFare) {
       minimumFareAdjustment = round2(rates.minimumFare - rawSubtotal);
     }
@@ -330,6 +358,7 @@ function calculateQuote(options = {}) {
     billedHours,
     breakdown: {
       mainBookingPrice,
+      rawSubtotal,
       baseFare,
       mileageCharge,
       effectiveMiles: isRoundTrip ? safeNumber(options.distanceMiles, 0) * 2 : safeNumber(options.distanceMiles, 0),

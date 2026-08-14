@@ -289,6 +289,37 @@ test("Edge Cases & Robust Sanitization", () => {
   assert.strictEqual(isNaN(zeroTrip.breakdown.grandTotal), false);
 });
 
+// 12. ADMIN CUSTOM VEHICLE PRICING OVERRIDE
+test("Admin Custom Vehicle Pricing Override", () => {
+  const customVehicle = {
+    vehicle_name: "Executive Sedan",
+    vehicle_class_name: "Executive Sedan",
+    price: {
+      base_price: 50,
+      price_per_minute: 1.5,
+      price_per_mile: 7,
+      price_per_hour: 85
+    }
+  };
+
+  // Trip: 10 miles, 20 minutes with admin custom pricing
+  // Base: 50, Mileage: 10 * 7 = 70.00, Time: 20 * 1.5 = 30.00
+  // Raw Subtotal: 50 + 70 + 30 = 150.00
+  const quote = calculateQuote({
+    vehicle: customVehicle,
+    bookingType: 'one-way',
+    distanceMiles: 10,
+    durationMinutes: 20,
+    pickupTime: '10:00 AM',
+    pickupDate: '2026-06-15',
+  });
+
+  assert.strictEqual(quote.breakdown.baseFare, 50.00);
+  assert.strictEqual(quote.breakdown.mileageCharge, 70.00);
+  assert.strictEqual(quote.breakdown.timeCharge, 30.00);
+  assert.strictEqual(quote.breakdown.rawSubtotal, 150.00);
+});
+
 console.log("\n=================================================");
 console.log(`  TEST RESULTS: ${passedCount} / ${totalCount} PASSED  `);
 console.log("=================================================\n");
