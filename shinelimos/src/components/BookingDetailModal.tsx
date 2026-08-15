@@ -53,6 +53,10 @@ export default function BookingDetailModal({
     setTimeout(() => setCopiedId(false), 2000);
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const getLiveWaitMins = (arrivalTime?: string | Date) => {
     if (!arrivalTime) return 0;
     const arrivalMs = new Date(arrivalTime).getTime();
