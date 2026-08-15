@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { getNotifications } from "../../utils/api";
-import { Search, Mail, MailOpen, User, CarFront, MapPin, Banknote, Clock, Loader2 } from "lucide-react";
+import { Search, Mail, MailOpen, User, CarFront, MapPin, Banknote, Clock, Loader2, Eye } from "lucide-react";
+import BookingDetailModal from "../../components/BookingDetailModal";
 
 export default function AdminNotifications() {
   const [searchParams] = useSearchParams();
@@ -9,6 +10,7 @@ export default function AdminNotifications() {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDetailBooking, setSelectedDetailBooking] = useState<any | null>(null);
 
   useEffect(() => {
     fetchNotifications();
@@ -29,12 +31,16 @@ export default function AdminNotifications() {
           date: n.date,
           read: n.is_read,
           userName: n.booker_name || "Unknown User",
+          email: n.email || "",
+          phone: n.phone || "",
           vehicleName: n.vehicle_name || "N/A",
           source: n.pickup || "N/A",
           destination: n.dropoff || "N/A",
           amount: n.estimated_price ? `$${n.estimated_price}` : "N/A",
+          rawAmount: n.estimated_price || 0,
           paymentStatus: n.payment_status || "Pending",
-          type: (n.type === "Payment Request" || (n.message && n.message.toLowerCase().includes('payment'))) ? "Payment Request" : (n.type || "Notification")
+          type: (n.type === "Payment Request" || (n.message && n.message.toLowerCase().includes('payment'))) ? "Payment Request" : (n.type || "Notification"),
+          rawBooking: n
         }));
         setNotifications(mapped);
 
@@ -54,10 +60,7 @@ export default function AdminNotifications() {
 
   const handleSelectNotification = (id: string) => {
     setSelectedId(id);
-    // Optimistically mark as read in UI
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    // In a real app, you might want to call an API to mark a specific notification as read
-    // For now, the "Mark all as read" button handles the backend sync
   };
 
   const selectedNotification = notifications.find(n => n.id === selectedId);
@@ -201,9 +204,38 @@ export default function AdminNotifications() {
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-
-                    <button className="px-4 py-2 bg-gold/10 hover:bg-gold/20 border border-gold/30 text-gold text-sm rounded-lg transition-colors font-medium">
-                      View Invoice
+                    <button 
+                      onClick={() => {
+                        const formattedBooking = {
+                          _id: selectedNotification.bookingId || selectedNotification.id,
+                          booking_status: 'pending',
+                          payment_status: selectedNotification.paymentStatus || 'pending',
+                          created_at: selectedNotification.date,
+                          contact_details: {
+                            booker: {
+                              first_name: selectedNotification.userName ? selectedNotification.userName.split(' ')[0] : 'Customer',
+                              last_name: selectedNotification.userName ? selectedNotification.userName.split(' ').slice(1).join(' ') : '',
+                              email: selectedNotification.email || '',
+                              primary_phone: { number: selectedNotification.phone || '' },
+                              is_passenger: true
+                            }
+                          },
+                          vehicle_details: { 
+                            vehicle_name: selectedNotification.vehicleName || 'Luxury Vehicle',
+                            estimated_price: selectedNotification.rawAmount || selectedNotification.amount
+                          },
+                          trip_details: [{ 
+                            trip_type: 'One Way', 
+                            pickup_location: selectedNotification.source || 'N/A', 
+                            dropoff_location: selectedNotification.destination || 'N/A' 
+                          }],
+                          price_breakdown: {},
+                        };
+                        setSelectedDetailBooking(formattedBooking);
+                      }}
+                      className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/40 border border-blue-500/30 text-blue-300 text-sm rounded-lg transition-colors font-medium flex items-center gap-1.5"
+                    >
+                      <Eye size={14} /> View Booking Details
                     </button>
                   </div>
                 </div>
@@ -217,6 +249,14 @@ export default function AdminNotifications() {
           </div>
         )}
       </div>
+
+      {/* Booking Detail Modal */}
+      {selectedDetailBooking && (
+        <BookingDetailModal
+          booking={selectedDetailBooking}
+          onClose={() => setSelectedDetailBooking(null)}
+        />
+      )}
     </div>
   );
 }

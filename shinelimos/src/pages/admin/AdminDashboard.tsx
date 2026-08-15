@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, X, Play, CheckCircle2, Trash2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, X, Play, CheckCircle2, Trash2, Eye } from "lucide-react";
 import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide, deleteBooking } from "../../utils/api";
 import { calculateQuote, parseHours } from "../../utils/pricingEngine";
+import BookingDetailModal from "../../components/BookingDetailModal";
 
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
@@ -9,6 +10,7 @@ export default function AdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [notifyingId, setNotifyingId] = useState<string | null>(null);
   const [startingRideId, setStartingRideId] = useState<string | null>(null);
+  const [selectedDetailBooking, setSelectedDetailBooking] = useState<any | null>(null);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -424,99 +426,158 @@ export default function AdminDashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5 text-white">
-              {data.recent_bookings.map((row: any, i: number) => (
-                <tr key={i} className="hover:bg-white/5 transition-colors group">
-                  <td className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">{row.name?.[0] || "?"}</div>
-                      <div>
-                        <div className="text-white font-medium">{row.name || "Unknown"}</div>
-                        <div className="text-[11px] text-white">{row.email || "No email"}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-4">{row.trip || "N/A"}</td>
-                  <td className="p-4 text-white">{row.date || "N/A"}</td>
-                  <td className="p-4 text-white">{row.price || "N/A"}</td>
-                  <td className="p-4 text-white">{row.phone || "N/A"}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-wider ${row.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'}`}>
-                      {row.status === 'completed' ? 'Complete' : 'Pending'}
-                    </span>
-                  </td>
+              {data.recent_bookings.map((row: any, i: number) => {
+                const formattedBooking = {
+                  _id: row.id || row._id,
+                  booking_status: row.status || row.booking_status || 'pending',
+                  payment_status: row.payment_status || 'pending',
+                  created_at: row.date || row.created_at,
+                  contact_details: row.contact_details || {
+                    booker: {
+                      first_name: row.name ? row.name.split(' ')[0] : 'Customer',
+                      last_name: row.name ? row.name.split(' ').slice(1).join(' ') : '',
+                      email: row.email || '',
+                      primary_phone: { number: row.phone || '' },
+                      is_passenger: true
+                    }
+                  },
+                  vehicle_details: row.vehicle_details || { vehicle_name: row.vehicle_name || 'Luxury Vehicle' },
+                  trip_details: row.trip_details || [{ trip_type: row.trip || 'One Way', pickup_location: row.source || 'N/A', dropoff_location: row.destination || 'N/A' }],
+                  price_breakdown: row.price_breakdown || {},
+                  waiting_minutes: row.waiting_minutes || 0,
+                  waiting_fee: row.waiting_fee || 0,
+                  vehicle_arrived: row.vehicle_arrived,
+                  arrival_time: row.arrival_time,
+                  ride_started: row.ride_started,
+                  ride_start_time: row.ride_start_time
+                };
 
-                  <td className="p-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {!row.ride_started && !row.vehicle_arrived && (
-                        <button
-                          onClick={() => handleNotifyArrival(row.id || row._id)}
-                          disabled={notifyingId === (row.id || row._id)}
-                          className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
-                          title="Notify booker & passenger that vehicle has arrived at pickup location"
-                        >
-                          {notifyingId === (row.id || row._id) ? <Loader2 size={12} className="animate-spin" /> : <Bell size={12} />}
-                          Notify Arrival
-                        </button>
-                      )}
-
-                      {row.vehicle_arrived && !row.ride_started && (
-                        <button
-                          onClick={() => handleStartRide(row.id || row._id)}
-                          disabled={startingRideId === (row.id || row._id)}
-                          className="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 animate-pulse"
-                          title="Click to START RIDE and STOP waiting timer calculation"
-                        >
-                          {startingRideId === (row.id || row._id) ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
-                          Start Ride ({getLiveWaitMins(row.arrival_time)}m wait)
-                        </button>
-                      )}
-
-                      {row.ride_started && (
-                        <div className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
-                          <CheckCircle2 size={12} />
-                          Ride Started ({row.waiting_minutes || 0}m wait)
+                return (
+                  <tr 
+                    key={i} 
+                    onClick={() => setSelectedDetailBooking(formattedBooking)}
+                    className="hover:bg-white/10 transition-colors group cursor-pointer"
+                  >
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">{row.name?.[0] || "?"}</div>
+                        <div>
+                          <div className="text-white font-medium group-hover:text-gold transition-colors">{row.name || "Unknown"}</div>
+                          <div className="text-[11px] text-white/60">{row.email || "No email"}</div>
                         </div>
-                      )}
+                      </div>
+                    </td>
+                    <td className="p-4">{row.trip || "N/A"}</td>
+                    <td className="p-4 text-white">{row.date || "N/A"}</td>
+                    <td className="p-4 text-white">{row.price || "N/A"}</td>
+                    <td className="p-4 text-white">{row.phone || "N/A"}</td>
+                    <td className="p-4">
+                      <span className={`px-2 py-1 rounded-md text-[10px] uppercase font-bold tracking-wider ${row.status === 'completed' ? 'bg-green-500/20 text-green-400' : 'bg-orange-500/20 text-orange-400'}`}>
+                        {row.status === 'completed' ? 'Complete' : 'Pending'}
+                      </span>
+                    </td>
 
-
-
-                      <button
-                        onClick={() => handleOpenFinalModal(row)}
-                        className="bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
-                        title="Open interactive invoice form to add extra charges & send final invoice with payment link"
-                      >
-                        <FileText size={12} />
-                        Send Final Invoice
-                      </button>
-
-                      {row.status === 'completed' ? (
-                        <button 
-                          onClick={() => handleUpdateStatus(row.id, 'pending')}
-                          className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 border border-yellow-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                    <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDetailBooking(formattedBooking);
+                          }}
+                          className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                          title="Open full details view for this booking"
                         >
-                          Pending
+                          <Eye size={12} />
+                          View Details
                         </button>
-                      ) : (
-                        <button 
-                          onClick={() => handleUpdateStatus(row.id, 'completed')}
-                          className="bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                        >
-                          Complete
-                        </button>
-                      )}
 
-                      <button 
-                        onClick={() => handleDeleteBooking(row.id || row._id)}
-                        className="bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
-                        title="Delete booking permanently from database"
-                      >
-                        <Trash2 size={12} />
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {!row.ride_started && !row.vehicle_arrived && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleNotifyArrival(row.id || row._id);
+                            }}
+                            disabled={notifyingId === (row.id || row._id)}
+                            className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                            title="Notify booker & passenger that vehicle has arrived at pickup location"
+                          >
+                            {notifyingId === (row.id || row._id) ? <Loader2 size={12} className="animate-spin" /> : <Bell size={12} />}
+                            Notify Arrival
+                          </button>
+                        )}
+
+                        {row.vehicle_arrived && !row.ride_started && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStartRide(row.id || row._id);
+                            }}
+                            disabled={startingRideId === (row.id || row._id)}
+                            className="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 animate-pulse"
+                            title="Click to START RIDE and STOP waiting timer calculation"
+                          >
+                            {startingRideId === (row.id || row._id) ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
+                            Start Ride ({getLiveWaitMins(row.arrival_time)}m wait)
+                          </button>
+                        )}
+
+                        {row.ride_started && (
+                          <div className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5">
+                            <CheckCircle2 size={12} />
+                            Ride Started ({row.waiting_minutes || 0}m wait)
+                          </div>
+                        )}
+
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenFinalModal(row);
+                          }}
+                          className="bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                          title="Open interactive invoice form to add extra charges & send final invoice with payment link"
+                        >
+                          <FileText size={12} />
+                          Send Final Invoice
+                        </button>
+
+                        {row.status === 'completed' ? (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateStatus(row.id, 'pending');
+                            }}
+                            className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 border border-yellow-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                          >
+                            Pending
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateStatus(row.id, 'completed');
+                            }}
+                            className="bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                          >
+                            Complete
+                          </button>
+                        )}
+
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteBooking(row.id || row._id);
+                          }}
+                          className="bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                          title="Delete booking permanently from database"
+                        >
+                          <Trash2 size={12} />
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -773,6 +834,29 @@ export default function AdminDashboard() {
           </div>
         );
       })()}
+
+      {/* Booking Detail & Customer Information Modal */}
+      {selectedDetailBooking && (
+        <BookingDetailModal
+          booking={selectedDetailBooking}
+          onClose={() => setSelectedDetailBooking(null)}
+          onNotifyArrival={(b) => {
+            setSelectedDetailBooking(null);
+            handleNotifyArrival(b._id || b.id);
+          }}
+          onStartRide={(id) => handleStartRide(id)}
+          onOpenFinalModal={(b) => {
+            setSelectedDetailBooking(null);
+            handleOpenFinalModal(b);
+          }}
+          onUpdateStatus={(id, status) => handleUpdateStatus(id, status)}
+          onDeleteBooking={(id) => {
+            setSelectedDetailBooking(null);
+            handleDeleteBooking(id);
+          }}
+          startingRideId={startingRideId}
+        />
+      )}
     </div>
   );
 }

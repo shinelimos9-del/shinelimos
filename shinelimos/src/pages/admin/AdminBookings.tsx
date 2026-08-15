@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Play, Trash2 } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Play, Trash2, Eye } from "lucide-react";
 import { getAllBookings, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide, deleteBooking } from "../../utils/api";
 import { calculateQuote, parseHours } from "../../utils/pricingEngine";
+import BookingDetailModal from "../../components/BookingDetailModal";
 import moment from "moment";
 
 export default function AdminBookings() {
@@ -14,6 +15,7 @@ export default function AdminBookings() {
   const [waitingMinutes, setWaitingMinutes] = useState<number>(0);
   const [notifyingArrival, setNotifyingArrival] = useState(false);
   const [startingRideId, setStartingRideId] = useState<string | null>(null);
+  const [selectedDetailBooking, setSelectedDetailBooking] = useState<any | null>(null);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
@@ -284,17 +286,21 @@ export default function AdminBookings() {
             <tbody className="divide-y divide-white/5 text-white">
               {currentBookings.length > 0 ? (
                 currentBookings.map((b) => (
-                  <tr key={b._id} className="hover:bg-white/5 transition-colors group">
+                  <tr 
+                    key={b._id} 
+                    onClick={() => setSelectedDetailBooking(b)}
+                    className="hover:bg-white/10 transition-colors group cursor-pointer"
+                  >
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-linear-to-tr from-purple-500/20 to-blue-500/20 flex items-center justify-center text-xs font-bold border border-white/10">
                           {b.contact_details?.booker?.first_name?.[0] || "?"}
                         </div>
                         <div>
-                          <div className="text-white font-medium">
+                          <div className="text-white font-medium group-hover:text-gold transition-colors flex items-center gap-1.5">
                             {b.contact_details?.booker?.first_name || "Unknown"} {b.contact_details?.booker?.last_name || ""}
                           </div>
-                          <div className="text-[11px] text-white">{b.contact_details?.booker?.email || "No email"}</div>
+                          <div className="text-[11px] text-white/60">{b.contact_details?.booker?.email || "No email"}</div>
                         </div>
                       </div>
                     </td>
@@ -317,11 +323,24 @@ export default function AdminBookings() {
                       </span>
                     </td>
 
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDetailBooking(b);
+                          }}
+                          className="bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
+                          title="Open full details view for this booking"
+                        >
+                          <Eye size={12} />
+                          View Details
+                        </button>
+
                         {!b.ride_started && !b.vehicle_arrived && (
                           <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setArrivalModalBooking(b);
                               setWaitingMinutes(b.waiting_minutes || 0);
                             }}
@@ -335,7 +354,10 @@ export default function AdminBookings() {
 
                         {b.vehicle_arrived && !b.ride_started && (
                           <button
-                            onClick={() => handleStartRide(b._id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleStartRide(b._id);
+                            }}
                             disabled={startingRideId === b._id}
                             className="bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 border border-amber-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5 animate-pulse"
                             title="Click to START RIDE and STOP waiting timer calculation"
@@ -352,10 +374,11 @@ export default function AdminBookings() {
                           </div>
                         )}
 
-
-
                         <button 
-                          onClick={() => handleOpenFinalModal(b)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenFinalModal(b);
+                          }}
                           className="bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 border border-purple-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
                           title="Track extra trip charges (stops, waiting, tolls, parking) & send final payment link after drop"
                         >
@@ -371,14 +394,20 @@ export default function AdminBookings() {
 
                         {b.booking_status === 'completed' ? (
                           <button 
-                            onClick={() => handleUpdateStatus(b._id, 'pending')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateStatus(b._id, 'pending');
+                            }}
                             className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-400 border border-yellow-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                           >
                             Mark Pending
                           </button>
                         ) : (
                           <button 
-                            onClick={() => handleUpdateStatus(b._id, 'completed')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleUpdateStatus(b._id, 'completed');
+                            }}
                             className="bg-green-500/20 hover:bg-green-500/40 text-green-400 border border-green-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
                           >
                             Mark Complete
@@ -386,7 +415,10 @@ export default function AdminBookings() {
                         )}
 
                         <button 
-                          onClick={() => handleDeleteBooking(b._id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteBooking(b._id);
+                          }}
                           className="bg-red-500/20 hover:bg-red-500/40 text-red-400 border border-red-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5"
                           title="Delete booking permanently from database"
                         >
@@ -798,6 +830,30 @@ export default function AdminBookings() {
           </div>
         );
       })()}
+
+      {/* Booking Detail & Customer Information Modal */}
+      {selectedDetailBooking && (
+        <BookingDetailModal
+          booking={selectedDetailBooking}
+          onClose={() => setSelectedDetailBooking(null)}
+          onNotifyArrival={(b) => {
+            setSelectedDetailBooking(null);
+            setArrivalModalBooking(b);
+            setWaitingMinutes(b.waiting_minutes || 0);
+          }}
+          onStartRide={(id) => handleStartRide(id)}
+          onOpenFinalModal={(b) => {
+            setSelectedDetailBooking(null);
+            handleOpenFinalModal(b);
+          }}
+          onUpdateStatus={(id, status) => handleUpdateStatus(id, status)}
+          onDeleteBooking={(id) => {
+            setSelectedDetailBooking(null);
+            handleDeleteBooking(id);
+          }}
+          startingRideId={startingRideId}
+        />
+      )}
     </div>
   );
 }
