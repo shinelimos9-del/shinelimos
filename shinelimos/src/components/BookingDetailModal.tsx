@@ -6,6 +6,8 @@ import {
   Info
 } from "lucide-react";
 import moment from "moment";
+import { FLEET } from "../data";
+import { ADMIN_BASE_URL } from "../utils/api";
 
 interface BookingDetailModalProps {
   booking: any;
@@ -51,10 +53,6 @@ export default function BookingDetailModal({
     setTimeout(() => setCopiedId(false), 2000);
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   const getLiveWaitMins = (arrivalTime?: string | Date) => {
     if (!arrivalTime) return 0;
     const arrivalMs = new Date(arrivalTime).getTime();
@@ -62,6 +60,69 @@ export default function BookingDetailModal({
     const elapsedMs = Math.max(0, Date.now() - arrivalMs);
     return Math.floor(elapsedMs / 60000);
   };
+
+  const getVehicleImageUrl = (bookingData: any): string => {
+    const vDetails = bookingData?.vehicle_details || {};
+    const vObj = vDetails.vehicle_id && typeof vDetails.vehicle_id === "object" ? vDetails.vehicle_id : {};
+
+    // 1. Check direct image fields
+    const rawUrl = 
+      vDetails.image || 
+      vObj.image || 
+      (Array.isArray(vDetails.images) && vDetails.images[0]) || 
+      (Array.isArray(vObj.images) && vObj.images[0]) ||
+      bookingData.image;
+
+    if (rawUrl && typeof rawUrl === "string" && rawUrl.trim() !== "") {
+      const trimmed = rawUrl.trim();
+      if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("data:")) {
+        return trimmed;
+      }
+      if (trimmed.startsWith("/images/") || trimmed.startsWith("/car image/")) {
+        return trimmed;
+      }
+      if (trimmed.startsWith("/uploads/") || trimmed.startsWith("uploads/")) {
+        const cleanPath = trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+        return `${ADMIN_BASE_URL}${cleanPath}`;
+      }
+      return trimmed.startsWith("/") ? trimmed : `/${trimmed}`;
+    }
+
+    // 2. Fallback: Search FLEET list in data.ts by vehicle name / class
+    const nameToSearch = (
+      vDetails.vehicle_name || 
+      vDetails.vehicle_class_name || 
+      bookingData.vehicle_name || 
+      bookingData.trip_details?.[0]?.vehicle_name ||
+      "Limousine"
+    ).toLowerCase();
+
+    const matchedFleet = FLEET.find(f => 
+      nameToSearch.includes(f.name.toLowerCase()) || 
+      f.name.toLowerCase().includes(nameToSearch) ||
+      nameToSearch.includes(f.category.toLowerCase()) ||
+      f.category.toLowerCase().includes(nameToSearch)
+    );
+
+    if (matchedFleet && matchedFleet.image) {
+      return matchedFleet.image;
+    }
+
+    // 3. Category based fallbacks
+    if (nameToSearch.includes("suv") || nameToSearch.includes("escalade") || nameToSearch.includes("suburban") || nameToSearch.includes("navigator")) {
+      return "/images/cadillac-escalade-removebg.png";
+    }
+    if (nameToSearch.includes("sprinter") || nameToSearch.includes("van")) {
+      return "/images/sprinter-removebg.png";
+    }
+    if (nameToSearch.includes("bus") || nameToSearch.includes("pax")) {
+      return "/images/30-pax-removebg.png";
+    }
+
+    return "/images/S_class-removebg.png";
+  };
+
+  const resolvedVehicleImage = getVehicleImageUrl(booking);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto print:p-0 print:bg-white print:static print:block">
@@ -441,18 +502,16 @@ export default function BookingDetailModal({
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-6">
-                  {vehicle.image ? (
+                  <div className="w-full sm:w-48 h-32 rounded-xl border border-white/10 bg-black/40 p-2 flex items-center justify-center overflow-hidden shrink-0">
                     <img
-                      src={vehicle.image}
-                      alt={vehicle.vehicle_name}
-                      className="w-full sm:w-48 h-32 object-cover rounded-xl border border-white/10 bg-black/50"
+                      src={resolvedVehicleImage}
+                      alt={vehicle.vehicle_name || "Vehicle"}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/images/S_class-removebg.png";
+                      }}
+                      className="w-full h-full object-contain drop-shadow-md"
                     />
-                  ) : (
-                    <div className="w-full sm:w-48 h-32 rounded-xl border border-white/10 bg-white/5 flex flex-col items-center justify-center text-white/40">
-                      <Car size={36} />
-                      <span className="text-xs mt-2">No vehicle photo</span>
-                    </div>
-                  )}
+                  </div>
 
                   <div className="space-y-3 flex-1 text-sm">
                     <div>
