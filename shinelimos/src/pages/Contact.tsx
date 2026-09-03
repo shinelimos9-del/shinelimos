@@ -22,6 +22,12 @@ export default function Contact() {
     const whatsappUrl = `https://wa.me/12029517172?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
 
+    if (typeof window !== "undefined" && typeof window.gtag === "function") {
+      window.gtag("event", "conversion", {
+        send_to: "AW-17781178463/hboFCJaPjewcEN-A3Z5C",
+      });
+    }
+
     setSent(true);
     setTimeout(() => setSent(false), 4500);
     setForm({ name: "", email: "", phone: "", message: "" });
