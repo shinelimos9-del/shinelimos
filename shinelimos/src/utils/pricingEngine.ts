@@ -177,6 +177,7 @@ export interface QuoteOptions {
   parking?: number;
   isHoliday?: boolean;
   isLateNight?: boolean;
+  discount?: number;
   initialBookingSubtotal?: number;
 }
 
@@ -209,6 +210,9 @@ export interface QuoteBreakdown {
   subtotalWithSurcharges: number;
   gratuity: number;
   creditCardFee: number;
+  calculatedGrandTotal?: number;
+  originalGrandTotal?: number;
+  discount?: number;
   grandTotal: number;
 }
 
@@ -344,9 +348,17 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
   const holidaySurcharge = holiday ? round2(subtotal * 0.20) : 0;
   const subtotalWithSurcharges = round2(subtotal + lateNightSurcharge + holidaySurcharge);
 
+  // 11. Gratuity (20%)
   const gratuity = round2(subtotalWithSurcharges * 0.20);
+
+  // 12. Credit Card Fee (3%)
   const creditCardFee = round2((subtotalWithSurcharges + gratuity) * 0.03);
-  const grandTotal = round2(subtotalWithSurcharges + gratuity + creditCardFee);
+
+  // 13. Grand Total & Custom Adjustment / Discount
+  const calculatedGrandTotal = round2(subtotalWithSurcharges + gratuity + creditCardFee);
+  const discountInput = safeNumber(options.discount, 0);
+  const discount = round2(Math.max(0, Math.min(calculatedGrandTotal, discountInput)));
+  const grandTotal = round2(Math.max(0, calculatedGrandTotal - discount));
 
   return {
     vehicleTier: tierKey,
@@ -385,6 +397,9 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
       subtotalWithSurcharges,
       gratuity,
       creditCardFee,
+      calculatedGrandTotal,
+      originalGrandTotal: calculatedGrandTotal,
+      discount,
       grandTotal,
     },
     formattedGrandTotal: grandTotal.toFixed(2),

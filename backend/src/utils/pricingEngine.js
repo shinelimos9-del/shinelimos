@@ -345,8 +345,11 @@ function calculateQuote(options = {}) {
   // 12. Credit Card Fee (3%)
   const creditCardFee = round2((subtotalWithSurcharges + gratuity) * 0.03);
 
-  // 13. Grand Total
-  const grandTotal = round2(subtotalWithSurcharges + gratuity + creditCardFee);
+  // 13. Grand Total & Custom Adjustment / Discount
+  const calculatedGrandTotal = round2(subtotalWithSurcharges + gratuity + creditCardFee);
+  const discountInput = safeNumber(options.discount, 0);
+  const discount = round2(Math.max(0, Math.min(calculatedGrandTotal, discountInput)));
+  const grandTotal = round2(Math.max(0, calculatedGrandTotal - discount));
 
   return {
     vehicleTier: tierKey,
@@ -385,6 +388,9 @@ function calculateQuote(options = {}) {
       subtotalWithSurcharges,
       gratuity,
       creditCardFee,
+      calculatedGrandTotal,
+      originalGrandTotal: calculatedGrandTotal,
+      discount,
       grandTotal,
     },
     formattedGrandTotal: grandTotal.toFixed(2),

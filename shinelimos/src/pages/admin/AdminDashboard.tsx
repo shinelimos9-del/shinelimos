@@ -30,6 +30,7 @@ export default function AdminDashboard() {
     parking: 0,
     isHoliday: false,
     isLateNight: false,
+    discount: 0,
   });
   const [sendingFinalInvoiceState, setSendingFinalInvoiceState] = useState(false);
 
@@ -65,6 +66,7 @@ export default function AdminDashboard() {
       parking: bookingObj.price_breakdown?.parking || 0,
       isHoliday: Boolean(bookingObj.price_breakdown?.isHoliday),
       isLateNight: Boolean(bookingObj.price_breakdown?.isLateNight),
+      discount: bookingObj.price_breakdown?.discount || 0,
     });
   };
 
@@ -618,6 +620,7 @@ export default function AdminDashboard() {
           parking: finalOptions.parking,
           isHoliday: finalOptions.isHoliday,
           isLateNight: finalOptions.isLateNight,
+          discount: finalOptions.discount,
           initialBookingSubtotal: initialSubtotal,
         });
 
@@ -762,6 +765,27 @@ export default function AdminDashboard() {
                       )}
                       <span className="text-[10px] text-white/40 block">Starts at $150 if vehicle cleaning required</span>
                     </div>
+
+                    {/* Discount */}
+                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
+                      <label className="font-medium text-white/80 flex justify-between">
+                        <span>Discount ($):</span>
+                        <span className="text-emerald-400 font-mono">-${((liveQuote.breakdown.discount || 0)).toFixed(2)}</span>
+                      </label>
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={finalOptions.discount === 0 ? '' : finalOptions.discount}
+                        placeholder="0.00"
+                        onChange={(e) => {
+                          const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                          setFinalOptions(prev => ({ ...prev, discount: isNaN(val) ? 0 : Math.max(0, val) }));
+                        }}
+                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                      />
+                      <span className="text-[10px] text-white/40">Custom discount deducted from invoice total</span>
+                    </div>
                   </div>
 
                   {/* Manual Surcharge Toggles */}
@@ -806,6 +830,18 @@ export default function AdminDashboard() {
                   {liveQuote.breakdown.holidaySurcharge > 0 && <div className="flex justify-between text-amber-300"><span>Holiday Surcharge (20%):</span><span>${liveQuote.breakdown.holidaySurcharge.toFixed(2)}</span></div>}
                   <div className="flex justify-between text-white/70"><span>Gratuity (20%):</span><span>${liveQuote.breakdown.gratuity.toFixed(2)}</span></div>
                   <div className="flex justify-between text-white/70"><span>Credit Card Fee (3%):</span><span>${liveQuote.breakdown.creditCardFee.toFixed(2)}</span></div>
+                  {Boolean(liveQuote.breakdown.discount && liveQuote.breakdown.discount > 0) && (
+                    <div className="flex justify-between text-white/60">
+                      <span>Original Total:</span>
+                      <span className="line-through">${(liveQuote.breakdown.calculatedGrandTotal || 0).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {Boolean(liveQuote.breakdown.discount && liveQuote.breakdown.discount > 0) && (
+                    <div className="flex justify-between text-emerald-400 font-medium">
+                      <span>Discount:</span>
+                      <span>-${(liveQuote.breakdown.discount || 0).toFixed(2)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-lg text-gold border-t-2 border-gold/50 pt-3 mt-2">
                     <span>Final Total Due:</span>
                     <span>${liveQuote.formattedGrandTotal}</span>

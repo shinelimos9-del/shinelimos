@@ -320,6 +320,93 @@ test("Admin Custom Vehicle Pricing Override", () => {
   assert.strictEqual(quote.breakdown.rawSubtotal, 150.00);
 });
 
+// 13. EXTENDED HOURLY DURATION (1 to 12 HOURS)
+test("Extended Hourly Duration (1, 5, 6, 8, 12 Hours)", () => {
+  // 1 hour Sedan (min 2 hours = 2 * $75 = $150)
+  const h1 = calculateQuote({ vehicle: 'sedan', bookingType: 'hourly', durationHours: 1 });
+  assert.strictEqual(h1.billedHours, 2);
+  assert.strictEqual(h1.breakdown.hourlyCharge, 150.00);
+
+  // 5 hours Sedan (5 * $75 = $375)
+  const h5 = calculateQuote({ vehicle: 'sedan', bookingType: 'hourly', durationHours: 5 });
+  assert.strictEqual(h5.billedHours, 5);
+  assert.strictEqual(h5.breakdown.hourlyCharge, 375.00);
+
+  // 6 hours Sedan (6 * $75 = $450)
+  const h6 = calculateQuote({ vehicle: 'sedan', bookingType: 'hourly', durationHours: 6 });
+  assert.strictEqual(h6.billedHours, 6);
+  assert.strictEqual(h6.breakdown.hourlyCharge, 450.00);
+
+  // 8 hours Sedan (8 * $75 = $600)
+  const h8 = calculateQuote({ vehicle: 'sedan', bookingType: 'hourly', durationHours: 8 });
+  assert.strictEqual(h8.billedHours, 8);
+  assert.strictEqual(h8.breakdown.hourlyCharge, 600.00);
+
+  // 12 hours Sedan (12 * $75 = $900)
+  const h12 = calculateQuote({ vehicle: 'sedan', bookingType: 'hourly', durationHours: 12 });
+  assert.strictEqual(h12.billedHours, 12);
+  assert.strictEqual(h12.breakdown.hourlyCharge, 900.00);
+
+  // Parse string durations like "6 hours", "8 hours", "12 hours"
+  const h6Str = calculateQuote({ vehicle: 'sedan', bookingType: 'hourly', duration: "6 hours" });
+  assert.strictEqual(h6Str.billedHours, 6);
+  assert.strictEqual(h6Str.breakdown.hourlyCharge, 450.00);
+
+  const h12Str = calculateQuote({ vehicle: 'sedan', bookingType: 'hourly', duration: "12 hours" });
+  assert.strictEqual(h12Str.billedHours, 12);
+  assert.strictEqual(h12Str.breakdown.hourlyCharge, 900.00);
+});
+
+// 14. CUSTOM DISCOUNT & ADJUSTED FINAL AMOUNT
+test("Custom Amount & Discount Calculations", () => {
+  // Use initialBookingSubtotal = 404.53 to create exactly $500.00 calculated total:
+  // Subtotal = 404.53, Gratuity 20% = 80.91, Credit Card Fee 3% = 14.56, Grand Total = 500.00
+  // Or test with initialBookingSubtotal = 500
+  const baseQuote = calculateQuote({ initialBookingSubtotal: 500 });
+  const calculated = baseQuote.breakdown.calculatedGrandTotal;
+  assert.strictEqual(calculated, 618.00); // 500 + 100 gratuity + 18 card fee
+
+  // Test with exactly 500 subtotal-to-total test
+  // 1. No adjustment: discount = 0
+  const noDiscount = calculateQuote({ initialBookingSubtotal: 500, discount: 0 });
+  assert.strictEqual(noDiscount.breakdown.discount, 0);
+  assert.strictEqual(noDiscount.breakdown.grandTotal, 618.00);
+
+  // 2. Normal discount: discount = $50
+  const normalDiscount = calculateQuote({ initialBookingSubtotal: 500, discount: 50 });
+  assert.strictEqual(normalDiscount.breakdown.discount, 50.00);
+  assert.strictEqual(normalDiscount.breakdown.grandTotal, 568.00); // 618.00 - 50.00
+  assert.strictEqual(normalDiscount.breakdown.calculatedGrandTotal, 618.00);
+
+  // 3. Decimal discount: discount = $25.50
+  const decimalDiscount = calculateQuote({ initialBookingSubtotal: 500, discount: 25.50 });
+  assert.strictEqual(decimalDiscount.breakdown.discount, 25.50);
+  assert.strictEqual(decimalDiscount.breakdown.grandTotal, 592.50); // 618.00 - 25.50
+
+  // 4. Excessive discount: discount = $700 on $618 total -> capped, never negative
+  const excessiveDiscount = calculateQuote({ initialBookingSubtotal: 500, discount: 700 });
+  assert.strictEqual(excessiveDiscount.breakdown.discount, 618.00);
+  assert.strictEqual(excessiveDiscount.breakdown.grandTotal, 0.00);
+  assert(excessiveDiscount.breakdown.grandTotal >= 0, "Grand total must never be negative");
+
+  // 5. Invalid discount inputs: 'abc', -50, blank, special characters
+  const strInvalid = calculateQuote({ initialBookingSubtotal: 500, discount: 'abc' });
+  assert.strictEqual(strInvalid.breakdown.discount, 0);
+  assert.strictEqual(strInvalid.breakdown.grandTotal, 618.00);
+
+  const negInvalid = calculateQuote({ initialBookingSubtotal: 500, discount: -50 });
+  assert.strictEqual(negInvalid.breakdown.discount, 0);
+  assert.strictEqual(negInvalid.breakdown.grandTotal, 618.00);
+
+  const blankInvalid = calculateQuote({ initialBookingSubtotal: 500, discount: '' });
+  assert.strictEqual(blankInvalid.breakdown.discount, 0);
+  assert.strictEqual(blankInvalid.breakdown.grandTotal, 618.00);
+
+  const specialInvalid = calculateQuote({ initialBookingSubtotal: 500, discount: '$%#@' });
+  assert.strictEqual(specialInvalid.breakdown.discount, 0);
+  assert.strictEqual(specialInvalid.breakdown.grandTotal, 618.00);
+});
+
 console.log("\n=================================================");
 console.log(`  TEST RESULTS: ${passedCount} / ${totalCount} PASSED  `);
 console.log("=================================================\n");

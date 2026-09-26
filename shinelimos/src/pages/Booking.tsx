@@ -809,7 +809,14 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
                       <option className="bg-[#1a1a1a]" value="2 hours">2 Hours</option>
                       <option className="bg-[#1a1a1a]" value="3 hours">3 Hours</option>
                       <option className="bg-[#1a1a1a]" value="4 hours">4 Hours</option>
-                      <option className="bg-[#1a1a1a]" value="5+ hours">5+ Hours</option>
+                      <option className="bg-[#1a1a1a]" value="5 hours">5 Hours</option>
+                      <option className="bg-[#1a1a1a]" value="6 hours">6 Hours</option>
+                      <option className="bg-[#1a1a1a]" value="7 hours">7 Hours</option>
+                      <option className="bg-[#1a1a1a]" value="8 hours">8 Hours</option>
+                      <option className="bg-[#1a1a1a]" value="9 hours">9 Hours</option>
+                      <option className="bg-[#1a1a1a]" value="10 hours">10 Hours</option>
+                      <option className="bg-[#1a1a1a]" value="11 hours">11 Hours</option>
+                      <option className="bg-[#1a1a1a]" value="12 hours">12 Hours</option>
                     </select>
                     <button 
                       onClick={() => onOpenFlightInfo(seg.id)}

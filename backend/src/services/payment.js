@@ -473,6 +473,25 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
       || booking.price_breakdown?.rawSubtotal
       || booking.vehicle_details?.estimated_price;
 
+    // Validate discount if provided
+    let validatedDiscount = 0;
+    if (extraOptions.discount !== undefined && extraOptions.discount !== null && extraOptions.discount !== '') {
+      const rawDiscount = extraOptions.discount;
+      const parsedDiscount = Number(rawDiscount);
+      if (isNaN(parsedDiscount) || !isFinite(parsedDiscount)) {
+        return { success: false, message: "Invalid discount amount: must be a valid number" };
+      }
+      if (parsedDiscount < 0) {
+        return { success: false, message: "Discount amount cannot be negative" };
+      }
+      const discountStr = String(rawDiscount).trim();
+      const dotIndex = discountStr.indexOf('.');
+      if (dotIndex !== -1 && discountStr.length - dotIndex - 1 > 2) {
+        return { success: false, message: "Discount amount cannot exceed 2 decimal places" };
+      }
+      validatedDiscount = pricingEngine.round2(parsedDiscount);
+    }
+
     const quote = pricingEngine.calculateQuote({
       vehicle: booking.vehicle_details,
       bookingType: tripSegment.trip_type || 'one-way',
@@ -493,8 +512,22 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
       parking: extraOptions.parking,
       isHoliday: extraOptions.isHoliday,
       isLateNight: extraOptions.isLateNight,
+      discount: validatedDiscount,
       initialBookingSubtotal: initialBookingPrice,
     });
+
+    if (validatedDiscount > quote.breakdown.calculatedGrandTotal) {
+      return { 
+        success: false, 
+        message: `Discount cannot exceed total booking amount ($${quote.breakdown.calculatedGrandTotal.toFixed(2)})` 
+      };
+    }
+    if (quote.breakdown.grandTotal <= 0) {
+      return { 
+        success: false, 
+        message: "Final invoice total must be greater than $0.00" 
+      };
+    }
 
     const finalGrandTotal = quote.breakdown.grandTotal;
 
@@ -587,6 +620,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
                 ${quote.breakdown.holidaySurcharge > 0 ? `<tr><td style="padding: 4px 0;">Holiday Surcharge (20%)</td><td style="text-align: right;">$${quote.breakdown.holidaySurcharge.toFixed(2)}</td></tr>` : ''}
                 <tr><td style="padding: 4px 0;">Gratuity (20%)</td><td style="text-align: right;">$${quote.breakdown.gratuity.toFixed(2)}</td></tr>
                 <tr><td style="padding: 4px 0;">Credit Card Fee (3%)</td><td style="text-align: right;">$${quote.breakdown.creditCardFee.toFixed(2)}</td></tr>
+                ${quote.breakdown.discount > 0 ? `<tr><td style="padding: 4px 0; color: #4ade80;">Discount</td><td style="text-align: right; color: #4ade80;">-$${quote.breakdown.discount.toFixed(2)}</td></tr>` : ''}
                 <tr style="border-top: 2px solid #d4af37; font-size: 16px;"><td style="padding: 10px 0; font-weight: bold; color: #d4af37;">Grand Total Due</td><td style="text-align: right; font-weight: bold; color: #d4af37;">$${quote.breakdown.grandTotal.toFixed(2)}</td></tr>
               </table>
             </div>

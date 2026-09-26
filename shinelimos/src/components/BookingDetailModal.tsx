@@ -711,6 +711,13 @@ export default function BookingDetailModal({
                     <div className="flex justify-between text-white/70"><span>Credit Card Processing Fee (3%):</span><span className="font-mono">${priceBreakdown.creditCardFee.toFixed(2)}</span></div>
                   )}
 
+                  {priceBreakdown.discount > 0 && (
+                    <div className="flex justify-between text-emerald-400">
+                      <span>Discount:</span>
+                      <span className="font-mono">-${priceBreakdown.discount.toFixed(2)}</span>
+                    </div>
+                  )}
+
                   <div className="flex justify-between font-bold text-base text-gold border-t-2 border-gold/40 pt-3 mt-2">
                     <span>Grand Total:</span>
                     <span className="font-mono text-lg">${vehicle.estimated_price || priceBreakdown.grandTotal?.toFixed(2) || booking.price || "0.00"}</span>

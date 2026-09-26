@@ -214,6 +214,17 @@ const getRoadDistanceMapbox = async (waypoints) => {
 
 exports.initiateBooking = async (tripData) => {
 	try {
+		if (!Array.isArray(tripData) || tripData.length === 0) {
+			return { success: false, message: "Trip details are required" };
+		}
+
+		for (const segment of tripData) {
+			const durationHours = parseDurationToHours(segment.duration);
+			if (durationHours > 12) {
+				return { success: false, message: "Hourly duration cannot exceed 12 hours" };
+			}
+		}
+
 		// 1. Process trip data with accurate Mapbox distance calculation
 		const processedTripData = await Promise.all(tripData.map(async (segment) => {
 			// Get coordinates for pickup
@@ -458,6 +469,15 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 
 exports.createBooking = async (bookingData) => {
 	try {
+		if (Array.isArray(bookingData?.trip_details)) {
+			for (const segment of bookingData.trip_details) {
+				const durationHours = parseDurationToHours(segment.duration);
+				if (durationHours > 12) {
+					return { success: false, message: "Hourly duration cannot exceed 12 hours" };
+				}
+			}
+		}
+
 		const booking = new Booking(bookingData);
 		const saved = await booking.save();
 		return { success: true, message: "Booking created successfully", booking: saved };
