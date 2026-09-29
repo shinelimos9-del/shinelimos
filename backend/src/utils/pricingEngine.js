@@ -343,8 +343,11 @@ function calculateQuote(options = {}) {
   const holidaySurcharge = holiday ? round2(subtotal * 0.20) : 0;
   const subtotalWithSurcharges = round2(subtotal + lateNightSurcharge + holidaySurcharge);
 
-  // 11. Gratuity (20%)
-  const gratuity = round2(subtotalWithSurcharges * 0.20);
+  // 11. Gratuity (20% - Optional, default enabled)
+  const isGratuityEnabled = options.includeGratuity !== undefined
+    ? Boolean(options.includeGratuity)
+    : (options.hasGratuity !== undefined ? Boolean(options.hasGratuity) : true);
+  const gratuity = isGratuityEnabled ? round2(subtotalWithSurcharges * 0.20) : 0;
 
   // 12. Credit Card Fee (3%)
   const creditCardFee = round2((subtotalWithSurcharges + gratuity) * 0.03);
@@ -394,6 +397,7 @@ function calculateQuote(options = {}) {
       isHoliday: holiday,
       subtotalWithSurcharges,
       gratuity,
+      includeGratuity: isGratuityEnabled,
       creditCardFee,
       calculatedGrandTotal,
       originalGrandTotal: calculatedGrandTotal,

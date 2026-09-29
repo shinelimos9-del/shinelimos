@@ -177,6 +177,8 @@ export interface QuoteOptions {
   parking?: number;
   isHoliday?: boolean;
   isLateNight?: boolean;
+  includeGratuity?: boolean;
+  hasGratuity?: boolean;
   discount?: number;
   initialBookingSubtotal?: number | string;
   subtotal?: number | string;
@@ -215,6 +217,7 @@ export interface QuoteBreakdown {
   isHoliday: boolean;
   subtotalWithSurcharges: number;
   gratuity: number;
+  includeGratuity: boolean;
   creditCardFee: number;
   calculatedGrandTotal?: number;
   originalGrandTotal?: number;
@@ -361,8 +364,11 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
   const holidaySurcharge = holiday ? round2(subtotal * 0.20) : 0;
   const subtotalWithSurcharges = round2(subtotal + lateNightSurcharge + holidaySurcharge);
 
-  // 11. Gratuity (20%)
-  const gratuity = round2(subtotalWithSurcharges * 0.20);
+  // 11. Gratuity (20% - Optional, default enabled)
+  const isGratuityEnabled = options.includeGratuity !== undefined
+    ? Boolean(options.includeGratuity)
+    : (options.hasGratuity !== undefined ? Boolean(options.hasGratuity) : true);
+  const gratuity = isGratuityEnabled ? round2(subtotalWithSurcharges * 0.20) : 0;
 
   // 12. Credit Card Fee (3%)
   const creditCardFee = round2((subtotalWithSurcharges + gratuity) * 0.03);
@@ -412,6 +418,7 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
       isHoliday: holiday,
       subtotalWithSurcharges,
       gratuity,
+      includeGratuity: isGratuityEnabled,
       creditCardFee,
       calculatedGrandTotal,
       originalGrandTotal: calculatedGrandTotal,

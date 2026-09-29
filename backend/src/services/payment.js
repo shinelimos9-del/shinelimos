@@ -557,6 +557,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
       parking: extraOptions.parking,
       isHoliday: extraOptions.isHoliday,
       isLateNight: extraOptions.isLateNight,
+      includeGratuity: extraOptions.includeGratuity !== undefined ? Boolean(extraOptions.includeGratuity) : (extraOptions.hasGratuity !== undefined ? Boolean(extraOptions.hasGratuity) : true),
       discount: validatedDiscount,
       initialBookingSubtotal: effectiveSubtotal,
       originalSubtotal: initialBookingPrice,
@@ -667,7 +668,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
                 <tr style="border-top: 1px dashed #444;"><td style="padding: 6px 0; font-weight: bold; color: white;">Subtotal</td><td style="text-align: right; font-weight: bold; color: white;">$${quote.breakdown.subtotal.toFixed(2)}</td></tr>
                 ${quote.breakdown.lateNightSurcharge > 0 ? `<tr><td style="padding: 4px 0;">Late Night Surcharge (15%)</td><td style="text-align: right;">$${quote.breakdown.lateNightSurcharge.toFixed(2)}</td></tr>` : ''}
                 ${quote.breakdown.holidaySurcharge > 0 ? `<tr><td style="padding: 4px 0;">Holiday Surcharge (20%)</td><td style="text-align: right;">$${quote.breakdown.holidaySurcharge.toFixed(2)}</td></tr>` : ''}
-                <tr><td style="padding: 4px 0;">Gratuity (20%)</td><td style="text-align: right;">$${quote.breakdown.gratuity.toFixed(2)}</td></tr>
+                ${quote.breakdown.gratuity > 0 ? `<tr><td style="padding: 4px 0;">Gratuity (20%)</td><td style="text-align: right;">$${quote.breakdown.gratuity.toFixed(2)}</td></tr>` : ''}
                 <tr><td style="padding: 4px 0;">Credit Card Fee (3%)</td><td style="text-align: right;">$${quote.breakdown.creditCardFee.toFixed(2)}</td></tr>
                 ${quote.breakdown.discount > 0 ? `<tr><td style="padding: 4px 0; color: #4ade80;">Discount</td><td style="text-align: right; color: #4ade80;">-$${quote.breakdown.discount.toFixed(2)}</td></tr>` : ''}
                 <tr style="border-top: 2px solid #d4af37; font-size: 16px;"><td style="padding: 10px 0; font-weight: bold; color: #d4af37;">Grand Total Due</td><td style="text-align: right; font-weight: bold; color: #d4af37;">$${quote.breakdown.grandTotal.toFixed(2)}</td></tr>

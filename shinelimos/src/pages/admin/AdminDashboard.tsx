@@ -32,6 +32,7 @@ export default function AdminDashboard() {
     parking: 0,
     isHoliday: false,
     isLateNight: false,
+    includeGratuity: true,
     discount: 0,
   });
   const [sendingFinalInvoiceState, setSendingFinalInvoiceState] = useState(false);
@@ -103,6 +104,7 @@ export default function AdminDashboard() {
       parking: bookingObj.price_breakdown?.parking || 0,
       isHoliday: Boolean(bookingObj.price_breakdown?.isHoliday),
       isLateNight: Boolean(bookingObj.price_breakdown?.isLateNight),
+      includeGratuity: bookingObj.price_breakdown?.includeGratuity !== undefined ? Boolean(bookingObj.price_breakdown.includeGratuity) : (bookingObj.price_breakdown?.gratuity !== undefined ? bookingObj.price_breakdown.gratuity > 0 : true),
       discount: bookingObj.price_breakdown?.discount || 0,
     });
   };
@@ -172,6 +174,7 @@ export default function AdminDashboard() {
         parking: finalOptions.parking,
         isHoliday: finalOptions.isHoliday,
         isLateNight: finalOptions.isLateNight,
+        includeGratuity: finalOptions.includeGratuity !== false,
         discount: finalOptions.discount,
       };
 
@@ -745,6 +748,7 @@ export default function AdminDashboard() {
           parking: finalOptions.parking,
           isHoliday: finalOptions.isHoliday,
           isLateNight: finalOptions.isLateNight,
+          includeGratuity: finalOptions.includeGratuity !== false,
           discount: finalOptions.discount,
           initialBookingSubtotal: effectiveSubtotal,
           originalSubtotal: initialSubtotal,
@@ -923,26 +927,36 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Manual Surcharge Toggles */}
-                  <div className="grid sm:grid-cols-2 gap-4 pt-2">
-                    <label className="flex items-center gap-3 text-sm text-white/90 font-medium cursor-pointer bg-white/[0.03] p-4 rounded-2xl border border-white/10 hover:bg-white/[0.06] transition-colors">
+                  {/* Manual Surcharge & Gratuity Toggles */}
+                  <div className="grid sm:grid-cols-3 gap-3.5 pt-2">
+                    <label className="flex items-center gap-2.5 text-sm text-white/90 font-medium cursor-pointer bg-white/[0.03] p-3.5 rounded-2xl border border-white/10 hover:bg-white/[0.06] transition-colors">
                       <input
                         type="checkbox"
                         checked={finalOptions.isLateNight || liveQuote.breakdown.isLateNight}
                         onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, isLateNight: e.target.checked }))}
-                        className="rounded accent-purple-500 w-5 h-5 cursor-pointer"
+                        className="rounded accent-purple-500 w-5 h-5 cursor-pointer shrink-0"
                       />
-                      <span>🌙 Late Night Surcharge (15% for 12 AM - 5 AM)</span>
+                      <span>🌙 Late Night (15%)</span>
                     </label>
 
-                    <label className="flex items-center gap-3 text-sm text-white/90 font-medium cursor-pointer bg-white/[0.03] p-4 rounded-2xl border border-white/10 hover:bg-white/[0.06] transition-colors">
+                    <label className="flex items-center gap-2.5 text-sm text-white/90 font-medium cursor-pointer bg-white/[0.03] p-3.5 rounded-2xl border border-white/10 hover:bg-white/[0.06] transition-colors">
                       <input
                         type="checkbox"
                         checked={finalOptions.isHoliday || liveQuote.breakdown.isHoliday}
                         onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, isHoliday: e.target.checked }))}
-                        className="rounded accent-purple-500 w-5 h-5 cursor-pointer"
+                        className="rounded accent-purple-500 w-5 h-5 cursor-pointer shrink-0"
                       />
-                      <span>🎆 Holiday Surcharge (20%)</span>
+                      <span>🎆 Holiday (20%)</span>
+                    </label>
+
+                    <label className="flex items-center gap-2.5 text-sm text-white/90 font-medium cursor-pointer bg-white/[0.03] p-3.5 rounded-2xl border border-white/10 hover:bg-white/[0.06] transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={finalOptions.includeGratuity !== false}
+                        onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, includeGratuity: e.target.checked }))}
+                        className="rounded accent-purple-500 w-5 h-5 cursor-pointer shrink-0"
+                      />
+                      <span>🎩 Gratuity (20%)</span>
                     </label>
                   </div>
                 </div>
@@ -1043,7 +1057,26 @@ export default function AdminDashboard() {
                   
                   {liveQuote.breakdown.lateNightSurcharge > 0 && <div className="flex justify-between text-amber-300 text-sm"><span>Late Night Surcharge (15%):</span><span className="font-mono">${liveQuote.breakdown.lateNightSurcharge.toFixed(2)}</span></div>}
                   {liveQuote.breakdown.holidaySurcharge > 0 && <div className="flex justify-between text-amber-300 text-sm"><span>Holiday Surcharge (20%):</span><span className="font-mono">${liveQuote.breakdown.holidaySurcharge.toFixed(2)}</span></div>}
-                  <div className="flex justify-between text-white/80 text-sm"><span>Gratuity (20%):</span><span className="font-mono text-white">${liveQuote.breakdown.gratuity.toFixed(2)}</span></div>
+                  <div className="flex justify-between items-center text-white/80 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span>Gratuity (20%):</span>
+                      <button
+                        type="button"
+                        onClick={() => setFinalOptions((prev: any) => ({ ...prev, includeGratuity: prev.includeGratuity === false ? true : false }))}
+                        className={`text-xs px-2.5 py-0.5 rounded-lg border transition-all cursor-pointer font-medium ${
+                          finalOptions.includeGratuity !== false
+                            ? 'bg-purple-500/15 text-purple-300 hover:bg-purple-500/25 border-purple-500/30'
+                            : 'bg-white/5 text-white/40 hover:text-white border-white/10'
+                        }`}
+                        title={finalOptions.includeGratuity !== false ? "Click to remove 20% gratuity" : "Click to add 20% gratuity"}
+                      >
+                        {finalOptions.includeGratuity !== false ? 'Remove' : '+ Add Gratuity'}
+                      </button>
+                    </div>
+                    <span className={`font-mono ${finalOptions.includeGratuity !== false ? 'text-white' : 'text-white/40 line-through'}`}>
+                      ${liveQuote.breakdown.gratuity.toFixed(2)}
+                    </span>
+                  </div>
                   <div className="flex justify-between text-white/80 text-sm"><span>Credit Card Fee (3%):</span><span className="font-mono text-white">${liveQuote.breakdown.creditCardFee.toFixed(2)}</span></div>
                   
                   {Boolean(liveQuote.breakdown.discount && liveQuote.breakdown.discount > 0) && (
