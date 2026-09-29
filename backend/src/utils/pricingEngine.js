@@ -253,8 +253,12 @@ function calculateQuote(options = {}) {
   const isHourly = rawBookingType === 'hourly' || rawBookingType === 'as-directed' || rawBookingType === 'as directed';
   const isRoundTrip = rawBookingType === 'round-trip' || rawBookingType === 'round trip';
 
-  // Check if an initial main booking price from DB is provided!
-  const hasInitialBookingPrice = options.initialBookingSubtotal !== undefined && options.initialBookingSubtotal !== null && safeNumber(options.initialBookingSubtotal, 0) > 0;
+  // Check if an initial main booking price from DB is provided or overridden by admin!
+  const explicitSubtotal = (options.subtotal !== undefined && options.subtotal !== null && options.subtotal !== '')
+    ? options.subtotal
+    : options.initialBookingSubtotal;
+
+  const hasInitialBookingPrice = explicitSubtotal !== undefined && explicitSubtotal !== null && explicitSubtotal !== '' && !isNaN(Number(explicitSubtotal)) && Number(explicitSubtotal) > 0;
 
   let baseFare = 0;
   let mileageCharge = 0;
@@ -266,8 +270,8 @@ function calculateQuote(options = {}) {
   let rawSubtotal = 0;
 
   if (hasInitialBookingPrice) {
-    // USE STORED MAIN BOOKING PRICE FROM DATABASE CREATION TIME
-    mainBookingPrice = safeNumber(options.initialBookingSubtotal, 0);
+    // USE STORED MAIN BOOKING PRICE FROM DATABASE CREATION TIME OR ADMIN OVERRIDE
+    mainBookingPrice = safeNumber(explicitSubtotal, 0);
     baseFare = mainBookingPrice;
   } else {
     // Standalone quote calculation for fresh quote widget
@@ -360,6 +364,9 @@ function calculateQuote(options = {}) {
     meetAndGreetIncluded: isAirport,
     billedHours,
     breakdown: {
+      originalSubtotal: options.originalSubtotal !== undefined ? round2(options.originalSubtotal) : mainBookingPrice,
+      effectiveSubtotal: mainBookingPrice,
+      isSubtotalEdited: options.originalSubtotal !== undefined ? Math.abs(round2(options.originalSubtotal) - mainBookingPrice) > 0.001 : Boolean(options.isExplicitSubtotal),
       mainBookingPrice,
       rawSubtotal,
       baseFare,

@@ -468,10 +468,55 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
     }
 
     const tripSegment = booking.trip_details?.[0] || {};
-    const initialBookingPrice = booking.price_breakdown?.mainBookingPrice
-      || booking.price_breakdown?.subtotal
+    let initialBookingPrice = pricingEngine.round2(
+      booking.price_breakdown?.originalSubtotal
+      || booking.price_breakdown?.mainBookingPrice
       || booking.price_breakdown?.rawSubtotal
-      || booking.vehicle_details?.estimated_price;
+      || booking.vehicle_details?.estimated_price
+      || booking.price_breakdown?.subtotal
+      || 0
+    );
+
+    if (initialBookingPrice <= 0) {
+      const autoQuote = pricingEngine.calculateQuote({
+        vehicle: booking.vehicle_details || { vehicle_name: 'Executive Sedan' },
+        bookingType: tripSegment.trip_type || 'one-way',
+        distanceMiles: tripSegment.distance_miles || 0,
+        durationMinutes: pricingEngine.parseHours(tripSegment.duration) * 60,
+        durationHours: pricingEngine.parseHours(tripSegment.duration),
+        pickupLocation: tripSegment.pickup_location,
+        pickupTime: tripSegment.start_time,
+        pickupDate: tripSegment.date,
+        flightInfo: tripSegment.flight_details,
+        occasion: tripSegment.occasion,
+      });
+      initialBookingPrice = autoQuote.breakdown.mainBookingPrice || autoQuote.breakdown.subtotal || 0;
+    }
+
+    // Validate subtotal override if provided
+    let effectiveSubtotal = initialBookingPrice;
+    let isSubtotalEdited = false;
+
+    if (extraOptions.subtotal !== undefined && extraOptions.subtotal !== null) {
+      const rawSubtotal = extraOptions.subtotal;
+      const subtotalStr = String(rawSubtotal).trim();
+      if (subtotalStr === '') {
+        return { success: false, message: "Subtotal cannot be empty: must be a valid number" };
+      }
+      const parsedSubtotal = Number(rawSubtotal);
+      if (isNaN(parsedSubtotal) || !isFinite(parsedSubtotal)) {
+        return { success: false, message: "Invalid subtotal amount: must be a valid number" };
+      }
+      if (parsedSubtotal < 0) {
+        return { success: false, message: "Subtotal amount cannot be negative" };
+      }
+      const dotIndex = subtotalStr.indexOf('.');
+      if (dotIndex !== -1 && subtotalStr.length - dotIndex - 1 > 2) {
+        return { success: false, message: "Subtotal amount cannot exceed 2 decimal places" };
+      }
+      effectiveSubtotal = pricingEngine.round2(parsedSubtotal);
+      isSubtotalEdited = true;
+    }
 
     // Validate discount if provided
     let validatedDiscount = 0;
@@ -493,7 +538,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
     }
 
     const quote = pricingEngine.calculateQuote({
-      vehicle: booking.vehicle_details,
+      vehicle: booking.vehicle_details || { vehicle_name: 'Executive Sedan' },
       bookingType: tripSegment.trip_type || 'one-way',
       distanceMiles: tripSegment.distance_miles || 0,
       durationMinutes: pricingEngine.parseHours(tripSegment.duration) * 60,
@@ -513,7 +558,9 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
       isHoliday: extraOptions.isHoliday,
       isLateNight: extraOptions.isLateNight,
       discount: validatedDiscount,
-      initialBookingSubtotal: initialBookingPrice,
+      initialBookingSubtotal: effectiveSubtotal,
+      originalSubtotal: initialBookingPrice,
+      isExplicitSubtotal: isSubtotalEdited,
     });
 
     if (validatedDiscount > quote.breakdown.calculatedGrandTotal) {
@@ -535,6 +582,8 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
     booking.price_breakdown = quote.breakdown;
     if (booking.vehicle_details) {
       booking.vehicle_details.estimated_price = quote.formattedGrandTotal;
+    } else {
+      booking.vehicle_details = { vehicle_name: 'Executive Sedan', estimated_price: quote.formattedGrandTotal };
     }
     booking.payment_status = "requested";
     booking.updated_at = Date.now();

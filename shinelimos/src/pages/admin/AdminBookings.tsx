@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Play, Trash2, Eye } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Play, Trash2, Eye, Edit2 } from "lucide-react";
 import { getAllBookings, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide, deleteBooking } from "../../utils/api";
 import { calculateQuote, parseHours } from "../../utils/pricingEngine";
 import BookingDetailModal from "../../components/BookingDetailModal";
@@ -23,11 +23,11 @@ export default function AdminBookings() {
     return () => clearInterval(timer);
   }, []);
 
-
-
   // Final Invoice Modal State
   const [finalModalBooking, setFinalModalBooking] = useState<any | null>(null);
-  const [finalOptions, setFinalOptions] = useState({
+  const [isEditingSubtotal, setIsEditingSubtotal] = useState(false);
+  const [finalOptions, setFinalOptions] = useState<any>({
+    subtotal: '',
     stopsCount: 0,
     waitingMinutes: 0,
     childSeatsCount: 0,
@@ -149,26 +149,128 @@ export default function AdminBookings() {
 
 
   const handleOpenFinalModal = (booking: any) => {
-    setFinalModalBooking(booking);
+    const bookingObj = {
+      ...booking,
+      _id: booking.id || booking._id,
+      contact_details: booking.contact_details || {
+        booker: {
+          first_name: booking.name ? booking.name.split(' ')[0] : 'Customer',
+          last_name: booking.name ? booking.name.split(' ').slice(1).join(' ') : '',
+          email: booking.email || '',
+        }
+      },
+      vehicle_details: booking.vehicle_details || { vehicle_name: booking.vehicle_name || 'Executive Sedan' },
+      trip_details: booking.trip_details || [{ trip_type: booking.trip || 'One Way' }],
+      waiting_minutes: booking.waiting_minutes || 0,
+      additional_stops_count: booking.additional_stops_count || 0,
+      price_breakdown: booking.price_breakdown || {},
+    };
+
+    const tripSegment = bookingObj.trip_details?.[0] || {};
+    const distance = tripSegment.distance_miles || tripSegment.miles || bookingObj.price_breakdown?.effectiveMiles || 0;
+    const durationMins = tripSegment.duration ? parseHours(tripSegment.duration) * 60 : (bookingObj.price_breakdown?.durationMinutes || 0);
+
+    const rawPriceStr = typeof booking.price === 'string' ? booking.price.replace(/[^0-9.]/g, '') : (booking.price || booking.vehicle_details?.estimated_price || booking.estimated_price);
+    let initialSubtotal = booking.price_breakdown?.originalSubtotal
+      || booking.price_breakdown?.mainBookingPrice
+      || booking.price_breakdown?.rawSubtotal
+      || booking.vehicle_details?.estimated_price
+      || booking.price_breakdown?.subtotal
+      || parseFloat(rawPriceStr)
+      || 0;
+
+    // If no stored subtotal or <= 0, dynamically calculate actual price from trip details
+    if (initialSubtotal <= 0) {
+      const autoQuote = calculateQuote({
+        vehicle: bookingObj.vehicle_details || { vehicle_name: 'Executive Sedan' },
+        bookingType: tripSegment.trip_type || 'one-way',
+        distanceMiles: distance,
+        durationMinutes: durationMins,
+        durationHours: parseHours(tripSegment.duration) || 0,
+        pickupLocation: tripSegment.pickup_location,
+        pickupTime: tripSegment.start_time,
+        pickupDate: tripSegment.date,
+        flightInfo: tripSegment.flight_details,
+        occasion: tripSegment.occasion,
+      });
+      initialSubtotal = autoQuote.breakdown.mainBookingPrice || autoQuote.breakdown.subtotal || 0;
+    }
+
+    setFinalModalBooking(bookingObj);
+    setIsEditingSubtotal(false);
     setFinalOptions({
-      stopsCount: booking.trip_details?.length > 1 ? booking.trip_details.length - 1 : 0,
+      subtotal: bookingObj.price_breakdown?.isSubtotalEdited && bookingObj.price_breakdown?.effectiveSubtotal > 0
+        ? Number(bookingObj.price_breakdown.effectiveSubtotal).toFixed(2)
+        : '',
+      stopsCount: booking.trip_details?.length > 1 ? booking.trip_details.length - 1 : (bookingObj.additional_stops_count || 0),
       waitingMinutes: booking.waiting_minutes || 0,
-      childSeatsCount: 0,
-      hasCleaningFee: false,
-      cleaningFeeAmount: 150,
-      tolls: 0,
-      parking: 0,
-      isHoliday: false,
-      isLateNight: false,
-      discount: booking.price_breakdown?.discount || 0,
+      childSeatsCount: bookingObj.price_breakdown?.childSeatsCount || 0,
+      hasCleaningFee: Boolean(bookingObj.price_breakdown?.cleaningFee > 0),
+      cleaningFeeAmount: bookingObj.price_breakdown?.cleaningFee || 150,
+      tolls: bookingObj.price_breakdown?.tolls || 0,
+      parking: bookingObj.price_breakdown?.parking || 0,
+      isHoliday: Boolean(bookingObj.price_breakdown?.isHoliday),
+      isLateNight: Boolean(bookingObj.price_breakdown?.isLateNight),
+      discount: bookingObj.price_breakdown?.discount || 0,
     });
   };
 
   const handleSendFinalInvoiceSubmit = async () => {
     if (!finalModalBooking) return;
+
+    const tripSegment = finalModalBooking.trip_details?.[0] || {};
+    const distance = tripSegment.distance_miles || tripSegment.miles || finalModalBooking.price_breakdown?.effectiveMiles || 0;
+    const durationMins = tripSegment.duration ? parseHours(tripSegment.duration) * 60 : (finalModalBooking.price_breakdown?.durationMinutes || 0);
+
+    const rawPriceStr = typeof finalModalBooking.price === 'string' ? finalModalBooking.price.replace(/[^0-9.]/g, '') : (finalModalBooking.price || finalModalBooking.vehicle_details?.estimated_price || finalModalBooking.estimated_price);
+    let initialSubtotal = finalModalBooking.price_breakdown?.originalSubtotal
+      || finalModalBooking.price_breakdown?.mainBookingPrice
+      || finalModalBooking.price_breakdown?.rawSubtotal
+      || finalModalBooking.vehicle_details?.estimated_price
+      || finalModalBooking.price_breakdown?.subtotal
+      || parseFloat(rawPriceStr)
+      || 0;
+
+    if (initialSubtotal <= 0) {
+      const autoQuote = calculateQuote({
+        vehicle: finalModalBooking.vehicle_details || { vehicle_name: 'Executive Sedan' },
+        bookingType: tripSegment.trip_type || 'one-way',
+        distanceMiles: distance,
+        durationMinutes: durationMins,
+        durationHours: parseHours(tripSegment.duration) || 0,
+        pickupLocation: tripSegment.pickup_location,
+        pickupTime: tripSegment.start_time,
+        pickupDate: tripSegment.date,
+        flightInfo: tripSegment.flight_details,
+        occasion: tripSegment.occasion,
+      });
+      initialSubtotal = autoQuote.breakdown.mainBookingPrice || autoQuote.breakdown.subtotal || 0;
+    }
+
+    let subtotalToSend = initialSubtotal;
+    if (finalOptions.subtotal !== '' && finalOptions.subtotal !== null && finalOptions.subtotal !== undefined) {
+      const parsedSubtotal = Number(finalOptions.subtotal);
+      if (isNaN(parsedSubtotal) || !isFinite(parsedSubtotal)) {
+        alert("Invalid subtotal amount: must be a valid number.");
+        return;
+      }
+      if (parsedSubtotal < 0) {
+        alert("Subtotal amount cannot be negative.");
+        return;
+      }
+      const subtotalStr = String(finalOptions.subtotal).trim();
+      const dotIndex = subtotalStr.indexOf('.');
+      if (dotIndex !== -1 && subtotalStr.length - dotIndex - 1 > 2) {
+        alert("Subtotal amount cannot exceed 2 decimal places.");
+        return;
+      }
+      subtotalToSend = parsedSubtotal;
+    }
+
     try {
       setSendingFinalInvoice(true);
       const extraOptions = {
+        subtotal: subtotalToSend,
         additionalStopsCount: finalOptions.stopsCount,
         waitingMinutes: finalOptions.waitingMinutes,
         childSeatsCount: finalOptions.childSeatsCount,
@@ -588,16 +690,40 @@ export default function AdminBookings() {
         const durationMins = tripSegment.duration ? parseHours(tripSegment.duration) * 60 : (finalModalBooking.price_breakdown?.durationMinutes || 0);
 
         // Stored initial main booking subtotal from database creation time
-        const rawPriceStr = typeof finalModalBooking.price === 'string' ? finalModalBooking.price.replace(/[^0-9.]/g, '') : finalModalBooking.price;
-        const initialSubtotal = finalModalBooking.price_breakdown?.mainBookingPrice
-          || finalModalBooking.price_breakdown?.subtotal
+        const rawPriceStr = typeof finalModalBooking.price === 'string' ? finalModalBooking.price.replace(/[^0-9.]/g, '') : (finalModalBooking.price || finalModalBooking.vehicle_details?.estimated_price || finalModalBooking.estimated_price);
+        let initialSubtotal = finalModalBooking.price_breakdown?.originalSubtotal
+          || finalModalBooking.price_breakdown?.mainBookingPrice
           || finalModalBooking.price_breakdown?.rawSubtotal
           || finalModalBooking.vehicle_details?.estimated_price
+          || finalModalBooking.price_breakdown?.subtotal
           || parseFloat(rawPriceStr)
           || 0;
 
+        // If no stored subtotal or <= 0, dynamically calculate actual price from trip details
+        if (initialSubtotal <= 0) {
+          const autoQuote = calculateQuote({
+            vehicle: finalModalBooking.vehicle_details || { vehicle_name: 'Executive Sedan' },
+            bookingType: tripSegment.trip_type || 'one-way',
+            distanceMiles: distance,
+            durationMinutes: durationMins,
+            durationHours: parseHours(tripSegment.duration) || 0,
+            pickupLocation: tripSegment.pickup_location,
+            pickupTime: tripSegment.start_time,
+            pickupDate: tripSegment.date,
+            flightInfo: tripSegment.flight_details,
+            occasion: tripSegment.occasion,
+          });
+          initialSubtotal = autoQuote.breakdown.mainBookingPrice || autoQuote.breakdown.subtotal || 0;
+        }
+
+        const effectiveSubtotal = (finalOptions.subtotal !== undefined && finalOptions.subtotal !== null && finalOptions.subtotal !== '' && !isNaN(Number(finalOptions.subtotal)) && Number(finalOptions.subtotal) >= 0)
+          ? Number(finalOptions.subtotal)
+          : initialSubtotal;
+
+        const isSubtotalModified = (finalOptions.subtotal !== '' && finalOptions.subtotal !== null && finalOptions.subtotal !== undefined) && Math.abs(effectiveSubtotal - initialSubtotal) > 0.001;
+
         const liveQuote = calculateQuote({
-          vehicle: finalModalBooking.vehicle_details,
+          vehicle: finalModalBooking.vehicle_details || { vehicle_name: 'Executive Sedan' },
           bookingType: tripSegment.trip_type || 'one-way',
           distanceMiles: distance,
           durationMinutes: durationMins,
@@ -617,156 +743,166 @@ export default function AdminBookings() {
           isHoliday: finalOptions.isHoliday,
           isLateNight: finalOptions.isLateNight,
           discount: finalOptions.discount,
-          initialBookingSubtotal: initialSubtotal,
+          initialBookingSubtotal: effectiveSubtotal,
+          originalSubtotal: initialSubtotal,
+          isExplicitSubtotal: isSubtotalModified,
         });
 
         return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-in fade-in duration-200 overflow-y-auto">
-            <div className="bg-[#121212] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden shadow-2xl my-auto">
-              <div className="p-5 border-b border-white/10 flex justify-between items-center bg-white/5 shrink-0">
-                <div className="flex items-center gap-2 text-purple-400">
-                  <FileText size={20} />
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/85 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
+            <div className="bg-[#141416] border border-white/15 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl shadow-black/90 my-auto text-left">
+              {/* Header */}
+              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/[0.03] shrink-0">
+                <div className="flex items-center gap-3 text-purple-400">
+                  <div className="p-2.5 rounded-2xl bg-purple-500/10 border border-purple-500/20">
+                    <FileText size={24} className="text-purple-400" />
+                  </div>
                   <div>
-                    <h3 className="font-semibold text-lg text-white">Final Trip Invoice & Extras Tracking</h3>
-                    <p className="text-xs text-white/50">Track trip extras and send final invoice payment link after drop-off.</p>
+                    <h3 className="font-semibold text-xl text-white tracking-wide">Final Trip Invoice & Extras Tracking</h3>
+                    <p className="text-sm text-white/60 mt-0.5">Track trip extras and send final invoice payment link after drop-off.</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setFinalModalBooking(null)}
-                  className="text-white/50 hover:text-white transition-colors"
+                  className="p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                 >
-                  <X size={20} />
+                  <X size={22} />
                 </button>
               </div>
 
-              <div className="p-6 overflow-y-auto space-y-6 flex-1">
+              {/* Scrollable Body */}
+              <div className="p-6 sm:p-8 overflow-y-auto space-y-7 flex-1 text-white">
                 {/* Trip & Booker Info Header */}
-                <div className="grid sm:grid-cols-2 gap-3 glass p-4 rounded-xl border border-white/5 text-xs">
-                  <div><span className="text-white/50">Customer:</span> <strong className="text-white">{finalModalBooking.contact_details?.booker?.first_name} {finalModalBooking.contact_details?.booker?.last_name}</strong></div>
-                  <div><span className="text-white/50">Email:</span> <span className="text-purple-300 font-mono">{finalModalBooking.contact_details?.booker?.email}</span></div>
-                  <div><span className="text-white/50">Vehicle:</span> <span className="text-white font-medium">{finalModalBooking.vehicle_details?.vehicle_name}</span></div>
-                  <div><span className="text-white/50">Service:</span> <span className="text-gold font-medium">{finalModalBooking.trip_details?.[0]?.trip_type || 'One Way'}</span></div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-5 rounded-2xl bg-white/[0.03] border border-white/10 text-sm">
+                  <div>
+                    <span className="text-[11px] text-white/40 uppercase tracking-wider font-semibold block">Customer</span>
+                    <strong className="text-white text-sm font-medium mt-1 block truncate">
+                      {finalModalBooking.contact_details?.booker?.first_name} {finalModalBooking.contact_details?.booker?.last_name}
+                    </strong>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-white/40 uppercase tracking-wider font-semibold block">Email</span>
+                    <span className="text-purple-300 font-mono text-sm mt-1 block truncate">
+                      {finalModalBooking.contact_details?.booker?.email}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-white/40 uppercase tracking-wider font-semibold block">Vehicle</span>
+                    <span className="text-white font-medium text-sm mt-1 block truncate">
+                      {finalModalBooking.vehicle_details?.vehicle_name || 'Executive Sedan'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] text-white/40 uppercase tracking-wider font-semibold block">Service</span>
+                    <span className="text-gold font-medium text-sm mt-1 block truncate">
+                      {finalModalBooking.trip_details?.[0]?.trip_type || 'One Way'}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Extras Tracking Controls */}
                 <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-purple-400 border-b border-white/10 pb-2">
-                    🎛️ Trip Extras & Surcharges Tracking
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-purple-400 border-b border-white/10 pb-2.5 flex items-center gap-2">
+                    <span>🎛️</span> Trip Extras & Surcharges Tracking
                   </h4>
 
-                  <div className="grid sm:grid-cols-2 gap-4 text-xs">
-                    {/* Additional Stops */}
-                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
-                      <label className="font-medium text-white/80 flex justify-between">
-                        <span>Additional Stops Count:</span>
-                        <span className="text-purple-300 font-mono">${liveQuote.breakdown.additionalStopsFee.toFixed(2)}</span>
-                      </label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={finalOptions.stopsCount}
-                        onChange={(e) => setFinalOptions(prev => ({ ...prev, stopsCount: Math.max(0, parseInt(e.target.value) || 0) }))}
-                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
-                      />
-                      <span className="text-[10px] text-white/40">Rate: Sedan $15 / SUV $20 / Sprinter $30 per stop</span>
-                    </div>
-
+                  <div className="grid sm:grid-cols-2 gap-4 text-sm">
                     {/* Waiting Time Mins */}
-                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
-                      <label className="font-medium text-white/80 flex justify-between">
-                        <span>Waiting Time (Minutes):</span>
-                        <span className="text-purple-300 font-mono">${liveQuote.breakdown.waitingTimeFee.toFixed(2)}</span>
+                    <div className="space-y-2 bg-white/[0.03] p-4 rounded-2xl border border-white/10">
+                      <label className="font-medium text-white/90 flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white">Waiting Time (Minutes):</span>
+                        <span className="text-purple-300 font-mono font-bold text-sm">${liveQuote.breakdown.waitingTimeFee.toFixed(2)}</span>
                       </label>
                       <input
                         type="number"
                         min={0}
                         value={finalOptions.waitingMinutes}
-                        onChange={(e) => setFinalOptions(prev => ({ ...prev, waitingMinutes: Math.max(0, parseInt(e.target.value) || 0) }))}
-                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                        onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, waitingMinutes: Math.max(0, parseInt(e.target.value) || 0) }))}
+                        className="w-full bg-black/60 border border-white/15 focus:border-purple-500 rounded-xl px-4 py-2.5 text-white font-mono text-base outline-none transition-colors"
                       />
-                      <span className="text-[10px] text-white/40">First 15 mins FREE. After 15 mins: Sedan $1/m, SUV $1.50/m, Sprinter $2/m</span>
+                      <span className="text-xs text-white/50 block">First 15 mins FREE. After 15 mins: Sedan $1/m, SUV $1.50/m, Sprinter $2/m</span>
                     </div>
 
                     {/* Child Seats */}
-                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
-                      <label className="font-medium text-white/80 flex justify-between">
-                        <span>Total Child Seats:</span>
-                        <span className="text-purple-300 font-mono">${liveQuote.breakdown.childSeatsFee.toFixed(2)}</span>
+                    <div className="space-y-2 bg-white/[0.03] p-4 rounded-2xl border border-white/10">
+                      <label className="font-medium text-white/90 flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white">Total Child Seats:</span>
+                        <span className="text-purple-300 font-mono font-bold text-sm">${liveQuote.breakdown.childSeatsFee.toFixed(2)}</span>
                       </label>
                       <input
                         type="number"
                         min={0}
                         value={finalOptions.childSeatsCount}
-                        onChange={(e) => setFinalOptions(prev => ({ ...prev, childSeatsCount: Math.max(0, parseInt(e.target.value) || 0) }))}
-                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                        onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, childSeatsCount: Math.max(0, parseInt(e.target.value) || 0) }))}
+                        className="w-full bg-black/60 border border-white/15 focus:border-purple-500 rounded-xl px-4 py-2.5 text-white font-mono text-base outline-none transition-colors"
                       />
-                      <span className="text-[10px] text-white/40">First seat FREE. Additional seats $15 each</span>
+                      <span className="text-xs text-white/50 block">First seat FREE. Additional seats $15 each</span>
                     </div>
 
                     {/* Tolls */}
-                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
-                      <label className="font-medium text-white/80 flex justify-between">
-                        <span>Tolls Amount ($):</span>
-                        <span className="text-purple-300 font-mono">${liveQuote.breakdown.tolls.toFixed(2)}</span>
+                    <div className="space-y-2 bg-white/[0.03] p-4 rounded-2xl border border-white/10">
+                      <label className="font-medium text-white/90 flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white">Tolls Amount ($):</span>
+                        <span className="text-purple-300 font-mono font-bold text-sm">${liveQuote.breakdown.tolls.toFixed(2)}</span>
                       </label>
                       <input
                         type="number"
                         min={0}
                         step="0.01"
                         value={finalOptions.tolls}
-                        onChange={(e) => setFinalOptions(prev => ({ ...prev, tolls: Math.max(0, parseFloat(e.target.value) || 0) }))}
-                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                        onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, tolls: Math.max(0, parseFloat(e.target.value) || 0) }))}
+                        className="w-full bg-black/60 border border-white/15 focus:border-purple-500 rounded-xl px-4 py-2.5 text-white font-mono text-base outline-none transition-colors"
                       />
                     </div>
 
                     {/* Parking */}
-                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
-                      <label className="font-medium text-white/80 flex justify-between">
-                        <span>Parking Amount ($):</span>
-                        <span className="text-purple-300 font-mono">${liveQuote.breakdown.parking.toFixed(2)}</span>
+                    <div className="space-y-2 bg-white/[0.03] p-4 rounded-2xl border border-white/10">
+                      <label className="font-medium text-white/90 flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white">Parking Amount ($):</span>
+                        <span className="text-purple-300 font-mono font-bold text-sm">${liveQuote.breakdown.parking.toFixed(2)}</span>
                       </label>
                       <input
                         type="number"
                         min={0}
                         step="0.01"
                         value={finalOptions.parking}
-                        onChange={(e) => setFinalOptions(prev => ({ ...prev, parking: Math.max(0, parseFloat(e.target.value) || 0) }))}
-                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                        onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, parking: Math.max(0, parseFloat(e.target.value) || 0) }))}
+                        className="w-full bg-black/60 border border-white/15 focus:border-purple-500 rounded-xl px-4 py-2.5 text-white font-mono text-base outline-none transition-colors"
                       />
                     </div>
 
                     {/* Cleaning Fee */}
-                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
-                      <label className="flex items-center gap-2 font-medium text-white/80 cursor-pointer">
+                    <div className="space-y-2 bg-white/[0.03] p-4 rounded-2xl border border-white/10">
+                      <label className="flex items-center gap-3 font-semibold text-white cursor-pointer text-sm">
                         <input
                           type="checkbox"
                           checked={finalOptions.hasCleaningFee}
-                          onChange={(e) => setFinalOptions(prev => ({ ...prev, hasCleaningFee: e.target.checked }))}
-                          className="rounded accent-purple-500 w-4 h-4"
+                          onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, hasCleaningFee: e.target.checked }))}
+                          className="rounded accent-purple-500 w-5 h-5 cursor-pointer"
                         />
                         <span>Apply Cleaning Fee</span>
                       </label>
                       {finalOptions.hasCleaningFee && (
                         <div className="flex items-center gap-2 mt-2">
-                          <span className="text-white/50">$</span>
+                          <span className="text-white/60 font-mono text-base">$</span>
                           <input
                             type="number"
                             min={150}
                             value={finalOptions.cleaningFeeAmount}
-                            onChange={(e) => setFinalOptions(prev => ({ ...prev, cleaningFeeAmount: Math.max(0, parseFloat(e.target.value) || 150) }))}
-                            className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-1.5 text-white font-mono text-xs outline-none"
+                            onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, cleaningFeeAmount: Math.max(0, parseFloat(e.target.value) || 150) }))}
+                            className="w-full bg-black/60 border border-white/15 focus:border-purple-500 rounded-xl px-4 py-2 text-white font-mono text-sm outline-none"
                             placeholder="150"
                           />
                         </div>
                       )}
-                      <span className="text-[10px] text-white/40 block">Starts at $150 if vehicle cleaning required</span>
+                      <span className="text-xs text-white/50 block">Starts at $150 if vehicle cleaning required</span>
                     </div>
 
                     {/* Discount */}
-                    <div className="space-y-1.5 bg-white/3 p-3 rounded-xl border border-white/5">
-                      <label className="font-medium text-white/80 flex justify-between">
-                        <span>Discount ($):</span>
-                        <span className="text-emerald-400 font-mono">-${((liveQuote.breakdown.discount || 0)).toFixed(2)}</span>
+                    <div className="space-y-2 bg-white/[0.03] p-4 rounded-2xl border border-white/10">
+                      <label className="font-medium text-white/90 flex justify-between items-center text-sm">
+                        <span className="font-semibold text-white">Discount ($):</span>
+                        <span className="text-emerald-400 font-mono font-bold text-sm">-${((liveQuote.breakdown.discount || 0)).toFixed(2)}</span>
                       </label>
                       <input
                         type="number"
@@ -776,32 +912,32 @@ export default function AdminBookings() {
                         placeholder="0.00"
                         onChange={(e) => {
                           const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
-                          setFinalOptions(prev => ({ ...prev, discount: isNaN(val) ? 0 : Math.max(0, val) }));
+                          setFinalOptions((prev: any) => ({ ...prev, discount: isNaN(val) ? 0 : Math.max(0, val) }));
                         }}
-                        className="w-full bg-black/60 border border-white/10 rounded-lg px-3 py-2 text-white font-mono text-sm focus:border-purple-500/60 outline-none"
+                        className="w-full bg-black/60 border border-white/15 focus:border-purple-500 rounded-xl px-4 py-2.5 text-white font-mono text-base outline-none transition-colors"
                       />
-                      <span className="text-[10px] text-white/40">Custom discount deducted from invoice total</span>
+                      <span className="text-xs text-white/50 block">Custom discount deducted from invoice total</span>
                     </div>
                   </div>
 
                   {/* Manual Surcharge Toggles */}
-                  <div className="flex flex-wrap gap-4 pt-2">
-                    <label className="flex items-center gap-2 text-xs text-white/80 cursor-pointer bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                  <div className="grid sm:grid-cols-2 gap-4 pt-2">
+                    <label className="flex items-center gap-3 text-sm text-white/90 font-medium cursor-pointer bg-white/[0.03] p-4 rounded-2xl border border-white/10 hover:bg-white/[0.06] transition-colors">
                       <input
                         type="checkbox"
                         checked={finalOptions.isLateNight || liveQuote.breakdown.isLateNight}
-                        onChange={(e) => setFinalOptions(prev => ({ ...prev, isLateNight: e.target.checked }))}
-                        className="rounded accent-purple-500 w-4 h-4"
+                        onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, isLateNight: e.target.checked }))}
+                        className="rounded accent-purple-500 w-5 h-5 cursor-pointer"
                       />
                       <span>🌙 Late Night Surcharge (15% for 12 AM - 5 AM)</span>
                     </label>
 
-                    <label className="flex items-center gap-2 text-xs text-white/80 cursor-pointer bg-white/5 px-3 py-2 rounded-xl border border-white/10">
+                    <label className="flex items-center gap-3 text-sm text-white/90 font-medium cursor-pointer bg-white/[0.03] p-4 rounded-2xl border border-white/10 hover:bg-white/[0.06] transition-colors">
                       <input
                         type="checkbox"
                         checked={finalOptions.isHoliday || liveQuote.breakdown.isHoliday}
-                        onChange={(e) => setFinalOptions(prev => ({ ...prev, isHoliday: e.target.checked }))}
-                        className="rounded accent-purple-500 w-4 h-4"
+                        onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, isHoliday: e.target.checked }))}
+                        className="rounded accent-purple-500 w-5 h-5 cursor-pointer"
                       />
                       <span>🎆 Holiday Surcharge (20%)</span>
                     </label>
@@ -809,57 +945,138 @@ export default function AdminBookings() {
                 </div>
 
                 {/* Live Itemized Breakdown Table */}
-                <div className="bg-black/60 border border-white/10 rounded-xl p-5 space-y-2 text-xs">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-gold border-b border-white/10 pb-2 mb-3">
-                    📊 Live Final Invoice Calculation Breakdown
+                <div className="bg-black/70 border border-white/10 rounded-2xl p-6 sm:p-7 space-y-3.5 text-sm">
+                  <h4 className="text-sm font-bold uppercase tracking-wider text-gold border-b border-white/10 pb-3 mb-4 flex items-center gap-2">
+                    <span>📊</span> Live Final Invoice Calculation Breakdown
                   </h4>
-                  <div className="flex justify-between font-medium text-white/90"><span>Main Booking Price (Booked Base):</span><span>${liveQuote.breakdown.mainBookingPrice.toFixed(2)}</span></div>
-                  {liveQuote.isAirportPickup && <div className="flex justify-between text-emerald-400"><span>Airport Pickup Fee (Meet & Greet Included):</span><span>${liveQuote.breakdown.airportPickupFee.toFixed(2)}</span></div>}
-                  {liveQuote.breakdown.additionalStopsFee > 0 && <div className="flex justify-between text-white/70"><span>Additional Stops Fee:</span><span>${liveQuote.breakdown.additionalStopsFee.toFixed(2)}</span></div>}
-                  {liveQuote.breakdown.waitingTimeFee > 0 && <div className="flex justify-between text-amber-300"><span>Waiting Time Fee:</span><span>${liveQuote.breakdown.waitingTimeFee.toFixed(2)}</span></div>}
-                  {liveQuote.breakdown.childSeatsFee > 0 && <div className="flex justify-between text-white/70"><span>Child Seats Fee:</span><span>${liveQuote.breakdown.childSeatsFee.toFixed(2)}</span></div>}
-                  {liveQuote.breakdown.cleaningFee > 0 && <div className="flex justify-between text-rose-300"><span>Cleaning Fee:</span><span>${liveQuote.breakdown.cleaningFee.toFixed(2)}</span></div>}
-                  {liveQuote.breakdown.tolls > 0 && <div className="flex justify-between text-white/70"><span>Tolls:</span><span>${liveQuote.breakdown.tolls.toFixed(2)}</span></div>}
-                  {liveQuote.breakdown.parking > 0 && <div className="flex justify-between text-white/70"><span>Parking:</span><span>${liveQuote.breakdown.parking.toFixed(2)}</span></div>}
-                  {liveQuote.breakdown.minimumFareAdjustment > 0 && <div className="flex justify-between text-blue-300"><span>Minimum Fare Adjustment:</span><span>${liveQuote.breakdown.minimumFareAdjustment.toFixed(2)}</span></div>}
-                  <div className="flex justify-between font-bold text-white border-t border-white/10 pt-2"><span>Subtotal:</span><span>${liveQuote.breakdown.subtotal.toFixed(2)}</span></div>
-                  {liveQuote.breakdown.lateNightSurcharge > 0 && <div className="flex justify-between text-amber-300"><span>Late Night Surcharge (15%):</span><span>${liveQuote.breakdown.lateNightSurcharge.toFixed(2)}</span></div>}
-                  {liveQuote.breakdown.holidaySurcharge > 0 && <div className="flex justify-between text-amber-300"><span>Holiday Surcharge (20%):</span><span>${liveQuote.breakdown.holidaySurcharge.toFixed(2)}</span></div>}
-                  <div className="flex justify-between text-white/70"><span>Gratuity (20%):</span><span>${liveQuote.breakdown.gratuity.toFixed(2)}</span></div>
-                  <div className="flex justify-between text-white/70"><span>Credit Card Fee (3%):</span><span>${liveQuote.breakdown.creditCardFee.toFixed(2)}</span></div>
+
+                  {/* Booking Subtotal (Actual trip price, manually editable only if needed) */}
+                  <div className="flex justify-between items-center font-medium text-white/90 p-3.5 rounded-xl bg-white/[0.04] border border-white/10">
+                    <div className="flex items-center gap-3">
+                      <span className="font-semibold text-white text-base">Booking Subtotal:</span>
+                      {!isEditingSubtotal ? (
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingSubtotal(true)}
+                          className="inline-flex items-center gap-1.5 text-xs text-purple-300 hover:text-white font-medium px-3 py-1 rounded-lg bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 transition-all cursor-pointer"
+                          title="Only if needed, click to edit subtotal"
+                        >
+                          <Edit2 size={12} />
+                          <span>Edit Price</span>
+                        </button>
+                      ) : (
+                        <span className="text-xs text-amber-400 font-medium bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">Editing</span>
+                      )}
+                    </div>
+
+                    {!isEditingSubtotal ? (
+                      <div className="flex items-center gap-2.5">
+                        {isSubtotalModified && (
+                          <span className="text-xs text-amber-400 line-through">
+                            ${initialSubtotal.toFixed(2)}
+                          </span>
+                        )}
+                        <span className="font-mono text-purple-300 font-bold text-lg">
+                          ${effectiveSubtotal.toFixed(2)}
+                        </span>
+                        {isSubtotalModified && (
+                          <button
+                            type="button"
+                            onClick={() => setFinalOptions((prev: any) => ({ ...prev, subtotal: '' }))}
+                            className="text-xs text-amber-400 hover:text-amber-300 underline ml-1.5 cursor-pointer"
+                            title="Reset to calculated actual price"
+                          >
+                            Reset
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <span className="text-white/60 font-mono text-base">$</span>
+                        <input
+                          id="final-invoice-subtotal-input"
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          value={finalOptions.subtotal !== '' ? finalOptions.subtotal : initialSubtotal.toFixed(2)}
+                          onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, subtotal: e.target.value }))}
+                          placeholder={initialSubtotal.toFixed(2)}
+                          className="w-32 bg-black border-2 border-purple-500 focus:border-purple-400 rounded-xl px-3 py-1.5 text-white font-mono text-base text-right outline-none ring-2 ring-purple-500/30"
+                          autoFocus
+                        />
+                        {finalOptions.subtotal !== '' && (
+                          <button
+                            type="button"
+                            onClick={() => setFinalOptions((prev: any) => ({ ...prev, subtotal: '' }))}
+                            className="text-xs text-amber-400 hover:text-amber-300 underline px-1 cursor-pointer"
+                            title="Reset to calculated actual price"
+                          >
+                            Reset
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingSubtotal(false)}
+                          className="px-3.5 py-1.5 text-xs bg-purple-600 hover:bg-purple-500 text-white rounded-lg font-bold transition-all shadow-md shadow-purple-600/30 cursor-pointer"
+                        >
+                          Done
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {liveQuote.isAirportPickup && <div className="flex justify-between text-emerald-400 text-sm"><span>Airport Pickup Fee (Meet & Greet Included):</span><span className="font-mono">${liveQuote.breakdown.airportPickupFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.additionalStopsFee > 0 && <div className="flex justify-between text-white/80 text-sm"><span>Additional Stops Fee:</span><span className="font-mono text-white">${liveQuote.breakdown.additionalStopsFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.waitingTimeFee > 0 && <div className="flex justify-between text-amber-300 text-sm"><span>Waiting Time Fee:</span><span className="font-mono">${liveQuote.breakdown.waitingTimeFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.childSeatsFee > 0 && <div className="flex justify-between text-white/80 text-sm"><span>Child Seats Fee:</span><span className="font-mono text-white">${liveQuote.breakdown.childSeatsFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.cleaningFee > 0 && <div className="flex justify-between text-rose-300 text-sm"><span>Cleaning Fee:</span><span className="font-mono">${liveQuote.breakdown.cleaningFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.tolls > 0 && <div className="flex justify-between text-white/80 text-sm"><span>Tolls:</span><span className="font-mono text-white">${liveQuote.breakdown.tolls.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.parking > 0 && <div className="flex justify-between text-white/80 text-sm"><span>Parking:</span><span className="font-mono text-white">${liveQuote.breakdown.parking.toFixed(2)}</span></div>}
+                  
+                  <div className="flex justify-between font-bold text-base text-white border-t border-white/10 pt-3 mt-1">
+                    <span>Subtotal (Base + Extras):</span>
+                    <span className="font-mono">${liveQuote.breakdown.subtotal.toFixed(2)}</span>
+                  </div>
+                  
+                  {liveQuote.breakdown.lateNightSurcharge > 0 && <div className="flex justify-between text-amber-300 text-sm"><span>Late Night Surcharge (15%):</span><span className="font-mono">${liveQuote.breakdown.lateNightSurcharge.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.holidaySurcharge > 0 && <div className="flex justify-between text-amber-300 text-sm"><span>Holiday Surcharge (20%):</span><span className="font-mono">${liveQuote.breakdown.holidaySurcharge.toFixed(2)}</span></div>}
+                  <div className="flex justify-between text-white/80 text-sm"><span>Gratuity (20%):</span><span className="font-mono text-white">${liveQuote.breakdown.gratuity.toFixed(2)}</span></div>
+                  <div className="flex justify-between text-white/80 text-sm"><span>Credit Card Fee (3%):</span><span className="font-mono text-white">${liveQuote.breakdown.creditCardFee.toFixed(2)}</span></div>
+                  
                   {Boolean(liveQuote.breakdown.discount && liveQuote.breakdown.discount > 0) && (
-                    <div className="flex justify-between text-white/60">
+                    <div className="flex justify-between text-white/60 text-sm">
                       <span>Original Total:</span>
                       <span className="line-through">${(liveQuote.breakdown.calculatedGrandTotal || 0).toFixed(2)}</span>
                     </div>
                   )}
                   {Boolean(liveQuote.breakdown.discount && liveQuote.breakdown.discount > 0) && (
-                    <div className="flex justify-between text-emerald-400 font-medium">
+                    <div className="flex justify-between text-emerald-400 font-medium text-sm">
                       <span>Discount:</span>
-                      <span>-${(liveQuote.breakdown.discount || 0).toFixed(2)}</span>
+                      <span className="font-mono">-${(liveQuote.breakdown.discount || 0).toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between font-bold text-lg text-gold border-t-2 border-gold/50 pt-3 mt-2">
-                    <span>Final Total Due:</span>
-                    <span>${liveQuote.formattedGrandTotal}</span>
+                  
+                  <div className="flex justify-between items-center font-bold text-xl sm:text-2xl text-gold border-t-2 border-gold/40 pt-4 mt-3">
+                    <span className="tracking-wide">Final Total Due:</span>
+                    <span className="font-mono text-2xl sm:text-3xl text-gold">${liveQuote.formattedGrandTotal}</span>
                   </div>
                 </div>
               </div>
 
               {/* Modal Footer */}
-              <div className="p-5 border-t border-white/10 flex justify-end gap-3 bg-white/2 shrink-0">
+              <div className="p-6 border-t border-white/10 flex justify-end gap-4 bg-white/[0.02] shrink-0">
                 <button
                   onClick={() => setFinalModalBooking(null)}
-                  className="px-4 py-2 rounded-xl text-sm font-medium border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-all"
+                  className="px-5 py-2.5 rounded-xl text-sm font-semibold border border-white/15 text-white/80 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSendFinalInvoiceSubmit}
                   disabled={sendingFinalInvoice}
-                  className="px-6 py-2.5 rounded-xl text-sm font-bold bg-purple-500 hover:bg-purple-600 text-white transition-all flex items-center gap-2 disabled:opacity-50 shadow-lg"
+                  className="px-7 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white transition-all flex items-center gap-2.5 disabled:opacity-50 shadow-xl shadow-purple-600/30 cursor-pointer"
                 >
-                  {sendingFinalInvoice ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  {sendingFinalInvoice ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                   Send Final Invoice & Payment Link
                 </button>
               </div>
