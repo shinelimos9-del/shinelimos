@@ -617,7 +617,7 @@ export default function BookingDetailModal({
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs text-blue-200">
                       <div>Airline & Flight #: <strong className="text-white font-mono">{primaryTrip.flight_details.airline_flight_no || "N/A"}</strong></div>
                       <div>Flight Type: <strong className="text-white">{primaryTrip.flight_details.international ? "International" : "Domestic"}</strong></div>
-                      <div>Direction: <strong className="text-white">{primaryTrip.flight_details.arrival ? "Arrival (Meet & Greet)" : "Departure"}</strong></div>
+                      <div>Direction: <strong className="text-white">{primaryTrip.flight_details.arrival ? (primaryTrip.flight_details.meet_and_greet ? "Arrival (Meet & Greet)" : "Arrival") : "Departure"}</strong></div>
                     </div>
                   </div>
                 )}

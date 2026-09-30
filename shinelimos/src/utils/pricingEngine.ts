@@ -179,6 +179,8 @@ export interface QuoteOptions {
   isLateNight?: boolean;
   includeGratuity?: boolean;
   hasGratuity?: boolean;
+  meetAndGreet?: boolean;
+  includeMeetAndGreet?: boolean;
   discount?: number;
   initialBookingSubtotal?: number | string;
   subtotal?: number | string;
@@ -327,7 +329,14 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
   }
 
   const isAirport = isAirportPickup(options.pickupLocation, options.flightInfo, options.occasion);
-  const airportPickupFee = isAirport ? rates.airportFee : 0;
+  const isMeetAndGreetSelected = Boolean(
+    options.meetAndGreet !== undefined ? options.meetAndGreet :
+    options.includeMeetAndGreet !== undefined ? options.includeMeetAndGreet :
+    options.flightInfo?.meet_and_greet !== undefined ? options.flightInfo.meet_and_greet :
+    options.flightInfo?.meetAndGreet !== undefined ? options.flightInfo.meetAndGreet :
+    false
+  );
+  const airportPickupFee = isMeetAndGreetSelected ? rates.airportFee : 0;
 
   const stopsCount = safeNumber(options.additionalStopsCount || options.stopsCount, 0);
   const additionalStopsFee = round2(stopsCount * rates.additionalStopRate);
@@ -385,7 +394,7 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
     isHourly,
     isRoundTrip,
     isAirportPickup: isAirport,
-    meetAndGreetIncluded: isAirport,
+    meetAndGreetIncluded: isMeetAndGreetSelected,
     billedHours,
     breakdown: {
       originalSubtotal: options.originalSubtotal !== undefined ? round2(options.originalSubtotal) : mainBookingPrice,

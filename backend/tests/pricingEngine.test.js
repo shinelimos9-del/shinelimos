@@ -109,19 +109,33 @@ test("Sprinter Standard Trip Calculation", () => {
   assert.strictEqual(quote.breakdown.grandTotal, 309.00);
 });
 
-// 4. AIRPORT PICKUP & MEET AND GREET
-test("Airport Pickup Fees Across Tiers", () => {
-  const sedanAirport = calculateQuote({ vehicle: 'sedan', pickupLocation: 'Dulles International Airport (IAD)' });
-  assert.strictEqual(sedanAirport.breakdown.airportPickupFee, 15.00);
-  assert.strictEqual(sedanAirport.meetAndGreetIncluded, true);
+// 4. AIRPORT PICKUP & OPTIONAL MEET AND GREET
+test("Airport Pickup Fees Across Tiers (Optional Meet & Greet)", () => {
+  // Case A: Airport Location but Meet & Greet NOT selected -> $0 fee
+  const sedanAirportNoMG = calculateQuote({ vehicle: 'sedan', pickupLocation: 'Dulles International Airport (IAD)' });
+  assert.strictEqual(sedanAirportNoMG.breakdown.airportPickupFee, 0.00);
+  assert.strictEqual(sedanAirportNoMG.meetAndGreetIncluded, false);
 
-  const suvAirport = calculateQuote({ vehicle: 'suv', pickupLocation: 'Reagan National Airport (DCA)' });
-  assert.strictEqual(suvAirport.breakdown.airportPickupFee, 20.00);
-  assert.strictEqual(suvAirport.meetAndGreetIncluded, true);
+  const suvAirportNoMG = calculateQuote({ vehicle: 'suv', pickupLocation: 'Reagan National Airport (DCA)' });
+  assert.strictEqual(suvAirportNoMG.breakdown.airportPickupFee, 0.00);
+  assert.strictEqual(suvAirportNoMG.meetAndGreetIncluded, false);
 
-  const sprinterAirport = calculateQuote({ vehicle: 'sprinter', flightInfo: { arrival: true, airline_flight_no: 'AA123' } });
-  assert.strictEqual(sprinterAirport.breakdown.airportPickupFee, 25.00);
-  assert.strictEqual(sprinterAirport.meetAndGreetIncluded, true);
+  const sprinterAirportNoMG = calculateQuote({ vehicle: 'sprinter', flightInfo: { arrival: true, airline_flight_no: 'AA123', meet_and_greet: false } });
+  assert.strictEqual(sprinterAirportNoMG.breakdown.airportPickupFee, 0.00);
+  assert.strictEqual(sprinterAirportNoMG.meetAndGreetIncluded, false);
+
+  // Case B: Airport Location with Meet & Greet selected -> Existing fee added
+  const sedanAirportMG = calculateQuote({ vehicle: 'sedan', pickupLocation: 'Dulles International Airport (IAD)', meetAndGreet: true });
+  assert.strictEqual(sedanAirportMG.breakdown.airportPickupFee, 15.00);
+  assert.strictEqual(sedanAirportMG.meetAndGreetIncluded, true);
+
+  const suvAirportMG = calculateQuote({ vehicle: 'suv', pickupLocation: 'Reagan National Airport (DCA)', meetAndGreet: true });
+  assert.strictEqual(suvAirportMG.breakdown.airportPickupFee, 20.00);
+  assert.strictEqual(suvAirportMG.meetAndGreetIncluded, true);
+
+  const sprinterAirportMG = calculateQuote({ vehicle: 'sprinter', flightInfo: { arrival: true, airline_flight_no: 'AA123', meet_and_greet: true } });
+  assert.strictEqual(sprinterAirportMG.breakdown.airportPickupFee, 25.00);
+  assert.strictEqual(sprinterAirportMG.meetAndGreetIncluded, true);
 });
 
 // 5. WAITING TIME RULES (First 15 mins FREE)
@@ -223,6 +237,7 @@ test("All Fees Combined Edge Case", () => {
     distanceMiles: 50,           // 50 * $7 = 350
     durationMinutes: 60,         // 60 * $1.50 = 90
     pickupLocation: 'Dulles Airport', // Airport Fee: $25
+    meetAndGreet: true,
     pickupTime: '03:00 AM',      // Late Night 15%
     pickupDate: '2026-07-04',    // July 4th Holiday 20%
     waitingMinutes: 35,          // (35-15) = 20m * $2 = $40
@@ -405,6 +420,63 @@ test("Custom Amount & Discount Calculations", () => {
   const specialInvalid = calculateQuote({ initialBookingSubtotal: 500, discount: '$%#@' });
   assert.strictEqual(specialInvalid.breakdown.discount, 0);
   assert.strictEqual(specialInvalid.breakdown.grandTotal, 618.00);
+});
+
+// 15. OPTIONAL AIRPORT MEET & GREET BEHAVIOR
+test("Optional Airport Meet & Greet Behavior Across All Scenarios", () => {
+  // Scenario 1: Airport Booking + Meet & Greet = NO -> $0 fee, normal subtotal and total
+  const airportNoMG = calculateQuote({
+    vehicle: 'sedan',
+    pickupLocation: 'Dulles International Airport (IAD)',
+    distanceMiles: 20,
+    durationMinutes: 30,
+    meetAndGreet: false,
+  });
+  // Sedan base 25, 20 mi * 3.25 = 65, 30 min * 0.75 = 22.50 -> rawSubtotal = 112.50
+  assert.strictEqual(airportNoMG.breakdown.airportPickupFee, 0.00);
+  assert.strictEqual(airportNoMG.meetAndGreetIncluded, false);
+  assert.strictEqual(airportNoMG.breakdown.subtotal, 112.50);
+  // Gratuity 20% = 22.50, CC Fee 3% = (112.50 + 22.50) * 0.03 = 4.05 -> Grand Total = 139.05
+  assert.strictEqual(airportNoMG.breakdown.grandTotal, 139.05);
+
+  // Scenario 2: Airport Booking + Meet & Greet = YES -> Exact existing Meet & Greet fee added ($15.00 for Sedan)
+  const airportWithMG = calculateQuote({
+    vehicle: 'sedan',
+    pickupLocation: 'Dulles International Airport (IAD)',
+    distanceMiles: 20,
+    durationMinutes: 30,
+    meetAndGreet: true,
+  });
+  // Subtotal = 112.50 + 15.00 = 127.50
+  assert.strictEqual(airportWithMG.breakdown.airportPickupFee, 15.00);
+  assert.strictEqual(airportWithMG.meetAndGreetIncluded, true);
+  assert.strictEqual(airportWithMG.breakdown.subtotal, 127.50);
+  // Gratuity 20% = 25.50, CC Fee 3% = (127.50 + 25.50) * 0.03 = 4.59 -> Grand Total = 157.59
+  assert.strictEqual(airportWithMG.breakdown.grandTotal, 157.59);
+
+  // Scenario 3: SUV with and without Meet & Greet ($20.00 fee)
+  const suvNoMG = calculateQuote({ vehicle: 'suv', initialBookingSubtotal: 500, meetAndGreet: false });
+  assert.strictEqual(suvNoMG.breakdown.airportPickupFee, 0.00);
+  assert.strictEqual(suvNoMG.breakdown.subtotal, 500.00);
+  assert.strictEqual(suvNoMG.breakdown.grandTotal, 618.00);
+
+  const suvWithMG = calculateQuote({ vehicle: 'suv', initialBookingSubtotal: 500, meetAndGreet: true });
+  assert.strictEqual(suvWithMG.breakdown.airportPickupFee, 20.00);
+  assert.strictEqual(suvWithMG.breakdown.subtotal, 520.00); // 500 + 20
+  // Gratuity: 520 * 0.20 = 104, CC Fee: (520 + 104) * 0.03 = 18.72 -> Grand Total = 642.72
+  assert.strictEqual(suvWithMG.breakdown.grandTotal, 642.72);
+
+  // Scenario 4: Sprinter with and without Meet & Greet ($25.00 fee) via flightInfo.meet_and_greet
+  const sprinterNoMG = calculateQuote({ vehicle: 'sprinter', initialBookingSubtotal: 500, flightInfo: { arrival: true, meet_and_greet: false } });
+  assert.strictEqual(sprinterNoMG.breakdown.airportPickupFee, 0.00);
+  assert.strictEqual(sprinterNoMG.breakdown.subtotal, 500.00);
+  assert.strictEqual(sprinterNoMG.breakdown.grandTotal, 618.00);
+
+  const sprinterWithMG = calculateQuote({ vehicle: 'sprinter', initialBookingSubtotal: 500, flightInfo: { arrival: true, meet_and_greet: true } });
+  assert.strictEqual(sprinterWithMG.breakdown.airportPickupFee, 25.00);
+  assert.strictEqual(sprinterWithMG.breakdown.subtotal, 525.00);
+  // Gratuity: 525 * 0.20 = 105, CC Fee: (525 + 105) * 0.03 = 18.90 -> Grand Total = 648.90
+  assert.strictEqual(sprinterWithMG.breakdown.grandTotal, 648.90);
 });
 
 console.log("\n=================================================");

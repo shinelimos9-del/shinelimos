@@ -477,6 +477,12 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
       || 0
     );
 
+    const isMeetAndGreet = extraOptions.meetAndGreet !== undefined
+      ? Boolean(extraOptions.meetAndGreet)
+      : (extraOptions.includeMeetAndGreet !== undefined
+          ? Boolean(extraOptions.includeMeetAndGreet)
+          : Boolean(tripSegment.flight_details?.meet_and_greet || tripSegment.flight_details?.meetAndGreet));
+
     if (initialBookingPrice <= 0) {
       const autoQuote = pricingEngine.calculateQuote({
         vehicle: booking.vehicle_details || { vehicle_name: 'Executive Sedan' },
@@ -489,6 +495,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
         pickupDate: tripSegment.date,
         flightInfo: tripSegment.flight_details,
         occasion: tripSegment.occasion,
+        meetAndGreet: isMeetAndGreet,
       });
       initialBookingPrice = autoQuote.breakdown.mainBookingPrice || autoQuote.breakdown.subtotal || 0;
     }
@@ -548,6 +555,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
       pickupDate: tripSegment.date,
       flightInfo: tripSegment.flight_details,
       occasion: tripSegment.occasion,
+      meetAndGreet: isMeetAndGreet,
       waitingMinutes: extraOptions.waitingMinutes,
       additionalStopsCount: extraOptions.additionalStopsCount !== undefined ? extraOptions.additionalStopsCount : ((tripSegment.stops?.length || 0) + (booking.trip_details?.length > 1 ? booking.trip_details.length - 1 : 0)),
       childSeatsCount: extraOptions.childSeatsCount,
@@ -610,7 +618,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
             currency: "usd",
             product_data: {
               name: `Final Invoice - Limo Reservation #${booking._id}`,
-              description: `Vehicle: ${quote.vehicleName}. ${quote.isAirportPickup ? 'Complimentary Meet & Greet Included.' : ''}`,
+              description: `Vehicle: ${quote.vehicleName}. ${quote.breakdown.airportPickupFee > 0 ? 'Airport Meet & Greet Included.' : ''}`,
             },
             unit_amount: Math.round(finalGrandTotal * 100),
           },
@@ -657,7 +665,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
                 ${quote.breakdown.baseFare > 0 ? `<tr><td style="padding: 4px 0;">Base Fare</td><td style="text-align: right;">$${quote.breakdown.baseFare.toFixed(2)}</td></tr>` : ''}
                 ${quote.breakdown.mileageCharge > 0 ? `<tr><td style="padding: 4px 0;">Mileage Charge (${quote.breakdown.effectiveMiles.toFixed(1)} miles)</td><td style="text-align: right;">$${quote.breakdown.mileageCharge.toFixed(2)}</td></tr>` : ''}
                 ${quote.breakdown.hourlyCharge > 0 ? `<tr><td style="padding: 4px 0;">Hourly Charge (${quote.breakdown.billedHours} hrs)</td><td style="text-align: right;">$${quote.breakdown.hourlyCharge.toFixed(2)}</td></tr>` : ''}
-                ${quote.breakdown.airportPickupFee > 0 ? `<tr><td style="padding: 4px 0;">Airport Pickup Fee (Meet & Greet Included)</td><td style="text-align: right;">$${quote.breakdown.airportPickupFee.toFixed(2)}</td></tr>` : ''}
+                ${quote.breakdown.airportPickupFee > 0 ? `<tr><td style="padding: 4px 0;">Airport Meet & Greet Fee</td><td style="text-align: right;">$${quote.breakdown.airportPickupFee.toFixed(2)}</td></tr>` : ''}
                 ${quote.breakdown.additionalStopsFee > 0 ? `<tr><td style="padding: 4px 0;">Additional Stops (${quote.breakdown.stopsCount})</td><td style="text-align: right;">$${quote.breakdown.additionalStopsFee.toFixed(2)}</td></tr>` : ''}
                 ${quote.breakdown.waitingTimeFee > 0 ? `<tr><td style="padding: 4px 0;">Waiting Time (${quote.breakdown.totalWaitMins} mins, ${quote.breakdown.chargeableWaitMins} chargeable)</td><td style="text-align: right;">$${quote.breakdown.waitingTimeFee.toFixed(2)}</td></tr>` : ''}
                 ${quote.breakdown.childSeatsFee > 0 ? `<tr><td style="padding: 4px 0;">Child Seats (${quote.breakdown.childSeatsCount})</td><td style="text-align: right;">$${quote.breakdown.childSeatsFee.toFixed(2)}</td></tr>` : ''}

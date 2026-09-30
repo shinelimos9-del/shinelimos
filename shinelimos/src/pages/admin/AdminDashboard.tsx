@@ -104,6 +104,7 @@ export default function AdminDashboard() {
       parking: bookingObj.price_breakdown?.parking || 0,
       isHoliday: Boolean(bookingObj.price_breakdown?.isHoliday),
       isLateNight: Boolean(bookingObj.price_breakdown?.isLateNight),
+      meetAndGreet: Boolean(bookingObj.price_breakdown?.airportPickupFee > 0 || tripSegment.flight_details?.meet_and_greet),
       includeGratuity: bookingObj.price_breakdown?.includeGratuity !== undefined ? Boolean(bookingObj.price_breakdown.includeGratuity) : (bookingObj.price_breakdown?.gratuity !== undefined ? bookingObj.price_breakdown.gratuity > 0 : true),
       discount: bookingObj.price_breakdown?.discount || 0,
     });
@@ -174,6 +175,7 @@ export default function AdminDashboard() {
         parking: finalOptions.parking,
         isHoliday: finalOptions.isHoliday,
         isLateNight: finalOptions.isLateNight,
+        meetAndGreet: Boolean(finalOptions.meetAndGreet),
         includeGratuity: finalOptions.includeGratuity !== false,
         discount: finalOptions.discount,
       };
@@ -748,6 +750,7 @@ export default function AdminDashboard() {
           parking: finalOptions.parking,
           isHoliday: finalOptions.isHoliday,
           isLateNight: finalOptions.isLateNight,
+          meetAndGreet: Boolean(finalOptions.meetAndGreet),
           includeGratuity: finalOptions.includeGratuity !== false,
           discount: finalOptions.discount,
           initialBookingSubtotal: effectiveSubtotal,
@@ -927,8 +930,18 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  {/* Manual Surcharge & Gratuity Toggles */}
-                  <div className="grid sm:grid-cols-3 gap-3.5 pt-2">
+                  {/* Manual Surcharge, Meet & Greet & Gratuity Toggles */}
+                  <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-3.5 pt-2">
+                    <label className="flex items-center gap-2.5 text-sm text-white/90 font-medium cursor-pointer bg-white/[0.03] p-3.5 rounded-2xl border border-white/10 hover:bg-white/[0.06] transition-colors">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(finalOptions.meetAndGreet)}
+                        onChange={(e) => setFinalOptions((prev: any) => ({ ...prev, meetAndGreet: e.target.checked }))}
+                        className="rounded accent-purple-500 w-5 h-5 cursor-pointer shrink-0"
+                      />
+                      <span>🛬 Meet & Greet</span>
+                    </label>
+
                     <label className="flex items-center gap-2.5 text-sm text-white/90 font-medium cursor-pointer bg-white/[0.03] p-3.5 rounded-2xl border border-white/10 hover:bg-white/[0.06] transition-colors">
                       <input
                         type="checkbox"
@@ -1042,7 +1055,7 @@ export default function AdminDashboard() {
                     )}
                   </div>
 
-                  {liveQuote.isAirportPickup && <div className="flex justify-between text-emerald-400 text-sm"><span>Airport Pickup Fee (Meet & Greet Included):</span><span className="font-mono">${liveQuote.breakdown.airportPickupFee.toFixed(2)}</span></div>}
+                  {liveQuote.breakdown.airportPickupFee > 0 && <div className="flex justify-between text-emerald-400 text-sm"><span>Airport Meet & Greet Fee:</span><span className="font-mono">${liveQuote.breakdown.airportPickupFee.toFixed(2)}</span></div>}
                   {liveQuote.breakdown.additionalStopsFee > 0 && <div className="flex justify-between text-white/80 text-sm"><span>Additional Stops Fee:</span><span className="font-mono text-white">${liveQuote.breakdown.additionalStopsFee.toFixed(2)}</span></div>}
                   {liveQuote.breakdown.waitingTimeFee > 0 && <div className="flex justify-between text-amber-300 text-sm"><span>Waiting Time Fee:</span><span className="font-mono">${liveQuote.breakdown.waitingTimeFee.toFixed(2)}</span></div>}
                   {liveQuote.breakdown.childSeatsFee > 0 && <div className="flex justify-between text-white/80 text-sm"><span>Child Seats Fee:</span><span className="font-mono text-white">${liveQuote.breakdown.childSeatsFee.toFixed(2)}</span></div>}

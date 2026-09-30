@@ -30,6 +30,7 @@ interface FlightInfo {
   departure: boolean;
   arrival: boolean;
   airline_flight_no: string;
+  meet_and_greet?: boolean;
 }
 
 interface StopLocation {
@@ -146,7 +147,7 @@ export default function Booking() {
         comments: "",
         total_passengers: String(Number(params.get("pax")) || 2),
         total_luggage: "0",
-        flight_info: { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "" }
+        flight_info: { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false }
       }
     ],
     vehicle_id: params.get("vehicle") || "",
@@ -221,7 +222,7 @@ export default function Booking() {
           dropoff_location: s.dropoff,
           dropoff_details: s.dropoff_details,
           comment: s.comments || "",
-          flight_details: s.flight_info || { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "" },
+          flight_details: s.flight_info || { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false },
         }));
 
         const result = await initiateBooking(tripDetails);
@@ -626,13 +627,13 @@ export default function Booking() {
         <FlightInfoModal
           isOpen={activeFlightSegmentId !== null}
           onClose={() => setActiveFlightSegmentId(null)}
-          data={data.segments.find(s => s.id === activeFlightSegmentId)?.flight_info || { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "" }}
+          data={data.segments.find(s => s.id === activeFlightSegmentId)?.flight_info || { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false }}
           onSave={(flightData) => {
             update("segments", data.segments.map(s => s.id === activeFlightSegmentId ? { ...s, flight_info: flightData } : s));
             setActiveFlightSegmentId(null);
           }}
           onClear={() => {
-            update("segments", data.segments.map(s => s.id === activeFlightSegmentId ? { ...s, flight_info: { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "" } } : s));
+            update("segments", data.segments.map(s => s.id === activeFlightSegmentId ? { ...s, flight_info: { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false } } : s));
             setActiveFlightSegmentId(null);
           }}
         />
@@ -672,7 +673,7 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
         comments: "", 
         total_passengers: "2", 
         total_luggage: "0",
-        flight_info: { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "" }
+        flight_info: { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false }
       }
     ]);
   };
@@ -703,7 +704,7 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
          comments: "",
          total_passengers: lastSeg.total_passengers || String(data.pax),
          total_luggage: lastSeg.total_luggage || String(data.bags),
-         flight_info: lastSeg.flight_info ? { ...lastSeg.flight_info } : { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "" }
+         flight_info: lastSeg.flight_info ? { ...lastSeg.flight_info } : { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false }
       }
     ]);
   };
@@ -1107,6 +1108,8 @@ function Step3Summary({ data, vehicle }: any) {
               ))}
               <Detail label="Drop-off" value={formatAddress(seg.dropoff, seg.dropoff_details)} />
               {seg.duration && <Detail label="Duration" value={seg.duration} />}
+              {seg.flight_info?.airline_flight_no && <Detail label="Flight #" value={seg.flight_info.airline_flight_no} />}
+              {seg.flight_info?.meet_and_greet && <Detail label="Meet & Greet" value="Included" />}
               {seg.comments && <Detail label="Comments" value={seg.comments} />}
             </div>
           </div>
@@ -1425,6 +1428,26 @@ function FlightInfoModal({
             />
           </div>
 
+          <div>
+            <span className="text-white/70 text-xs mb-1.5 block">Airport Meet & Greet (Optional)</span>
+            <div className="flex gap-2">
+              <button 
+                type="button"
+                onClick={() => setLocalData({ ...localData, meet_and_greet: true })}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded text-[11px] font-medium transition-all ${localData.meet_and_greet ? 'bg-[#337ab7] text-white shadow-lg' : 'bg-[#2d3748] text-white/70 hover:bg-[#3d485a]'}`}
+              >
+                ✓ Yes
+              </button>
+              <button 
+                type="button"
+                onClick={() => setLocalData({ ...localData, meet_and_greet: false })}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded text-[11px] font-medium transition-all ${!localData.meet_and_greet ? 'bg-[#337ab7] text-white shadow-lg' : 'bg-[#2d3748] text-white/70 hover:bg-[#3d485a]'}`}
+              >
+                ✕ No
+              </button>
+            </div>
+          </div>
+
           <div className="flex gap-2 pt-2">
             <button 
               type="button"
@@ -1436,7 +1459,7 @@ function FlightInfoModal({
             <button 
               type="button"
               onClick={() => {
-                const cleared = { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "" };
+                const cleared = { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false };
                 setLocalData(cleared);
                 onClear();
               }}

@@ -83,6 +83,10 @@ const bookingSchema = new mongoose.Schema({
         type: String,
         default: "",
       },
+      meet_and_greet: {
+        type: Boolean,
+        default: false,
+      },
     },
     trip_type: {
       type: String,

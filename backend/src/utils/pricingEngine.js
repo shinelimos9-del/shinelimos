@@ -297,9 +297,16 @@ function calculateQuote(options = {}) {
     mainBookingPrice = rawSubtotal + minimumFareAdjustment;
   }
 
-  // 4. Airport Pickup Fee
+  // 4. Airport Pickup Fee & Meet and Greet
   const isAirport = isAirportPickup(options.pickupLocation, options.flightInfo, options.occasion);
-  const airportPickupFee = isAirport ? rates.airportFee : 0;
+  const isMeetAndGreetSelected = Boolean(
+    options.meetAndGreet !== undefined ? options.meetAndGreet :
+    options.includeMeetAndGreet !== undefined ? options.includeMeetAndGreet :
+    options.flightInfo?.meet_and_greet !== undefined ? options.flightInfo.meet_and_greet :
+    options.flightInfo?.meetAndGreet !== undefined ? options.flightInfo.meetAndGreet :
+    false
+  );
+  const airportPickupFee = isMeetAndGreetSelected ? rates.airportFee : 0;
 
   // 5. Additional Stops Fee
   const stopsCount = safeNumber(options.additionalStopsCount || options.stopsCount, 0);
@@ -364,7 +371,7 @@ function calculateQuote(options = {}) {
     isHourly,
     isRoundTrip,
     isAirportPickup: isAirport,
-    meetAndGreetIncluded: isAirport,
+    meetAndGreetIncluded: isMeetAndGreetSelected,
     billedHours,
     breakdown: {
       originalSubtotal: options.originalSubtotal !== undefined ? round2(options.originalSubtotal) : mainBookingPrice,
