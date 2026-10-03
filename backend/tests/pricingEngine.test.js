@@ -240,7 +240,7 @@ test("All Fees Combined Edge Case", () => {
     meetAndGreet: true,
     pickupTime: '03:00 AM',      // Late Night 15%
     pickupDate: '2026-07-04',    // July 4th Holiday 20%
-    waitingMinutes: 35,          // (35-15) = 20m * $2 = $40
+    waitingMinutes: 80,          // Airport pickup 60m free: (80-60) = 20m * $2 = $40
     additionalStopsCount: 2,     // 2 * $30 = $60
     childSeatsCount: 3,          // (3-1) = 2 * $15 = $30
     hasCleaningFee: true,        // $150

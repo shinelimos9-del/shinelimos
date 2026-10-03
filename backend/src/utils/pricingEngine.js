@@ -312,9 +312,10 @@ function calculateQuote(options = {}) {
   const stopsCount = safeNumber(options.additionalStopsCount || options.stopsCount, 0);
   const additionalStopsFee = round2(stopsCount * rates.additionalStopRate);
 
-  // 6. Waiting Time Fee
+  // 6. Waiting Time Fee (Airport pickups include 60 mins complimentary, standard include 15 mins)
   const totalWaitMins = safeNumber(options.waitingMinutes, 0);
-  const chargeableWaitMins = Math.max(0, totalWaitMins - 15);
+  const complimentaryWaitMins = isAirport ? 60 : 15;
+  const chargeableWaitMins = Math.max(0, totalWaitMins - complimentaryWaitMins);
   const waitingTimeFee = round2(chargeableWaitMins * rates.waitingRatePerMin);
 
   // 7. Child Seats Fee

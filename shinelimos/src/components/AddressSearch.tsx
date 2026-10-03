@@ -8,9 +8,10 @@ interface AddressSearchProps {
   onChange: (address: string, details: any) => void;
   placeholder: string;
   className?: string;
+  hint?: boolean;
 }
 
-export default function AddressSearch({ value, onChange, placeholder, className }: AddressSearchProps) {
+export default function AddressSearch({ value, onChange, placeholder, className, hint = true }: AddressSearchProps) {
   const [query, setQuery] = useState(value);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,7 +46,7 @@ export default function AddressSearch({ value, onChange, placeholder, className 
           params: {
             q: searchText,
             access_token: MAPBOX_PUBLIC_TOKEN,
-            session_token: "session-123", // Ideally generate a unique session token
+            session_token: "session-123",
             limit: 5,
             proximity: "-77.0369,38.9072", // DC area
             types: "address,poi,postcode,place"
@@ -85,7 +86,6 @@ export default function AddressSearch({ value, onChange, placeholder, className 
   };
 
   const handleSelect = async (suggestion: any) => {
-    setQuery(suggestion.name);
     setShowDropdown(false);
 
     if (suggestion.isGeocodingV5 && suggestion.featureData) {
@@ -104,8 +104,8 @@ export default function AddressSearch({ value, onChange, placeholder, className 
         lng: feature.geometry?.coordinates[0] || feature.center?.[0]
       };
 
-      onChange(details.full_address, details);
       setQuery(details.full_address);
+      onChange(details.full_address, details);
       return;
     }
 
@@ -128,16 +128,36 @@ export default function AddressSearch({ value, onChange, placeholder, className 
         city: feature.properties.context?.place?.name || "",
         state: feature.properties.context?.region?.region_code || "",
         postal_code: feature.properties.context?.postcode?.name || "",
-        lat: feature.geometry.coordinates[1],
-        lng: feature.geometry.coordinates[0]
+        lat: feature.geometry?.coordinates[1],
+        lng: feature.geometry?.coordinates[0]
       };
 
-      onChange(details.full_address, details);
       setQuery(details.full_address);
+      onChange(details.full_address, details);
     } catch (error) {
       console.error("Mapbox Retrieve error:", error);
+      // Fallback: use suggestion name
+      const fallbackDetails = {
+        full_address: suggestion.full_address || suggestion.name,
+        city: "",
+        state: "",
+        postal_code: ""
+      };
+      setQuery(fallbackDetails.full_address);
+      onChange(fallbackDetails.full_address, fallbackDetails);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleManualBlur = () => {
+    if (query && query !== value) {
+      onChange(query, {
+        full_address: query,
+        city: "",
+        state: "",
+        postal_code: ""
+      });
     }
   };
 
@@ -151,7 +171,11 @@ export default function AddressSearch({ value, onChange, placeholder, className 
           onChange={(e) => {
             setQuery(e.target.value);
             fetchSuggestions(e.target.value);
+            if (e.target.value === "") {
+              onChange("", null);
+            }
           }}
+          onBlur={handleManualBlur}
           placeholder={placeholder}
           autoComplete="off"
         />
@@ -159,6 +183,7 @@ export default function AddressSearch({ value, onChange, placeholder, className 
           {loading && <Loader2 className="h-4 w-4 text-gold animate-spin" />}
           {query && (
             <button 
+              type="button"
               onClick={() => {
                 setQuery("");
                 setSuggestions([]);
@@ -172,13 +197,20 @@ export default function AddressSearch({ value, onChange, placeholder, className 
         </div>
       </div>
 
+      {hint && (
+        <p className="text-[10px] text-white/40 mt-1 pl-1">
+          Start typing and select your address from the list.
+        </p>
+      )}
+
       {showDropdown && suggestions.length > 0 && (
-        <div className="absolute z-9999 mt-2 w-full bg-black border border-white/20 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-top-2">
+        <div className="absolute z-9999 mt-1 w-full bg-black border border-white/20 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.8)] animate-in fade-in slide-in-from-top-2">
           {suggestions.map((s) => (
             <button
-              key={s.mapbox_id}
+              key={s.mapbox_id || s.name}
+              type="button"
               onClick={() => handleSelect(s)}
-              className="w-full text-left px-5 py-4 text-sm text-white hover:bg-gold/20 transition-colors border-b border-white/10 last:border-0 group"
+              className="w-full text-left px-5 py-3 text-sm text-white hover:bg-gold/20 transition-colors border-b border-white/10 last:border-0 group"
             >
               <div className="font-semibold group-hover:text-gold transition-colors">{s.name}</div>
               <div className="text-[11px] text-white/50 mt-0.5 group-hover:text-white/80 transition-colors">{s.full_address || s.place_formatted}</div>

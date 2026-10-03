@@ -342,7 +342,8 @@ export function calculateQuote(options: QuoteOptions = {}): QuoteResult {
   const additionalStopsFee = round2(stopsCount * rates.additionalStopRate);
 
   const totalWaitMins = safeNumber(options.waitingMinutes, 0);
-  const chargeableWaitMins = Math.max(0, totalWaitMins - 15);
+  const complimentaryWaitMins = isAirport ? 60 : 15;
+  const chargeableWaitMins = Math.max(0, totalWaitMins - complimentaryWaitMins);
   const waitingTimeFee = round2(chargeableWaitMins * rates.waitingRatePerMin);
 
   const childSeats = safeNumber(options.childSeatsCount || options.childSeats, 0);

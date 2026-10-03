@@ -508,6 +508,24 @@ export const LOCATIONS: Location[] = [
       "Reliable limo and black car service at Reagan National Airport (DCA). 24/7 airport transfers, flight tracking, and on-time chauffeurs."
   },
   {
+    slug: "bwi-airport",
+    city: "BWI Airport",
+    region: "Airport Transfers",
+    hero: "/location car/car.jpg.jpeg",
+    intro:
+      "Baltimore/Washington International Thurgood Marshall Airport (BWI) transfers made effortless. Whether you are traveling between Baltimore, Annapolis, Washington DC, or Northern Virginia, our chauffeurs provide prompt flight tracking, luggage assistance, and luxury curbside or terminal pickups.",
+    highlights: [
+      "Real-time BWI flight tracking & automatic adjustments",
+      "Direct transfers between BWI, DC, Maryland & Northern Virginia",
+      "Complimentary 60 minutes airport waiting time",
+      "Fixed all-inclusive rates with meet & greet available"
+    ],
+    landmarks: ["BWI Main Terminal", "Concourse A/B/C/D/E", "BWI Rail Station", "Arundel Mills", "Annapolis Corridor"],
+    seoTitle: "BWI Airport (BWI) Limo & Car Service | Shine Limos",
+    seoDesc:
+      "Premier BWI Airport car service and luxury limo transfers between BWI, Washington DC, and Virginia. 24/7 flight tracking and professional chauffeurs."
+  },
+  {
     slug: "bethesda-md",
     city: "Bethesda MD",
     region: "Limo Service",
@@ -521,7 +539,7 @@ export const LOCATIONS: Location[] = [
       "Corporate accounts for Lockheed Martin & Marriott HQ"
     ],
     landmarks: ["NIH Campus", "Bethesda Row", "Walter Reed", "Chevy Chase", "Marriott HQ", "Lockheed Martin"],
-    seoTitle: "Bethesda MD Limo & Black Car Service | ShineLimos",
+    seoTitle: "Bethesda MD Limo & Black Car Service | Shine Limos",
     seoDesc:
       "Premium chauffeur and limo service in Bethesda, Maryland. NIH transfers, corporate accounts, airport runs, and special events."
   }
@@ -529,27 +547,27 @@ export const LOCATIONS: Location[] = [
 
 export const TESTIMONIALS = [
   {
-    name: "Senator's Chief of Staff",
-    role: "Capitol Hill",
+    name: "David Vance",
+    role: "Google Review • Sep 2026",
     quote:
-      "ShineLimos has become our default for every Senate delegation we host. Faultless punctuality, total discretion.",
+      "Booked an Executive Sedan from Dulles (IAD) to downtown DC. The flight was delayed 45 minutes, but our chauffeur Ali tracked the plane and was waiting right at baggage claim. Immaculate Cadillac, cold water, flawless ride.",
   },
   {
-    name: "Priya & Aman Sharma",
-    role: "Wedding • The Hay-Adams",
+    name: "Sarah & Brian Jenkins",
+    role: "Google Review • Aug 2026",
     quote:
-      "From rehearsal dinner to send-off, the team coordinated 11 vehicles across three venues. Not one hiccup.",
+      "We reserved a Mercedes Sprinter and Cadillac Escalade for our wedding party in Alexandria. The drivers arrived 15 minutes early in pristine suits, vehicles were spotless, and the dispatch team answered immediately when we needed to tweak our schedule.",
   },
   {
-    name: "Marcus Webb",
-    role: "Managing Partner, McGuire Capital",
+    name: "Robert Sterling",
+    role: "Google Review • Sep 2026",
     quote:
-      "Our IPO roadshow had 23 city transfers in 6 days. The Sprinter became our second conference room.",
+      "Shine Limos is our executive team's go-to for Capitol Hill meetings and Reagan (DCA) transfers. Direct billing, itemized invoices, professional chauffeurs who know every detour in DC. Highly recommended.",
   },
   {
-    name: "Lena Park",
-    role: "Travel Manager, Fortune 100",
+    name: "Elena Rostova",
+    role: "Yelp Verified • Jul 2026",
     quote:
-      "Direct billing, consolidated invoicing and a single phone number. They saved our travel team hundreds of hours.",
+      "Used Shine Limos for a family transfer from BWI Airport to McLean, VA. The child car seat was installed safely before pickup and the vehicle was exceptionally clean. Truly first-class luxury transportation.",
   },
 ];

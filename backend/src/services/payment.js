@@ -6,6 +6,23 @@ const { sendEmail } = require("../utils/emailService");
 const moment = require("moment");
 const pricingEngine = require("../utils/pricingEngine");
 
+const formatTimeWithAmPm = (timeStr) => {
+  if (!timeStr) return "";
+  const trimmed = String(timeStr).trim();
+  if (/am|pm/i.test(trimmed)) return trimmed;
+  const parts = trimmed.split(":");
+  if (parts.length >= 2) {
+    let hh = parseInt(parts[0], 10);
+    const mm = parts[1].slice(0, 2).padStart(2, "0");
+    if (isNaN(hh)) return trimmed;
+    const isPm = hh >= 12;
+    if (hh > 12) hh -= 12;
+    if (hh === 0) hh = 12;
+    return `${hh}:${mm} ${isPm ? "PM" : "AM"}`;
+  }
+  return trimmed;
+};
+
 exports.sendStripePaymentLink = async (bookingId) => {
   try {
     const booking = await Booking.findById(bookingId);
@@ -102,7 +119,7 @@ exports.sendStripePaymentLink = async (bookingId) => {
           <p style="font-size: 14px;"><strong>Reservation Details:</strong></p>
           <p><strong>Booking ID:</strong> #${booking._id}</p>
           <p><strong>Pickup:</strong> ${booking.trip_details[0].pickup_location}</p>
-          <p><strong>Date/Time:</strong> ${booking.trip_details[0].date} at ${booking.trip_details[0].start_time}</p>
+          <p><strong>Date/Time:</strong> ${moment(booking.trip_details[0].date).format("MMM DD, YYYY")} at ${formatTimeWithAmPm(booking.trip_details[0].start_time)}</p>
           <p style="font-size: 12px; color: #888; text-align: center; margin-top: 30px;">Shine Limos LLC - Premium Chauffeur Service</p>
         </div>
       `,
@@ -263,7 +280,7 @@ const fulfillPayment = async (sessionOrId, bookingIdParam) => {
                 <p style="margin: 10px 0; font-size: 14px;"><strong>Pickup:</strong> ${booking.trip_details[0].pickup_location}</p>
                 <p style="margin: 10px 0; font-size: 14px;"><strong>Drop-off:</strong> ${booking.trip_details[0].dropoff_location}</p>
                 <p style="margin: 10px 0; font-size: 14px;"><strong>Date:</strong> ${moment(booking.trip_details[0].date).format("MMM DD, YYYY")}</p>
-                <p style="margin: 10px 0; font-size: 14px;"><strong>Time:</strong> ${booking.trip_details[0].start_time}</p>
+                <p style="margin: 10px 0; font-size: 14px;"><strong>Time:</strong> ${formatTimeWithAmPm(booking.trip_details[0].start_time)}</p>
                 <p style="margin: 10px 0; font-size: 14px;"><strong>Amount Paid:</strong> $${amountPaid}</p>
               </div>
 
@@ -306,7 +323,7 @@ const fulfillPayment = async (sessionOrId, bookingIdParam) => {
                 <p style="margin: 8px 0;"><strong>Vehicle:</strong> ${booking.vehicle_details.vehicle_name}</p>
                 <p style="margin: 8px 0;"><strong>Pickup:</strong> ${booking.trip_details[0].pickup_location}</p>
                 <p style="margin: 8px 0;"><strong>Drop-off:</strong> ${booking.trip_details[0].dropoff_location}</p>
-                <p style="margin: 8px 0;"><strong>Date/Time:</strong> ${moment(booking.trip_details[0].date).format("MMM DD, YYYY")} at ${booking.trip_details[0].start_time}</p>
+                <p style="margin: 8px 0;"><strong>Date/Time:</strong> ${moment(booking.trip_details[0].date).format("MMM DD, YYYY")} at ${formatTimeWithAmPm(booking.trip_details[0].start_time)}</p>
               </div>
 
               <div style="text-align: center; margin-top: 30px;">

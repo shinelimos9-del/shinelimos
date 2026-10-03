@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHero, GoldButton, GoldDivider } from "../components/ui";
 import SectionBackground from "../components/SectionBackground";
-import TimePicker from "../components/TimePicker";
+import TimePicker, { formatTimeWithAmPm } from "../components/TimePicker";
 import { initiateBooking, finalizeBooking, requestPayment, ADMIN_BASE_URL } from "../utils/api";
 import AddressSearch from "../components/AddressSearch";
 
@@ -399,7 +399,7 @@ export default function Booking() {
     const html = `
       <html>
         <head>
-          <title>Invoice - CN-${bookingId || 'PENDING'}</title>
+          <title>Invoice - #${bookingId || 'PENDING'}</title>
           <style>
             body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; max-width: 800px; margin: auto; }
             h1 { color: #d4af37; margin-bottom: 5px; }
@@ -417,7 +417,7 @@ export default function Booking() {
             <h1>ShineLimos LLC</h1>
             <p style="margin:0; color:#666;">Premium Chauffeur Service</p>
             <h3 style="margin-top:20px;">Booking Invoice</h3>
-            <p><strong>Confirmation Number:</strong> CN-${bookingId || Math.floor(100000 + Math.random() * 900000)}</p>
+            <p><strong>Confirmation Number:</strong> #${bookingId || 'PENDING'}</p>
             <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
           </div>
           
@@ -450,20 +450,17 @@ export default function Booking() {
             ${data.segments.map((seg, idx) => {
               const formatAddr = (loc: string, details: LocationDetails) => {
                 const parts = [
-                  details.flat_no,
+                  details.flat_no ? `Unit/Apt ${details.flat_no}` : '',
                   details.area,
                   details.landmark ? `(Near ${details.landmark})` : '',
-                  loc,
-                  details.city,
-                  details.postal_code
-                ].filter(Boolean);
-                return parts.join(", ") || loc;
+                ].filter(Boolean).filter(part => !loc.toLowerCase().includes(part.toLowerCase()));
+                return parts.length > 0 ? `${parts.join(", ")}, ${loc}` : loc;
               };
               return `
               <div style="margin-bottom: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px;">
                 <h4 style="margin-top:0; color:#d4af37;">Segment ${idx + 1}</h4>
                 <div class="row"><div class="label">Date:</div><div class="val">${seg.date}</div></div>
-                <div class="row"><div class="label">Time:</div><div class="val">${seg.time}</div></div>
+                <div class="row"><div class="label">Time:</div><div class="val">${formatTimeWithAmPm(seg.time)}</div></div>
                 <div class="row"><div class="label">Pickup Location:</div><div class="val">${formatAddr(seg.pickup, seg.pickup_details)}</div></div>
                 <div class="row"><div class="label">Drop-off Location:</div><div class="val">${formatAddr(seg.dropoff, seg.dropoff_details)}</div></div>
                 ${seg.duration ? `<div class="row"><div class="label">Duration:</div><div class="val">${seg.duration}</div></div>` : ''}
@@ -475,7 +472,7 @@ export default function Booking() {
           <div class="section">
             <h2>Estimated Price</h2>
             <div class="row"><div class="label">Vehicle Estimate:</div><div class="val" style="font-weight:bold; color:#d4af37; font-size:18px;">$${selectedVehicle?.estimated_price || "0.00"}</div></div>
-            <p style="font-size:12px; color:#888; margin-top:10px;">All-inclusive estimate: Your final quote includes tolls, gratuity, and fuel surcharges. Airport pickups include 60 minutes of complimentary wait time after your flight lands. Non-airport pickups include 15 minutes of complimentary wait time. No charge will be made until 24 hours before pickup.</p>
+            <p style="font-size:12px; color:#888; margin-top:10px;">All-inclusive estimate: Your final quote includes tolls, gratuity, and fuel surcharges. Airport pickups include 60 minutes of complimentary wait time; all other pickups include 15 minutes. No charge will be made until 24 hours before pickup.</p>
           </div>
 
           <div class="footer">
@@ -507,18 +504,19 @@ export default function Booking() {
               <CheckCircle className="h-10 w-10 text-gold" />
             </div>
             <h2 className="font-serif-lux text-2xl sm:text-3xl gradient-gold-text">Thank you for your reservation request!</h2>
-            <p className="text-white/70 mt-3 font-mono text-sm">Confirmation #CN-{Math.floor(100000 + Math.random() * 900000)}</p>
+            <p className="text-white/70 mt-3 font-mono text-sm">Confirmation #{bookingId || 'PENDING'}</p>
             <p className="text-sm text-white/70 mt-4 leading-relaxed font-light">
-              Your booking request has been received. A reservation specialist will contact you within 15 minutes to confirm your trip details and verify your payment information. Your card will not be charged at this time. Once your reservation is confirmed, your card will be charged 24 hours before your scheduled pickup.
+              Your reservation request has been received. Our dispatch team will review your trip details and send you a payment link shortly. Your card will not be charged at this time — cards are charged 24 hours before scheduled pickup. Free cancellation up to 24 hours before pickup for Sedans and SUVs (7 days for Sprinter Vans and Specialty vehicles).
             </p>
             <div className="mt-8 grid sm:grid-cols-2 gap-4 text-left text-sm">
               <Detail label="Vehicle" value={selectedVehicle?.vehicle_name || "Not selected"} />
+              <Detail label="Estimated Total" value={selectedVehicle?.estimated_price ? `$${selectedVehicle.estimated_price}` : "Calculated at confirmation"} />
               <Detail label="Passengers" value={`${data.pax}`} />
               <Detail label="Luggage" value={data.bags > 0 ? `${data.bags} ${data.bagSize ? `(${data.bagSize})` : ""}` : "None"} />
-              <Detail label="Pickup" value={`${data.segments[0]?.pickup_details?.flat_no ? data.segments[0].pickup_details.flat_no + ', ' : ''}${data.segments[0]?.pickup}`} />
-              <Detail label="Drop-off" value={`${data.segments[0]?.dropoff_details?.flat_no ? data.segments[0].dropoff_details.flat_no + ', ' : ''}${data.segments[0]?.dropoff}`} />
+              <Detail label="Pickup" value={`${data.segments[0]?.pickup_details?.flat_no ? 'Unit/Apt ' + data.segments[0].pickup_details.flat_no + ', ' : ''}${data.segments[0]?.pickup}`} />
+              <Detail label="Drop-off" value={`${data.segments[0]?.dropoff_details?.flat_no ? 'Unit/Apt ' + data.segments[0].dropoff_details.flat_no + ', ' : ''}${data.segments[0]?.dropoff}`} />
               <Detail label="Date" value={data.segments[0]?.date} />
-              <Detail label="Time" value={data.segments[0]?.time} />
+              <Detail label="Time" value={formatTimeWithAmPm(data.segments[0]?.time)} />
             </div>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <button onClick={handleDownloadInvoice} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full text-sm font-medium transition-all border border-white/20">
@@ -1079,15 +1077,17 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
 
 function Step3Summary({ data, vehicle }: any) {
   const formatAddress = (loc: string, details: LocationDetails) => {
-    const parts = [
-      details.flat_no,
-      details.area,
-      details.landmark ? `(Near ${details.landmark})` : '',
-      loc,
-      details.city,
-      details.postal_code
-    ].filter(Boolean);
-    return parts.join(", ") || loc;
+    if (!loc) return "";
+    const prefixParts = [
+      details?.flat_no ? `Unit/Apt ${details.flat_no}` : "",
+      details?.area || "",
+      details?.landmark ? `(Near ${details.landmark})` : "",
+    ].filter(Boolean).filter(part => !loc.toLowerCase().includes(part.toLowerCase()));
+
+    if (prefixParts.length > 0) {
+      return `${prefixParts.join(", ")}, ${loc}`;
+    }
+    return loc;
   };
 
   return (
@@ -1101,7 +1101,7 @@ function Step3Summary({ data, vehicle }: any) {
             <h4 className="text-gold font-semibold text-sm mb-3">Segment {idx + 1}</h4>
             <div className="grid md:grid-cols-2 gap-4">
               <Detail label="Date" value={seg.date} />
-              <Detail label="Time" value={seg.time} />
+              <Detail label="Time" value={formatTimeWithAmPm(seg.time)} />
               <Detail label="Pickup" value={formatAddress(seg.pickup, seg.pickup_details)} />
               {(seg.stops || []).map((stop: any, sIdx: number) => (
                 <Detail key={stop.id || sIdx} label={`Stop ${sIdx + 1}`} value={formatAddress(stop.address || stop.location, stop.details || {})} />
@@ -1125,7 +1125,7 @@ function Step3Summary({ data, vehicle }: any) {
         <Detail label="Estimated Total" value={vehicle?.estimated_price ? `$${vehicle.estimated_price}` : "Calculated at booking"} />
       </div>
       <p className="mt-3 text-xs text-white/50 leading-relaxed font-light px-1">
-        All-inclusive estimate: Your final quote includes tolls, gratuity, and fuel surcharges. Airport pickups include 60 minutes of complimentary wait time after your flight lands. Non-airport pickups include 15 minutes of complimentary wait time. No charge will be made until 24 hours before pickup.
+        All-inclusive estimate: Your final quote includes tolls, gratuity, and fuel surcharges. Airport pickups include 60 minutes of complimentary wait time; all other pickups include 15 minutes. No charge will be made until 24 hours before pickup.
       </p>
     </>
   );
@@ -1332,7 +1332,7 @@ function Step4Contact({ data, update }: { data: BookingData; update: (k: keyof B
 
       <div className="mt-6 glass-gold rounded-xl p-4 text-sm text-white/80">
         <strong className="text-gold">All-inclusive estimate:</strong> Your final quote includes tolls, gratuity,
-        fuel surcharges and 15 minutes of complimentary wait time. No charge will be made until 24 hours before pickup.
+        and fuel surcharges. Airport pickups include 60 minutes of complimentary wait time; all other pickups include 15 minutes. No charge will be made until 24 hours before pickup.
       </div>
     </>
   );

@@ -25,6 +25,7 @@ const Terms = React.lazy(() => import("./pages/Terms"));
 const Privacy = React.lazy(() => import("./pages/Privacy"));
 const CancellationPolicy = React.lazy(() => import("./pages/CancellationPolicy"));
 const Faq = React.lazy(() => import("./pages/Faq"));
+const Corporate = React.lazy(() => import("./pages/Corporate"));
 
 const AdminLogin = React.lazy(() => import("./pages/admin/AdminLogin"));
 const ForgotPassword = React.lazy(() => import("./pages/admin/ForgotPassword"));
@@ -59,6 +60,8 @@ function AppContent() {
             <Route path="/about" element={<About />} />
             <Route path="/fleet" element={<Fleet />} />
             <Route path="/fleet/:slug" element={<FleetDetail />} />
+            <Route path="/fleet/executive-sedan-" element={<FleetDetail />} />
+            <Route path="/corporate" element={<Corporate />} />
             <Route path="/services" element={<Services />} />
             <Route path="/services/:slug" element={<ServiceDetail />} />
             <Route path="/locations" element={<Locations />} />

@@ -7,6 +7,23 @@ const socketUtil = require("../../socket");
 const { sendEmail } = require("../utils/emailService");
 const pricingEngine = require("../utils/pricingEngine");
 
+const formatTimeWithAmPm = (timeStr) => {
+	if (!timeStr) return "";
+	const trimmed = String(timeStr).trim();
+	if (/am|pm/i.test(trimmed)) return trimmed;
+	const parts = trimmed.split(":");
+	if (parts.length >= 2) {
+		let hh = parseInt(parts[0], 10);
+		const mm = parts[1].slice(0, 2).padStart(2, "0");
+		if (isNaN(hh)) return trimmed;
+		const isPm = hh >= 12;
+		if (hh > 12) hh -= 12;
+		if (hh === 0) hh = 12;
+		return `${hh}:${mm} ${isPm ? "PM" : "AM"}`;
+	}
+	return trimmed;
+};
+
 // Helper to notify admin via socket and save to DB
 const notifyAdmin = async (booking, type = "Booking", message = "New booking received!") => {
 	try {
@@ -20,7 +37,7 @@ const notifyAdmin = async (booking, type = "Booking", message = "New booking rec
 			estimated_price: booking.vehicle_details.estimated_price,
 			vehicle_name: booking.vehicle_details.vehicle_name,
 			date: moment(booking.trip_details[0].date).format("MMM DD, YYYY"),
-			time: booking.trip_details[0].start_time,
+			time: formatTimeWithAmPm(booking.trip_details[0].start_time),
 			message: message,
 			type: type,
 			payment_status: booking.payment_status || "Pending"
@@ -404,7 +421,7 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 								<p style="margin: 10px 0; font-size: 14px;"><strong>Vehicle Requested:</strong> ${updated.vehicle_details?.vehicle_name || 'N/A'}</p>
 								<p style="margin: 10px 0; font-size: 14px;"><strong>Pickup:</strong> ${updated.trip_details[0]?.pickup_location}</p>
 								<p style="margin: 10px 0; font-size: 14px;"><strong>Drop-off:</strong> ${updated.trip_details[0]?.dropoff_location}</p>
-								<p style="margin: 10px 0; font-size: 14px;"><strong>Date & Time:</strong> ${moment(updated.trip_details[0]?.date).format("MMM DD, YYYY")} at ${updated.trip_details[0]?.start_time}</p>
+								<p style="margin: 10px 0; font-size: 14px;"><strong>Date & Time:</strong> ${moment(updated.trip_details[0]?.date).format("MMM DD, YYYY")} at ${formatTimeWithAmPm(updated.trip_details[0]?.start_time)}</p>
 								<p style="margin: 10px 0; font-size: 14px;"><strong>Estimated Price:</strong> $${updated.vehicle_details?.estimated_price || 'N/A'}</p>
 							</div>
 
@@ -445,7 +462,7 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 								<p style="margin: 8px 0; font-size: 14px;"><strong>Vehicle Requested:</strong> ${updated.vehicle_details?.vehicle_name || 'N/A'}</p>
 								<p style="margin: 8px 0; font-size: 14px;"><strong>Pickup:</strong> ${updated.trip_details[0]?.pickup_location}</p>
 								<p style="margin: 8px 0; font-size: 14px;"><strong>Drop-off:</strong> ${updated.trip_details[0]?.dropoff_location}</p>
-								<p style="margin: 8px 0; font-size: 14px;"><strong>Date & Time:</strong> ${moment(updated.trip_details[0]?.date).format("MMM DD, YYYY")} at ${updated.trip_details[0]?.start_time}</p>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Date & Time:</strong> ${moment(updated.trip_details[0]?.date).format("MMM DD, YYYY")} at ${formatTimeWithAmPm(updated.trip_details[0]?.start_time)}</p>
 								<p style="margin: 8px 0; font-size: 14px;"><strong>Estimated Price:</strong> $${updated.vehicle_details?.estimated_price || 'N/A'}</p>
 							</div>
 

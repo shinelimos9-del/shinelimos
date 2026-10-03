@@ -6,19 +6,24 @@ export interface SEOData {
 
 export const SEO_CONFIG: Record<string, SEOData> = {
   "home": {
-    title: "Affordable Airport Limo Service | ShineLimos",
-    description: "Executive airport car service, luxury limo service, luxury chauffeur service in Washington DC, Maryland, and Virginia.",
+    title: "Shine Limos | Premium Black Car & Chauffeur Service in Washington DC",
+    description: "Premier luxury black car, limousine, and chauffeur service in Washington DC, Northern Virginia, and Maryland. Airport transfers, corporate travel, and special events.",
     keywords: "luxury transportation, professional chauffeur, premium car service, luxury fleet, luxury ground transportation, vip transportation, luxury travel experience"
   },
   "about": {
-    title: "About ShineLimos | Executive Transfer",
-    description: "Experienced chauffeurs, airport transfer chauffeur. Learn about our premier black car and limo service.",
+    title: "About Shine Limos | Premium Chauffeur Service in the DMV",
+    description: "Experienced chauffeurs, late-model fleet, and 100% on-time guarantee. Learn about our premier black car and limo service across DC, VA, and MD.",
     keywords: "professional drivers, experienced team, customer satisfaction, luxury transportation company, safety standards"
   },
   "fleet": {
-    title: "Mercedes Sprinter Rental DC | Luxury SUV Hire",
-    description: "Range rover chauffeur hire, executive sedan service. Discover our premium fleet of luxury vehicles.",
-    keywords: "luxury vehicles, premium fleet, professional transportation"
+    title: "Our Fleet | Luxury Sedans, SUVs, S-Class & Sprinters — Shine Limos",
+    description: "Discover our premium fleet of luxury sedans, Cadillac Escalades, Mercedes-Benz S-Class, Sprinters, and executive party buses in Washington DC.",
+    keywords: "luxury vehicles, premium fleet, professional transportation, escalade suv hire, mercedes sprinter dc"
+  },
+  "corporate": {
+    title: "Corporate Accounts & Affiliate Partners | Shine Limos",
+    description: "Direct billing, priority dispatch, and a vetted DMV chauffeur network for companies, hotels, travel advisors, and affiliate operators.",
+    keywords: "corporate accounts, corporate limo service, direct billing chauffeur, affiliate chauffeur network, executive travel dc"
   },
   "services": {
     title: "Chauffeur Airport Transfer | Private Luxury Taxi",
@@ -31,28 +36,38 @@ export const SEO_CONFIG: Record<string, SEOData> = {
     keywords: "service area, local transportation, regional transportation, city to city travel, coverage area, luxury rides, transportation solutions"
   },
   "contact": {
-    title: "Private Airport Taxi Service | Transportation Support",
-    description: "Transportation support, transportation reservation, regional limo service. Contact ShineLimos today.",
+    title: "Contact Shine Limos | 24/7 Chauffeur Service in DC, VA & MD",
+    description: "24/7 customer support, instant reservations, and corporate inquiries. Contact Shine Limos today at (202) 951-7172.",
     keywords: "request a quote, transportation inquiry, booking assistance, service request, reservation support, transportation consultation, customer assistance"
   },
   "booking": {
-    title: "Limousine Bus Online Booking | Online Limo Reservation",
-    description: "Online limo reservation, book your luxury vehicle instantly with ShineLimos.",
-    keywords: "reservation confirmation, instant reservation"
+    title: "Book Your Chauffeur | Shine Limos LLC",
+    description: "Instant all-inclusive quotes and online limo reservation. Four short steps. Available 24/7.",
+    keywords: "reservation confirmation, instant reservation, book limo online dc"
   },
   "faq": {
-    title: "FAQ & Transportation Support | ShineLimos",
-    description: "Find answers to your luxury transportation questions. Transportation support and customer assistance for our premium car service.",
+    title: "FAQs | Booking, Pricing & Chauffeur Service — Shine Limos",
+    description: "Find answers to frequently asked questions about booking, pricing, airport wait times, cancellations, and chauffeur services.",
     keywords: "transportation support, customer assistance, transportation inquiry, booking assistance, luxury limo service FAQ, airport transportation questions"
   },
   "cancellation-policy": {
-    title: "Cancellation Policy | ShineLimos",
+    title: "Cancellation Policy | Shine Limos",
     description: "Review our reservation cancellation guidelines, refund policies, and modification terms for executive sedan, SUV, sprinter van, and limo services.",
     keywords: "cancellation policy, refund policy, reservation cancellation, ride modification, limo cancellation rules"
   },
+  "terms": {
+    title: "Terms of Service | Shine Limos",
+    description: "Terms and conditions for Shine Limos LLC luxury transportation and chauffeur services.",
+    keywords: "terms of service, transportation terms, limo terms and conditions"
+  },
+  "privacy": {
+    title: "Privacy Policy | Shine Limos",
+    description: "Privacy policy and data protection commitments of Shine Limos LLC.",
+    keywords: "privacy policy, data security"
+  },
   "airport-limo-service": {
     title: "Washington DC Airport Limo Service | Airport Executive Transfer",
-    description: "DC airport limo service, luxury airport shuttle service, airport luxury transfers.",
+    description: "DC airport limo service, luxury airport shuttle service, airport luxury transfers with flight tracking and meet & greet.",
     keywords: "airport pickup, flight tracking, dca airport transportation, luxury airport transfer, flight monitoring"
   },
   "wedding-limo-service": {
@@ -109,5 +124,25 @@ export const SEO_CONFIG: Record<string, SEOData> = {
     title: "Wedding Limo in Fairfax VA | Majestic Limousine Service",
     description: "Majestic limousine service Fairfax VA, transportation from BWI to Fairfax VA, luxury car rental Fairfax VA.",
     keywords: "fairfax transportation, fairfax shuttle, fairfax to dulles airport, george mason university transportation"
+  },
+  "dulles-airport": {
+    title: "Dulles Airport (IAD) Limo & Car Service | Shine Limos",
+    description: "Premium limo and black car transfers to and from Dulles International Airport (IAD). Flight tracking, meet & greet, 24/7 dispatch.",
+    keywords: "dulles airport limo, iad car service, dulles black car, airport transfer dulles"
+  },
+  "reagan-airport": {
+    title: "Reagan National Airport (DCA) Limo Service | Shine Limos",
+    description: "Reliable limo and black car service at Reagan National Airport (DCA). 24/7 airport transfers, flight tracking, and on-time chauffeurs.",
+    keywords: "reagan airport limo, dca black car service, national airport transfer"
+  },
+  "bwi-airport": {
+    title: "BWI Airport (BWI) Limo & Car Service | Shine Limos",
+    description: "Baltimore/Washington International Thurgood Marshall Airport (BWI) transfers. Reliable 24/7 black car & chauffeur service to DC, MD, and VA.",
+    keywords: "bwi airport limo, bwi car service, bwi to dc transfer, bwi airport shuttle"
+  },
+  "bethesda-md": {
+    title: "Bethesda MD Limo & Black Car Service | Shine Limos",
+    description: "Premium chauffeur and limo service in Bethesda, Maryland. NIH transfers, corporate accounts, airport runs, and special events.",
+    keywords: "bethesda limo service, bethesda car service, nih chauffeur, chevy chase black car"
   }
 };

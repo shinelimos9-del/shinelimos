@@ -79,6 +79,7 @@ export default function Footer() {
               <li><Link to="/" className="text-white/65 hover:text-gold">Home</Link></li>
               <li><Link to="/about" className="text-white/65 hover:text-gold">About Us</Link></li>
               <li><Link to="/fleet" className="text-white/65 hover:text-gold">Our Fleet</Link></li>
+              <li><Link to="/corporate" className="text-white/65 hover:text-gold">Corporate & Affiliates</Link></li>
               <li><Link to="/booking" className="text-white/65 hover:text-gold">Reservations</Link></li>
               <li><Link to="/cancellation-policy" className="text-white/65 hover:text-gold">Cancellation Policy</Link></li>
               <li><Link to="/contact" className="text-white/65 hover:text-gold">Contact</Link></li>

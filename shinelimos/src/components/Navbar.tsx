@@ -138,6 +138,11 @@ export default function Navbar() {
             </li>
 
             <li>
+              <NavLink to="/corporate" className={({ isActive }) => `${navLinkBase} ${isActive ? "active text-gold" : ""}`}>
+                Corporate
+              </NavLink>
+            </li>
+            <li>
               <NavLink to="/contact" className={({ isActive }) => `${navLinkBase} ${isActive ? "active text-gold" : ""}`}>
                 Contact
               </NavLink>
@@ -257,6 +262,7 @@ function MobileNav() {
           </div>
         )}
       </li>
+      <li><NavLink to="/corporate" className={itemBase}>Corporate</NavLink></li>
       <li><NavLink to="/contact" className={itemBase}>Contact</NavLink></li>
     </ul>
   );

@@ -13,9 +13,9 @@ const values = [
 
 const stats = [
   { n: "15+", l: "Years of Service" },
-  { n: "62k", l: "Successful Transfers" },
-  { n: "200+", l: "Vehicles Fleet-Wide" },
-  { n: "5.0★", l: "Average Rating" },
+  { n: "62k+", l: "Successful Transfers" },
+  { n: "100%", l: "On-Time Guarantee" },
+  { n: "5.0 ★", l: "Average Rating" },
 ];
 
 const BG = {

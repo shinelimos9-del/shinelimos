@@ -43,6 +43,8 @@ export default function FleetDetail() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [activeImg, vehicle?.images?.length]);
 
+  const cleanSlug = (slug || "").replace(/^-+|-+$/g, "").toLowerCase();
+
   useEffect(() => {
     async function loadVehicle() {
       try {
@@ -54,15 +56,15 @@ export default function FleetDetail() {
 
         if (response.success && response.vehicles) {
           dbVehicle = response.vehicles.find((v: any) => {
-            const formattedDbName = v.vehicle_name.toLowerCase().replace(/\s+/g, "-");
-            return formattedDbName === slug || v._id === slug;
+            const formattedDbName = v.vehicle_name.toLowerCase().replace(/\s+/g, "-").replace(/^-+|-+$/g, "");
+            return formattedDbName === cleanSlug || v._id === cleanSlug || v.vehicle_name.toLowerCase().includes(cleanSlug) || cleanSlug.includes(formattedDbName);
           });
           
           matchedOther = response.vehicles.filter((v: any) => {
-            const formattedDbName = v.vehicle_name.toLowerCase().replace(/\s+/g, "-");
-            return formattedDbName !== slug && v._id !== slug;
+            const formattedDbName = v.vehicle_name.toLowerCase().replace(/\s+/g, "-").replace(/^-+|-+$/g, "");
+            return formattedDbName !== cleanSlug && v._id !== cleanSlug;
           }).slice(0, 3).map((v: any) => ({
-            slug: v.vehicle_name.toLowerCase().replace(/\s+/g, "-"),
+            slug: v.vehicle_name.toLowerCase().replace(/\s+/g, "-").replace(/^-+|-+$/g, ""),
             name: v.vehicle_name,
             category: v.vehicle_class_name,
             blurb: v.discription,
@@ -81,12 +83,13 @@ export default function FleetDetail() {
 
         if (dbVehicle) {
           const staticMatch = FLEET.find(v => 
-            v.slug === slug || 
-            v.name.toLowerCase() === dbVehicle.vehicle_name.toLowerCase()
+            v.slug === cleanSlug || 
+            v.name.toLowerCase() === dbVehicle.vehicle_name.toLowerCase() ||
+            v.name.toLowerCase().includes(cleanSlug)
           );
 
           const mapped = {
-            slug: dbVehicle.vehicle_name.toLowerCase().replace(/\s+/g, "-"),
+            slug: dbVehicle.vehicle_name.toLowerCase().replace(/\s+/g, "-").replace(/^-+|-+$/g, ""),
             name: dbVehicle.vehicle_name,
             category: dbVehicle.vehicle_class_name,
             passengers: parseInt(dbVehicle.passenger_capacity) || 3,
@@ -106,9 +109,11 @@ export default function FleetDetail() {
         } else {
           const staticMatch = FLEET.find(
             (v) =>
-              v.slug === slug ||
-              v.name.toLowerCase().replace(/\s+/g, "-") === slug ||
-              v.category.toLowerCase().replace(/\s+/g, "-") === slug
+              v.slug === cleanSlug ||
+              v.name.toLowerCase().replace(/\s+/g, "-").replace(/^-+|-+$/g, "") === cleanSlug ||
+              v.category.toLowerCase().replace(/\s+/g, "-").replace(/^-+|-+$/g, "") === cleanSlug ||
+              v.slug.includes(cleanSlug) ||
+              cleanSlug.includes(v.slug)
           );
           if (staticMatch) {
             setVehicle({

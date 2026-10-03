@@ -6,4 +6,4 @@ Disallow: /admin/
 Disallow: /dashboard/
 Disallow: /checkout/
 
-Sitemap: https://shinelimos.com/sitemap.xml
+Sitemap: https://shinelimosllc.com/sitemap.xml
