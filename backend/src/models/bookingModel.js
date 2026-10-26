@@ -188,6 +188,24 @@ const bookingSchema = new mongoose.Schema({
   additional_stops_count: { type: Number, default: 0 },
   price_breakdown: { type: Object },
 
+  // Origin of the booking: website bookings vs GNet farm-in trips.
+  source: {
+    type: String,
+    enum: ["website", "gnet"],
+    default: "website",
+  },
+
+  // GNet farm-in metadata (only set for source === "gnet").
+  gnet: {
+    requesterId: String,
+    requesterResNo: String,
+    providerResNo: String,
+    accountNumber: String,
+    transactionId: String,
+    vehicleType: String,
+    raw: mongoose.Schema.Types.Mixed,
+  },
+
   created_at: { 
     type: Date,
     default: Date.now,
