@@ -97,6 +97,10 @@ const notifyAdmin = async (booking, type = "Booking", message = "New booking rec
 	}
 };
 
+// Reused by the GNet farm-in service so GNet trips get the same admin
+// socket feed + admin notifications as website bookings.
+exports.notifyAdmin = notifyAdmin;
+
 // Helper to extract numeric hours from duration string (e.g., "2 hours" -> 2)
 const parseDurationToHours = (durationStr) => {
 	if (!durationStr) return 0;

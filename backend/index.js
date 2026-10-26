@@ -105,6 +105,8 @@ app.use('/', require('./src/routes/adminvalidation.js'));
 app.use('/api', require('./src/routes/vehicles.js'));
 // Booking routes
 app.use('/api', require('./src/routes/booking.js'));
+// GNet farm-in receiving routes
+app.use('/api', require('./src/routes/gnet.js'));
 // Dashboard routes
 app.use('/api', require('./src/routes/dashboard.js'));
 // Payment routes
