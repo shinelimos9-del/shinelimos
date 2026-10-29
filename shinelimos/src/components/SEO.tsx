@@ -29,6 +29,29 @@ export default function SEO({ pageKey, title, description, keywords }: SEOProps)
       <meta property="og:description" content={currentDesc} />
       <meta property="og:url" content={canonicalUrl} />
       <meta property="og:type" content="website" />
+      {pageKey === "home" && (
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "LocalBusiness",
+            name: "Shine Limos",
+            telephone: "(202) 951-7172",
+            url: "https://shinelimosllc.com",
+            openingHours: "Mo-Su 00:00-23:59",
+            areaServed: ["Washington, DC", "Northern Virginia", "Maryland"],
+            aggregateRating: {
+              "@type": "AggregateRating",
+              ratingValue: "5.0",
+              reviewCount: "10",
+            },
+            sameAs: [
+              "https://www.instagram.com/shinelimos/",
+              "https://facebook.com/ShineLimosllc",
+              "https://www.tiktok.com/@shinelim0s",
+            ],
+          })}
+        </script>
+      )}
     </Helmet>
   );
 }

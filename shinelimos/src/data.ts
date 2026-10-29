@@ -216,7 +216,7 @@ export const SERVICES: Service[] = [
       "Real-time flight tracking & adjustment",
       "Meet & Greet service in the terminal",
       "Complimentary 60 minutes waiting time",
-      "Fixed, all-inclusive rates"
+      "Fixed rates — plus a 20% chauffeur gratuity, confirmed before you book"
     ],
     benefits: [
       { title: "Punctuality Guarantee", body: "We track your flight live so your airport pickup is always ready, regardless of delays." },
@@ -474,7 +474,7 @@ export const LOCATIONS: Location[] = [
   {
     slug: "dulles-airport",
     city: "Dulles Airport",
-    region: "Airport Transfers",
+    region: "Limo & Car Service",
     hero: "/location car/car.jpg.jpeg",
     intro:
       "Washington Dulles International Airport (IAD) is our most active transfer hub. With real-time flight tracking, meet & greet service, and complimentary wait time, we ensure your arrival and departure are seamless, every single time.",
@@ -482,7 +482,7 @@ export const LOCATIONS: Location[] = [
       "Real-time flight tracking & automatic adjustments",
       "Meet & greet in arrivals terminal",
       "Complimentary 60 minutes waiting time",
-      "Fixed all-inclusive rates — no surprises"
+      "Fixed rates — no surprises, plus a 20% chauffeur gratuity"
     ],
     landmarks: ["IAD Terminal A", "IAD Terminal B", "IAD Terminal C", "Dulles Toll Road", "Route 28 Corridor"],
     seoTitle: "Dulles Airport Limo & Black Car Service | ShineLimos",
@@ -492,7 +492,7 @@ export const LOCATIONS: Location[] = [
   {
     slug: "reagan-airport",
     city: "Reagan Airport",
-    region: "Airport Transfers",
+    region: "Limo & Car Service",
     hero: "/location car/reagan airport.webp",
     intro:
       "Reagan National Airport (DCA) serves the heart of the District and Northern Virginia. Our chauffeurs are stationed minutes away, ensuring rapid pickups and no-stress drop-offs for business and leisure travelers alike.",
@@ -510,7 +510,7 @@ export const LOCATIONS: Location[] = [
   {
     slug: "bwi-airport",
     city: "BWI Airport",
-    region: "Airport Transfers",
+    region: "Limo & Car Service",
     hero: "/location car/car.jpg.jpeg",
     intro:
       "Baltimore/Washington International Thurgood Marshall Airport (BWI) transfers made effortless. Whether you are traveling between Baltimore, Annapolis, Washington DC, or Northern Virginia, our chauffeurs provide prompt flight tracking, luggage assistance, and luxury curbside or terminal pickups.",
@@ -518,7 +518,7 @@ export const LOCATIONS: Location[] = [
       "Real-time BWI flight tracking & automatic adjustments",
       "Direct transfers between BWI, DC, Maryland & Northern Virginia",
       "Complimentary 60 minutes airport waiting time",
-      "Fixed all-inclusive rates with meet & greet available"
+      "Fixed rates with meet & greet available — plus a 20% chauffeur gratuity"
     ],
     landmarks: ["BWI Main Terminal", "Concourse A/B/C/D/E", "BWI Rail Station", "Arundel Mills", "Annapolis Corridor"],
     seoTitle: "BWI Airport (BWI) Limo & Car Service | Shine Limos",

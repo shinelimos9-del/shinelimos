@@ -418,7 +418,7 @@ export default function Home() {
               {[
                 { title: "Vetted, Suited Chauffeurs", body: "Background-checked, defensive-driving certified, and trained in the protocols of diplomatic and executive travel." },
                 { title: "Flight & Traffic Intelligence", body: "Our dispatch system monitors every flight and DC-area traffic incident in real time, adjusting your pickup automatically." },
-                { title: "All-Inclusive Pricing", body: "Tolls, gratuity, fuel surcharges and standard wait time — all included. The quote is the price." },
+                { title: "Transparent Pricing", body: "No surge pricing, no hidden fees — your rate plus a standard 20% chauffeur gratuity, confirmed before you book." },
                 { title: "Discretion Guaranteed", body: "NDAs available on request. Manifests, routes and passenger lists handled with absolute confidentiality." },
               ].map((f, i) => (
                 <Reveal key={f.title} delay={i * 100} variant="right">

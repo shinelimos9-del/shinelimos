@@ -128,7 +128,8 @@ export default function ServiceDetail() {
                     <ul className="space-y-3.5 text-sm text-white/70">
                       {[
                         "Dulles International Airport (IAD)",
-                        "Ronald Reagan Washington National Airport (DCA)"
+                        "Ronald Reagan Washington National Airport (DCA)",
+                        "Baltimore/Washington International Airport (BWI)"
                       ].map((airport) => (
                         <li key={airport} className="flex items-start gap-3">
                           <span className="w-2 h-2 rounded-full bg-white/50 mt-1.5 shrink-0" />
@@ -137,7 +138,7 @@ export default function ServiceDetail() {
                       ))}
                     </ul>
                     <div className="mt-8 p-4 glass-gold rounded-xl border border-white/5 text-[11px] text-white/80 leading-relaxed">
-                      <strong>Note:</strong> Real-time flight tracking & gate synchronization included with all Dulles and Ronald Reagan airport transfers.
+                      <strong>Note:</strong> Real-time flight tracking & gate synchronization included with all Dulles, Reagan National, and BWI airport transfers.
                     </div>
                   </div>
                 </Reveal>

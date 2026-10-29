@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, Navigate } from "react-router-dom";
 import { Users, Briefcase, Check, ArrowRight, ArrowLeft, Loader2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { FLEET } from "../data";
 import { GoldButton, GoldDivider } from "../components/ui";
@@ -137,6 +137,10 @@ export default function FleetDetail() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [slug]);
 
+  if (slug && slug !== cleanSlug) {
+    return <Navigate to={`/fleet/${cleanSlug}`} replace />;
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white/50">
@@ -160,7 +164,7 @@ export default function FleetDetail() {
 
   return (
     <div className="route-fade bg-black min-h-screen text-white">
-      <SEO pageKey="fleet" />
+      <SEO title={`${vehicle.name} | Shine Limos DC`} description={vehicle.blurb} />
 
       {/* ── HERO BREADCRUMB BAR ── */}
       <div
@@ -442,7 +446,7 @@ export default function FleetDetail() {
               </div>
 
               <div className="text-[11px] text-white/40 text-center leading-relaxed">
-                24/7 Professional Chauffeur Service. Real-time Flight tracking & all-inclusive pricing.
+                24/7 Professional Chauffeur Service. Real-time flight tracking & transparent pricing — rates plus 20% chauffeur gratuity.
               </div>
             </div>
           </div>

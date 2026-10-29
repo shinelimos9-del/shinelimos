@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Background from "./components/Background";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -60,7 +60,7 @@ function AppContent() {
             <Route path="/about" element={<About />} />
             <Route path="/fleet" element={<Fleet />} />
             <Route path="/fleet/:slug" element={<FleetDetail />} />
-            <Route path="/fleet/executive-sedan-" element={<FleetDetail />} />
+            <Route path="/fleet/executive-sedan-" element={<Navigate to="/fleet" replace />} />
             <Route path="/corporate" element={<Corporate />} />
             <Route path="/services" element={<Services />} />
             <Route path="/services/:slug" element={<ServiceDetail />} />
