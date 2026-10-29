@@ -36,6 +36,20 @@ export default function Fleet() {
     }
   };
 
+  // Fleet order, as requested: Sedan, then SUV, then S-Class, then Sprinter,
+  // with buses last (buses render separately as specialty vehicles below).
+  // The database returns vehicles in insertion order, so sort explicitly
+  // instead of relying on that order.
+  const fleetRank = (v: any) => {
+    const name = `${v.vehicle_name || ""} ${v.vehicle_class_name || ""}`.toLowerCase();
+    if (name.includes("s-class")) return 3;
+    if (name.includes("sedan")) return 1;
+    if (name.includes("suv")) return 2;
+    if (name.includes("sprinter")) return 4;
+    return 5;
+  };
+  const orderedVehicles = [...vehicles].sort((a, b) => fleetRank(a) - fleetRank(b));
+
   // Find specialty vehicles (Party Buses, Stretch Limos, 50-pax Coaches) from static data that are not in DB
   const specialtyVehicles = FLEET.filter((fv) => {
     const isSpecialty = fv.slug.includes("bus") || fv.slug.includes("coach") || fv.slug.includes("stretch");
@@ -81,7 +95,7 @@ export default function Fleet() {
         <SectionBackground image="/images/pexels-photo-9411658.webp" overlay="dark" parallax className="py-20 px-6">
           <div className="mx-auto max-w-7xl space-y-24">
             {/* Standard Fleet (Sedans, SUVs, Sprinters) */}
-            {vehicles.map((v, i) => (
+            {orderedVehicles.map((v, i) => (
               <div
                 key={v._id}
                 id={v.vehicle_name.toLowerCase().replace(/\s+/g, '-')}
