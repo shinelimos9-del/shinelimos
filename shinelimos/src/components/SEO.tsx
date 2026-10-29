@@ -17,7 +17,7 @@ export default function SEO({ pageKey, title, description, keywords }: SEOProps)
   const currentDesc = description || data?.description || "Premier luxury black car, limousine, and chauffeur service in Washington DC, Northern Virginia, and Maryland.";
   const currentKeywords = keywords || data?.keywords;
 
-  const canonicalUrl = `https://shinelimosllc.com${location.pathname === "/" ? "" : location.pathname}`;
+  const canonicalUrl = `https://shinelimos.com${location.pathname === "/" ? "" : location.pathname}`;
 
   return (
     <Helmet>
@@ -36,7 +36,7 @@ export default function SEO({ pageKey, title, description, keywords }: SEOProps)
             "@type": "LocalBusiness",
             name: "Shine Limos",
             telephone: "(202) 951-7172",
-            url: "https://shinelimosllc.com",
+            url: "https://shinelimos.com",
             openingHours: "Mo-Su 00:00-23:59",
             areaServed: ["Washington, DC", "Northern Virginia", "Maryland"],
             aggregateRating: {
