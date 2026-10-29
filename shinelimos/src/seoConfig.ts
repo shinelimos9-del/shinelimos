@@ -12,7 +12,7 @@ export const SEO_CONFIG: Record<string, SEOData> = {
   },
   "about": {
     title: "About Shine Limos | Premium Chauffeur Service in the DMV",
-    description: "Experienced chauffeurs, late-model fleet, and 100% on-time guarantee. Learn about our premier black car and limo service across DC, VA, and MD.",
+    description: "Experienced chauffeurs, late-model fleet, and on-time service. Learn about our premier black car and limo service across DC, VA, and MD.",
     keywords: "professional drivers, experienced team, customer satisfaction, luxury transportation company, safety standards"
   },
   "fleet": {
@@ -26,12 +26,12 @@ export const SEO_CONFIG: Record<string, SEOData> = {
     keywords: "corporate accounts, corporate limo service, direct billing chauffeur, affiliate chauffeur network, executive travel dc"
   },
   "services": {
-    title: "Chauffeur Airport Transfer | Private Luxury Taxi",
+    title: "Chauffeur & Limo Services in Washington DC | Shine Limos",
     description: "Luxury airport taxi, private luxury taxi, executive transportation service in Washington DC.",
     keywords: "luxury travel, point to point transportation, hourly transportation, business travel, vip service, professional chauffeur service"
   },
   "locations": {
-    title: "Premium Airport Transportation | Intercity Chauffeur Service",
+    title: "Service Areas | Washington DC, VA & MD Limo Service — Shine Limos",
     description: "Washington metro transportation, intercity chauffeur service, Virginia transportation company.",
     keywords: "service area, local transportation, regional transportation, city to city travel, coverage area, luxury rides, transportation solutions"
   },
@@ -42,7 +42,7 @@ export const SEO_CONFIG: Record<string, SEOData> = {
   },
   "booking": {
     title: "Book Your Chauffeur | Shine Limos LLC",
-    description: "Instant all-inclusive quotes and online limo reservation. Four short steps. Available 24/7.",
+    description: "Instant quotes and online limo reservation. Four short steps. Available 24/7.",
     keywords: "reservation confirmation, instant reservation, book limo online dc"
   },
   "faq": {
@@ -66,7 +66,7 @@ export const SEO_CONFIG: Record<string, SEOData> = {
     keywords: "privacy policy, data security"
   },
   "airport-limo-service": {
-    title: "Washington DC Airport Limo Service | Airport Executive Transfer",
+    title: "Airport Limo Service in Washington DC — DCA, IAD & BWI | Shine Limos",
     description: "DC airport limo service, luxury airport shuttle service, airport luxury transfers with flight tracking and meet & greet.",
     keywords: "airport pickup, flight tracking, dca airport transportation, luxury airport transfer, flight monitoring"
   },
@@ -96,7 +96,7 @@ export const SEO_CONFIG: Record<string, SEOData> = {
     keywords: "corporate transportation, executive shuttle, corporate shuttle service, corporate event transportation, executive mobility"
   },
   "luxury-car-rental": {
-    title: "Executive Car Rental | Premium Car Rental Service",
+    title: "Luxury Car Service with Chauffeur in Washington DC | Shine Limos",
     description: "Premium car rental service, luxury car hire, executive car hire.",
     keywords: "embassy transportation, executive travel, high end transportation, premium chauffeur service, elite transportation, first class transportation"
   },
@@ -116,12 +116,12 @@ export const SEO_CONFIG: Record<string, SEOData> = {
     keywords: "arlington airport transportation, hilton arlington airport shuttle"
   },
   "tysons-corner": {
-    title: "Luxury Car Rental Tysons Corner | Exotic Car Rental",
+    title: "Tysons Corner Limo & Black Car Service | Shine Limos",
     description: "Exotic car rental Tysons Corner, car rental near Tysons Corner VA, exotic car rental McLean VA.",
     keywords: "premium car hire, premium car rental, prestige vehicle rental, luxury transportation provider"
   },
   "fairfax-va": {
-    title: "Wedding Limo in Fairfax VA | Majestic Limousine Service",
+    title: "Fairfax VA Limo & Black Car Service | Shine Limos",
     description: "Majestic limousine service Fairfax VA, transportation from BWI to Fairfax VA, luxury car rental Fairfax VA.",
     keywords: "fairfax transportation, fairfax shuttle, fairfax to dulles airport, george mason university transportation"
   },
