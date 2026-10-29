@@ -16,6 +16,8 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5176',
   'https://shinelimosllc.com',
+  'https://shinelimos.com',
+  'https://www.shinelimos.com',
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:5175',
