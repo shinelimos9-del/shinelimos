@@ -65,7 +65,7 @@ export default function ServiceDetail() {
               <div className="glass rounded-2xl p-6 text-sm text-white/70 space-y-3">
                 <div className="flex items-center gap-1 text-white">
                   {[...Array(5)].map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-current" />)}
-                  <span className="ml-2 text-xs text-white/70 tracking-wider">5.0 · 1,200+ reviews</span>
+                  <span className="ml-2 text-xs text-white/70 tracking-wider">5.0 · Verified Google Reviews</span>
                 </div>
                 <p className="italic">"Faultless punctuality, total discretion. They've become our default."</p>
                 <div className="text-[11px] tracking-widest text-white/45 uppercase">— Senate Office</div>
