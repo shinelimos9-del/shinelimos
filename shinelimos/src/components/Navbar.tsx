@@ -147,6 +147,11 @@ export default function Navbar() {
                 Contact
               </NavLink>
             </li>
+            <li>
+              <a href="https://blog.shinelimosllc.com" target="_blank" rel="noopener noreferrer" className={navLinkBase}>
+                Blog
+              </a>
+            </li>
           </ul>
 
           {/* Right CTAs */}
@@ -264,6 +269,7 @@ function MobileNav() {
       </li>
       <li><NavLink to="/corporate" className={itemBase}>Corporate</NavLink></li>
       <li><NavLink to="/contact" className={itemBase}>Contact</NavLink></li>
+      <li><a href="https://blog.shinelimosllc.com" target="_blank" rel="noopener noreferrer" className={itemBase}>Blog</a></li>
     </ul>
   );
 }
