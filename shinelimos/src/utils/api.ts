@@ -126,8 +126,51 @@ export const deleteVehicle = async (id: string) => {
   return response.data;
 };
 
-export const getDashboardData = async () => {
-  const response = await api.get('/dashboard');
+export const getDashboardData = async (params?: { from?: string; to?: string }) => {
+  const response = await api.get('/dashboard', { params });
+  return response.data;
+};
+
+export const getBookingsReport = async (params?: { from?: string; to?: string; vehicle?: string; payment_status?: string; driver?: string; status?: string }) => {
+  const response = await api.get('/dashboard/report', { params });
+  return response.data;
+};
+
+export const exportBookingsCsv = async (params?: { from?: string; to?: string; vehicle?: string; payment_status?: string; driver?: string; status?: string }) => {
+  const response = await api.get('/dashboard/export.csv', { params, responseType: 'blob' });
+  const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `shine-limos-bookings-${params?.from || 'all'}-to-${params?.to || 'all'}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+};
+
+// Drivers (Phase 1: admin-managed, no driver login)
+export const getDrivers = async (activeOnly = false) => {
+  const response = await api.get('/drivers', { params: activeOnly ? { active: 'true' } : {} });
+  return response.data;
+};
+
+export const addDriver = async (driver: any) => {
+  const response = await api.post('/drivers', driver);
+  return response.data;
+};
+
+export const updateDriver = async (id: string, driver: any) => {
+  const response = await api.put(`/drivers/${encodeURIComponent(id)}`, driver);
+  return response.data;
+};
+
+export const deleteDriver = async (id: string) => {
+  const response = await api.delete(`/drivers/${encodeURIComponent(id)}`);
+  return response.data;
+};
+
+export const assignDriver = async (bookingId: string, driverId: string | null) => {
+  const response = await api.patch(`/bookings/${encodeURIComponent(bookingId)}/driver`, { driver_id: driverId });
   return response.data;
 };
 
