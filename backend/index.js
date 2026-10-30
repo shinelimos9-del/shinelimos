@@ -111,6 +111,8 @@ app.use('/api', require('./src/routes/booking.js'));
 app.use('/api', require('./src/routes/gnet.js'));
 // Dashboard routes
 app.use('/api', require('./src/routes/dashboard.js'));
+// Driver routes (Phase 1: admin-managed drivers)
+app.use('/api', require('./src/routes/drivers.js'));
 // Payment routes
 app.use('/api', require('./src/routes/payment.js'));
 
