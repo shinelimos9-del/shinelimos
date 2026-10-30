@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, Users, CheckSquare, DollarSign, Loader2, Bell, Send, FileText, X, Play, CheckCircle2, Trash2, Eye, Edit2 } from "lucide-react";
-import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide, deleteBooking } from "../../utils/api";
+import { getDashboardData, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide, deleteBooking, getDrivers, assignDriver, exportBookingsCsv } from "../../utils/api";
 import { calculateQuote, parseHours } from "../../utils/pricingEngine";
 import BookingDetailModal from "../../components/BookingDetailModal";
 
@@ -11,11 +11,18 @@ export default function AdminDashboard() {
   const [notifyingId, setNotifyingId] = useState<string | null>(null);
   const [startingRideId, setStartingRideId] = useState<string | null>(null);
   const [selectedDetailBooking, setSelectedDetailBooking] = useState<any | null>(null);
+  const [drivers, setDrivers] = useState<any[]>([]);
+  const [filterFrom, setFilterFrom] = useState("");
+  const [filterTo, setFilterTo] = useState("");
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 10000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    getDrivers().then((r: any) => { if (r.success) setDrivers(r.drivers || []); }).catch(() => {});
   }, []);
 
   // Final Invoice Modal State
@@ -196,11 +203,12 @@ export default function AdminDashboard() {
     }
   };
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (clearFilters?: string) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await getDashboardData();
+      const params = clearFilters === "" ? {} : { from: filterFrom || undefined, to: filterTo || undefined };
+      const response = await getDashboardData(params);
       if (response.success) {
         setData(response);
       } else {
@@ -215,6 +223,21 @@ export default function AdminDashboard() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAssignDriver = async (id: string, driverId: string | null) => {
+    try {
+      const response = await assignDriver(id, driverId);
+      if (response.success && response.booking) {
+        setSelectedDetailBooking(response.booking);
+        fetchDashboardData();
+      } else if (!response.success) {
+        alert(response.message || "Failed to assign driver");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error assigning driver");
     }
   };
 
@@ -310,7 +333,7 @@ export default function AdminDashboard() {
         <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl text-center max-w-md">
           <p className="text-red-400 mb-4">{error}</p>
           <button 
-            onClick={fetchDashboardData}
+            onClick={() => fetchDashboardData()}
             className="bg-white text-black px-6 py-2 rounded-xl text-sm font-medium hover:bg-white/90 transition-colors"
           >
             Try Again
@@ -329,12 +352,14 @@ export default function AdminDashboard() {
           <h1 className="text-2xl font-serif-lux text-white">Overview</h1>
           <p className="text-white text-sm mt-1">Welcome back, here's what's happening today.</p>
         </div>
-        <select className="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-4 py-2 focus:outline-none focus:border-white/20 appearance-none min-w-[120px]">
-          <option value="today" className="bg-[#111]">Today</option>
-          <option value="week" className="bg-[#111]">This Week</option>
-          <option value="month" className="bg-[#111]">This Month</option>
-          <option value="year" className="bg-[#111]">This Year</option>
-        </select>
+        <div className="flex flex-wrap items-center gap-2">
+          <input type="date" value={filterFrom} onChange={(e) => setFilterFrom(e.target.value)} className="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-3 py-2" aria-label="From date" />
+          <span className="text-white/50 text-sm">to</span>
+          <input type="date" value={filterTo} onChange={(e) => setFilterTo(e.target.value)} className="bg-white/5 border border-white/10 text-white text-sm rounded-lg px-3 py-2" aria-label="To date" />
+          <button onClick={() => fetchDashboardData()} className="bg-white text-black px-4 py-2 rounded-lg text-sm font-medium">Apply</button>
+          <button onClick={() => { setFilterFrom(""); setFilterTo(""); fetchDashboardData(""); }} className="bg-white/10 text-white px-4 py-2 rounded-lg text-sm">Clear</button>
+          <button onClick={() => exportBookingsCsv({ from: filterFrom || undefined, to: filterTo || undefined })} className="bg-gold text-black px-4 py-2 rounded-lg text-sm font-semibold">Export CSV</button>
+        </div>
       </div>
 
       {/* Top Stats Cards */}
@@ -1154,6 +1179,8 @@ export default function AdminDashboard() {
             handleDeleteBooking(id);
           }}
           startingRideId={startingRideId}
+          drivers={drivers}
+          onAssignDriver={(id, driverId) => handleAssignDriver(id, driverId)}
         />
       )}
     </div>

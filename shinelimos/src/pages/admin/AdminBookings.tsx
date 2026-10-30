@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Play, Trash2, Eye, Edit2 } from "lucide-react";
-import { getAllBookings, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide, deleteBooking } from "../../utils/api";
+import { getAllBookings, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide, deleteBooking, getDrivers, assignDriver } from "../../utils/api";
 import { calculateQuote, parseHours } from "../../utils/pricingEngine";
 import BookingDetailModal from "../../components/BookingDetailModal";
 import moment from "moment";
@@ -16,11 +16,16 @@ export default function AdminBookings() {
   const [notifyingArrival, setNotifyingArrival] = useState(false);
   const [startingRideId, setStartingRideId] = useState<string | null>(null);
   const [selectedDetailBooking, setSelectedDetailBooking] = useState<any | null>(null);
+  const [drivers, setDrivers] = useState<any[]>([]);
   const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 10000);
     return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    getDrivers().then((r: any) => { if (r.success) setDrivers(r.drivers || []); }).catch(() => {});
   }, []);
 
   // Final Invoice Modal State
@@ -66,6 +71,21 @@ export default function AdminBookings() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAssignDriver = async (id: string, driverId: string | null) => {
+    try {
+      const response = await assignDriver(id, driverId);
+      if (response.success && response.booking) {
+        setSelectedDetailBooking(response.booking);
+        fetchBookings();
+      } else if (!response.success) {
+        alert(response.message || "Failed to assign driver");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Error assigning driver");
     }
   };
 
@@ -1153,6 +1173,8 @@ export default function AdminBookings() {
             handleDeleteBooking(id);
           }}
           startingRideId={startingRideId}
+          drivers={drivers}
+          onAssignDriver={(id, driverId) => handleAssignDriver(id, driverId)}
         />
       )}
     </div>
