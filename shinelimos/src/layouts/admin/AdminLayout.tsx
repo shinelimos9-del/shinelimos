@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
-import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, CreditCard, CheckCircle, Loader2 } from "lucide-react";
+import { LayoutDashboard, CarFront, LogOut, Bell, Menu, X, CheckSquare, CreditCard, CheckCircle, Loader2, User } from "lucide-react";
 import { getAdminProfile, getNotifications, markNotificationsRead, logoutAdmin, ADMIN_BASE_URL } from "../../utils/api";
 import { io } from "socket.io-client";
 import toast, { Toaster } from "react-hot-toast";
@@ -225,6 +225,8 @@ export default function AdminLayout() {
     { name: "Overview", path: "/admin-dashboard", icon: <LayoutDashboard size={18} /> },
     { name: "Vehicle", path: "/admin-dashboard/vehicles", icon: <CarFront size={18} /> },
     { name: "Booking", path: "/admin-dashboard/bookings", icon: <CheckSquare size={18} /> },
+    { name: "Drivers", path: "/admin-dashboard/drivers", icon: <User size={18} /> },
+    { name: "Notifications", path: "/admin-dashboard/notifications", icon: <Bell size={18} /> },
   ];
 
   if (!authChecked) {
