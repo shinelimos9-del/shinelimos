@@ -89,6 +89,20 @@ exports.update_bookingStatus = async (req, res) => {
 	}
 };
 
+exports.assign_driver = async (req, res) => {
+	try {
+		const { id } = req.params;
+		if (!id) return res.status(400).json({ success: false, message: "Booking ID is required" });
+		// driver_id may be null/empty to unassign.
+		const result = await bookingService.assignDriverToBooking(id, req.body ? req.body.driver_id : null);
+		if (!result.success) return res.status(400).json(result);
+		return res.status(200).json(result);
+	} catch (error) {
+		console.log("assign_driver controller error:", error);
+		return res.status(500).json({ success: false, message: "Internal server error" });
+	}
+};
+
 exports.delete_booking = async (req, res) => {
 	try {
 		const { id } = req.params;
