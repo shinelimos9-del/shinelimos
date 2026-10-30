@@ -18,6 +18,10 @@ interface BookingDetailModalProps {
   onUpdateStatus?: (bookingId: string, status: string) => void;
   onDeleteBooking?: (bookingId: string) => void;
   startingRideId?: string | null;
+  // Phase 1 driver assignment (supplied by admin pages; optional so the
+  // modal still works anywhere it is rendered without driver support).
+  drivers?: any[];
+  onAssignDriver?: (bookingId: string, driverId: string | null) => void;
 }
 
 export default function BookingDetailModal({
@@ -28,9 +32,12 @@ export default function BookingDetailModal({
   onOpenFinalModal,
   onUpdateStatus,
   onDeleteBooking,
-  startingRideId
+  startingRideId,
+  drivers,
+  onAssignDriver
 }: BookingDetailModalProps) {
   const [copiedId, setCopiedId] = useState(false);
+  const [assigningDriver, setAssigningDriver] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "customer" | "trip" | "pricing">("overview");
 
   if (!booking) return null;
@@ -498,6 +505,40 @@ export default function BookingDetailModal({
           {/* TAB 3: TRIP & VEHICLE DETAILS */}
           {(activeTab === "trip" || window.matchMedia("print").matches) && (
             <div className="space-y-6">
+              {/* Driver Assignment (Phase 1) */}
+              {onAssignDriver && (
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-3">
+                  <div className="flex items-center gap-2 text-gold border-b border-white/10 pb-3">
+                    <User size={20} />
+                    <h3 className="font-bold text-base text-white">Driver Assigned</h3>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <select
+                      value={booking.driver_details?.driver_id?._id || booking.driver_details?.driver_id || ""}
+                      disabled={assigningDriver}
+                      onChange={async (e) => {
+                        setAssigningDriver(true);
+                        try {
+                          await onAssignDriver(bookingId, e.target.value || null);
+                        } finally {
+                          setAssigningDriver(false);
+                        }
+                      }}
+                      className="flex-1 bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white"
+                    >
+                      <option value="">Unassigned</option>
+                      {(drivers || []).filter((d: any) => d.status === "active").map((d: any) => (
+                        <option key={d._id} value={d._id}>{d.name}{d.phone ? ` — ${d.phone}` : ""}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-xs text-white/50">
+                    {booking.driver_details?.driver_name
+                      ? `Currently assigned: ${booking.driver_details.driver_name}`
+                      : "No driver assigned yet. Register drivers under Drivers in the sidebar."}
+                  </p>
+                </div>
+              )}
               {/* Vehicle Section */}
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-5">
                 <div className="flex items-center gap-2 text-gold border-b border-white/10 pb-3">
