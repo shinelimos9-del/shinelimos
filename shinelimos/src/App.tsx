@@ -36,6 +36,7 @@ const AdminDashboard = React.lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminVehicles = React.lazy(() => import("./pages/admin/AdminVehicles"));
 const AdminBookings = React.lazy(() => import("./pages/admin/AdminBookings"));
 const AdminNotifications = React.lazy(() => import("./pages/admin/AdminNotifications"));
+const AdminDrivers = React.lazy(() => import("./pages/admin/AdminDrivers"));
 
 // Loading Fallback
 const PageLoader = () => (
@@ -86,6 +87,7 @@ function AppContent() {
               <Route index element={<AdminDashboard />} />
               <Route path="vehicles" element={<AdminVehicles />} />
               <Route path="bookings" element={<AdminBookings />} />
+              <Route path="drivers" element={<AdminDrivers />} />
               <Route path="notifications" element={<AdminNotifications />} />
               <Route path="*" element={<div className="text-white text-center py-20 text-xl font-light">Page under construction</div>} />
             </Route>

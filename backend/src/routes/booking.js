@@ -18,6 +18,9 @@ router.get("/bookings/today",admin_auth, bookingController.get_todayBookings);
 // Update booking status
 router.patch("/bookings/:id/status",admin_auth, bookingController.update_bookingStatus);
 
+// Assign (or unassign, driver_id: null) a driver to a booking
+router.patch("/bookings/:id/driver", admin_auth, bookingController.assign_driver);
+
 // Delete booking
 router.delete("/bookings/:id", admin_auth, bookingController.delete_booking);
 

@@ -159,8 +159,23 @@ const bookingSchema = new mongoose.Schema({
     }
   },
   special_requests: String,
+  // Assigned driver (Phase 1). driver_name is a snapshot kept on the
+  // booking so trip history survives a later driver rename/delete.
+  driver_details: {
+    driver_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "driver",
+      required: false,
+    },
+    driver_name: String,
+  },
+  // Real enum (Phase 1 fix): previously a free string, so any typo was
+  // silently accepted and broke dashboard counts. Existing non-enum
+  // values are mapped to "pending" by scripts/migrate-booking-status.js
+  // before this enum is enforced on writes.
   booking_status: {
     type: String,
+    enum: ["pending", "confirmed", "dispatched", "completed", "cancelled"],
     default: "pending",
   },
   payment_status: {
