@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Booking = require("../models/bookingModel");
+const Driver = require("../models/driverModel");
 const Vehicle = require("../models/vehiclesModels");
 const Admin = require("../models/adminModel");
 const moment = require("moment");
@@ -510,7 +511,7 @@ exports.createBooking = async (bookingData) => {
 
 exports.getAllBookings = async () => {
 	try {
-		const bookings = await Booking.find().populate("vehicle_details.vehicle_id");
+		const bookings = await Booking.find().populate("vehicle_details.vehicle_id").populate("driver_details.driver_id");
 		return { success: true, bookings };
 	} catch (error) {
 		console.log("getAllBookings error:", error);
@@ -554,17 +555,51 @@ exports.requestPayment = async (bookingId) => {
 	}
 };
 
+const BOOKING_STATUSES = ["pending", "confirmed", "dispatched", "completed", "cancelled"];
+
 exports.updateBookingStatus = async (id, status) => {
 	try {
+		if (!BOOKING_STATUSES.includes(status)) {
+			return { success: false, message: `Invalid booking status: ${status}. Expected one of: ${BOOKING_STATUSES.join(", ")}` };
+		}
 		const updated = await Booking.findByIdAndUpdate(
 			id,
 			{ booking_status: status, updated_at: Date.now() },
-			{ new: true }
+			{ new: true, runValidators: true }
 		);
 		if (!updated) return { success: false, message: "Booking not found" };
 		return { success: true, message: `Booking ${status} successfully`, booking: updated };
 	} catch (error) {
 		console.log("updateBookingStatus error:", error);
+		return { success: false, message: error.message || error };
+	}
+};
+
+// Phase 1: assign (or unassign, with driver_id: null) a driver to a booking.
+// Stores the driver's name as a snapshot on the booking so history is
+// preserved if the driver is later renamed or deleted.
+exports.assignDriverToBooking = async (id, driverId) => {
+	try {
+		if (!driverId) {
+			const updated = await Booking.findByIdAndUpdate(
+				id,
+				{ driver_details: { driver_id: null, driver_name: "" }, updated_at: Date.now() },
+				{ new: true }
+			);
+			if (!updated) return { success: false, message: "Booking not found" };
+			return { success: true, message: "Driver unassigned successfully", booking: updated };
+		}
+		const driver = await Driver.findById(driverId);
+		if (!driver) return { success: false, message: "Driver not found" };
+		const updated = await Booking.findByIdAndUpdate(
+			id,
+			{ driver_details: { driver_id: driver._id, driver_name: driver.name }, updated_at: Date.now() },
+			{ new: true }
+		);
+		if (!updated) return { success: false, message: "Booking not found" };
+		return { success: true, message: `Driver ${driver.name} assigned successfully`, booking: updated };
+	} catch (error) {
+		console.log("assignDriverToBooking error:", error);
 		return { success: false, message: error.message || error };
 	}
 };
