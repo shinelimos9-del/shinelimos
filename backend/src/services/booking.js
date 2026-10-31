@@ -6,6 +6,7 @@ const Admin = require("../models/adminModel");
 const moment = require("moment");
 const socketUtil = require("../../socket");
 const { sendEmail } = require("../utils/emailService");
+const { displayConfirmationCode } = require("../utils/confirmationCode");
 const pricingEngine = require("../utils/pricingEngine");
 
 const formatTimeWithAmPm = (timeStr) => {
@@ -403,11 +404,12 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 			const bookerEmail = updated.contact_details?.booker?.email;
 			const bookerName = `${updated.contact_details?.booker?.first_name || 'Valued'} ${updated.contact_details?.booker?.last_name || 'Customer'}`;
 			
+			const confirmationCode = displayConfirmationCode(updated);
 			if (bookerEmail) {
 				console.log(`[BOOKING] Sending initial booking confirmation email to booker: ${bookerEmail}`);
 				await sendEmail({
 					to: bookerEmail,
-					subject: `Reservation Request Received - Shine Limos (#${updated._id})`,
+					subject: `Reservation Request Received - Shine Limos (#${confirmationCode})`,
 					html: `
 						<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
 							<div style="text-align: center; margin-bottom: 30px;">
@@ -418,11 +420,11 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 							<h2 style="color: #000; text-align: center; font-size: 20px;">Reservation Request Received</h2>
 							
 							<p>Dear ${bookerName},</p>
-							<p>Thank you for choosing <strong>Shine Limos</strong>. We have successfully received your reservation request (<strong>#${updated._id}</strong>). Our dispatch team is reviewing your trip details and will send you a payment link shortly to finalize your reservation.</p>
+							<p>Thank you for choosing <strong>Shine Limos</strong>. We have successfully received your reservation request (<strong>#${confirmationCode}</strong>). Our dispatch team is reviewing your trip details and will send you a payment link shortly to finalize your reservation.</p>
 							
 							<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0; border: 1px solid #eee;">
 								<h3 style="margin-top: 0; font-size: 16px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Trip Summary</h3>
-								<p style="margin: 10px 0; font-size: 14px;"><strong>Booking Ref:</strong> #${updated._id}</p>
+								<p style="margin: 10px 0; font-size: 14px;"><strong>Booking Ref:</strong> #${confirmationCode}</p>
 								<p style="margin: 10px 0; font-size: 14px;"><strong>Vehicle Requested:</strong> ${updated.vehicle_details?.vehicle_name || 'N/A'}</p>
 								<p style="margin: 10px 0; font-size: 14px;"><strong>Pickup:</strong> ${updated.trip_details[0]?.pickup_location}</p>
 								<p style="margin: 10px 0; font-size: 14px;"><strong>Drop-off:</strong> ${updated.trip_details[0]?.dropoff_location}</p>
@@ -448,7 +450,7 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 				console.log(`[BOOKING] Sending new booking notification email to admin: ${adminEmail}`);
 				await sendEmail({
 					to: adminEmail,
-					subject: `🚨 New Reservation Request Received (#${updated._id})`,
+					subject: `🚨 New Reservation Request Received (#${confirmationCode})`,
 					html: `
 						<div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
 							<div style="text-align: center; margin-bottom: 20px;">
@@ -460,7 +462,7 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 							
 							<div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #eee;">
 								<h3 style="margin-top: 0; font-size: 16px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 10px;">Booking Details</h3>
-								<p style="margin: 8px 0; font-size: 14px;"><strong>Booking Ref:</strong> #${updated._id}</p>
+								<p style="margin: 8px 0; font-size: 14px;"><strong>Booking Ref:</strong> #${confirmationCode}</p>
 								<p style="margin: 8px 0; font-size: 14px;"><strong>Booker Name:</strong> ${bookerName}</p>
 								<p style="margin: 8px 0; font-size: 14px;"><strong>Booker Email:</strong> ${bookerEmail || 'N/A'}</p>
 								<p style="margin: 8px 0; font-size: 14px;"><strong>Phone:</strong> ${updated.contact_details?.booker?.primary_phone?.number || 'N/A'}</p>
@@ -645,7 +647,14 @@ exports.getCustomerBooking = async (bookingId, email) => {
 		// is ambiguous and returns "Booking not found" rather than guessing.
 		const cleanId = String(bookingId).trim().replace(/^#/, "");
 		let booking = null;
-		if (/^[0-9a-fA-F]{24}$/.test(cleanId)) {
+		// Phase 3 — the short confirmation code (e.g. "ZE34") is now the
+		// number customers see, so it resolves first, case-insensitively.
+		// The full-ObjectId and 8-char-suffix paths below stay as fallbacks
+		// for older bookings and links.
+		if (/^[A-HJ-NP-Z2-9]{4}$/i.test(cleanId)) {
+			booking = await Booking.findOne({ confirmation_code: cleanId.toUpperCase() }).exec();
+			if (!booking) return { success: false, message: "Booking not found." };
+		} else if (/^[0-9a-fA-F]{24}$/.test(cleanId)) {
 			booking = await Booking.findById(cleanId).exec();
 		} else if (/^[0-9a-fA-F]{8}$/.test(cleanId)) {
 			const matches = await Booking.aggregate([
@@ -671,6 +680,7 @@ exports.getCustomerBooking = async (bookingId, email) => {
 			success: true,
 			booking: {
 				booking_id: String(booking._id),
+				confirmation_code: booking.confirmation_code || null,
 				date: trip.date || null,
 				start_time: trip.start_time || "",
 				pickup_location: trip.pickup_location || "",

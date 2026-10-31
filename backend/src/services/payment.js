@@ -5,6 +5,11 @@ const Admin = require("../models/adminModel");
 const { sendEmail } = require("../utils/emailService");
 const moment = require("moment");
 const pricingEngine = require("../utils/pricingEngine");
+const { displayConfirmationCode, formatTripDateEastern } = require("../utils/confirmationCode");
+// NOTE: receiptPdf (pdfkit) is required lazily inside
+// sendFinalInvoicePaymentLink, not at module load, so a missing pdfkit
+// install degrades to "email without PDF attachment" instead of
+// breaking the payment service at startup.
 
 const formatTimeWithAmPm = (timeStr) => {
   if (!timeStr) return "";
@@ -117,7 +122,7 @@ exports.sendStripePaymentLink = async (bookingId) => {
           <p style="word-break: break-all; color: #888; font-size: 12px;">${session.url}</p>
           <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
           <p style="font-size: 14px;"><strong>Reservation Details:</strong></p>
-          <p><strong>Booking ID:</strong> #${booking._id}</p>
+          <p><strong>Booking ID:</strong> #${displayConfirmationCode(booking)}</p>
           <p><strong>Pickup:</strong> ${booking.trip_details[0].pickup_location}</p>
           <p><strong>Date/Time:</strong> ${moment(booking.trip_details[0].date).format("MMM DD, YYYY")} at ${formatTimeWithAmPm(booking.trip_details[0].start_time)}</p>
           <p style="font-size: 12px; color: #888; text-align: center; margin-top: 30px;">Shine Limos LLC - Premium Chauffeur Service</p>
@@ -634,7 +639,7 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `Final Invoice - Limo Reservation #${booking._id}`,
+              name: `Final Invoice - Limo Reservation #${displayConfirmationCode(booking)}`,
               description: `Vehicle: ${quote.vehicleName}. ${quote.breakdown.airportPickupFee > 0 ? 'Airport Meet & Greet Included.' : ''}`,
             },
             unit_amount: Math.round(finalGrandTotal * 100),
@@ -652,11 +657,28 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
       },
     });
 
+    // Phase 3 — build the PDF receipt once and attach it to every
+    // recipient's final invoice email. If PDF generation fails, the
+    // email still goes out (without the attachment) rather than
+    // blocking the payment request.
+    const confirmationCode = displayConfirmationCode(booking);
+    const tripDateEastern = formatTripDateEastern(tripSegment.date);
+    const vehicleImageUrl = (booking.vehicle_details && booking.vehicle_details.image) || null;
+    let receiptAttachments = [];
+    try {
+      const { buildReceiptPdf } = require("./receiptPdf");
+      const pdfBuffer = await buildReceiptPdf({ booking, quote, paymentUrl: session.url });
+      receiptAttachments = [{ filename: `Reservation_${confirmationCode}.pdf`, content: pdfBuffer, contentType: "application/pdf" }];
+    } catch (pdfError) {
+      console.error("Final invoice PDF generation failed, sending email without attachment:", pdfError.message);
+    }
+
     // Send Itemized Final Invoice Email
     for (const email of recipients) {
       await sendEmail({
         to: email,
-        subject: `Final Invoice & Payment Request - Shine Limos (#${booking._id})`,
+        subject: `Final Invoice & Payment Request - Shine Limos (#${confirmationCode})`,
+        attachments: receiptAttachments,
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 30px; border: 1px solid #e0e0e0; border-radius: 12px; background-color: #ffffff;">
             <div style="text-align: center; margin-bottom: 25px;">
@@ -666,14 +688,15 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
             </div>
 
             <p>Dear ${bookerName},</p>
-            <p>Thank you for traveling with Shine Limos. Below is your complete itemized final invoice for trip <strong>#${booking._id}</strong>.</p>
+            <p>Thank you for traveling with Shine Limos. Below is your complete itemized final invoice for trip <strong>#${confirmationCode}</strong>. A PDF copy of this receipt is attached.</p>
 
             <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #eee;">
               <h4 style="margin-top: 0; font-size: 15px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 8px;">Trip Details</h4>
+              ${vehicleImageUrl ? `<p style="text-align: center; margin: 0 0 12px;"><img src="${vehicleImageUrl}" alt="${quote.vehicleName}" style="max-width: 100%; height: auto; border-radius: 8px;" /></p>` : ''}
               <p style="margin: 6px 0; font-size: 13px;"><strong>Vehicle:</strong> ${quote.vehicleName}</p>
               <p style="margin: 6px 0; font-size: 13px;"><strong>Pickup Location:</strong> ${tripSegment.pickup_location || 'N/A'}</p>
               <p style="margin: 6px 0; font-size: 13px;"><strong>Drop-off Location:</strong> ${tripSegment.dropoff_location || 'N/A'}</p>
-              <p style="margin: 6px 0; font-size: 13px;"><strong>Date/Time:</strong> ${tripSegment.date} at ${tripSegment.start_time}</p>
+              <p style="margin: 6px 0; font-size: 13px;"><strong>Date/Time:</strong> ${tripDateEastern} at ${tripSegment.start_time}</p>
             </div>
 
             <div style="background-color: #1a1a1a; color: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
