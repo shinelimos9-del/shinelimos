@@ -576,14 +576,20 @@ exports.updateBookingStatus = async (id, status) => {
 };
 
 // Phase 1: assign (or unassign, with driver_id: null) a driver to a booking.
-// Stores the driver's name as a snapshot on the booking so history is
-// preserved if the driver is later renamed or deleted.
+// Stores the driver's name AND phone as snapshots on the booking so
+// history — and the customer-facing driver display — survives a later
+// driver rename, phone change or delete.
+// Phase 2: assigning also sets driver_status to "assigned" and emails
+// the driver their trip details (no price in that email, ever). The
+// email is best-effort: if the sender is not configured, assignment
+// still succeeds and the result says email_sent: false instead of
+// failing the whole assignment.
 exports.assignDriverToBooking = async (id, driverId) => {
 	try {
 		if (!driverId) {
 			const updated = await Booking.findByIdAndUpdate(
 				id,
-				{ driver_details: { driver_id: null, driver_name: "" }, updated_at: Date.now() },
+				{ driver_details: { driver_id: null, driver_name: "", driver_phone: "" }, driver_status: null, updated_at: Date.now() },
 				{ new: true }
 			);
 			if (!updated) return { success: false, message: "Booking not found" };
@@ -593,14 +599,65 @@ exports.assignDriverToBooking = async (id, driverId) => {
 		if (!driver) return { success: false, message: "Driver not found" };
 		const updated = await Booking.findByIdAndUpdate(
 			id,
-			{ driver_details: { driver_id: driver._id, driver_name: driver.name }, updated_at: Date.now() },
+			{ driver_details: { driver_id: driver._id, driver_name: driver.name, driver_phone: driver.phone }, driver_status: "assigned", updated_at: Date.now() },
 			{ new: true }
 		);
 		if (!updated) return { success: false, message: "Booking not found" };
-		return { success: true, message: `Driver ${driver.name} assigned successfully`, booking: updated };
+		let emailResult = { sent: false, reason: "Email not attempted." };
+		try {
+			const { sendDriverAssignmentEmail } = require("./driverPortal");
+			emailResult = await sendDriverAssignmentEmail(updated, driver);
+		} catch (emailError) {
+			console.error("Driver assignment email error:", emailError);
+			emailResult = { sent: false, reason: emailError.message || "Email sender error." };
+		}
+		return {
+			success: true,
+			message: `Driver ${driver.name} assigned successfully`,
+			booking: updated,
+			email_sent: emailResult.sent,
+			email_error: emailResult.sent ? undefined : emailResult.reason,
+		};
 	} catch (error) {
 		console.log("assignDriverToBooking error:", error);
 		return { success: false, message: error.message || error };
+	}
+};
+
+// Phase 2 — customer booking lookup. The customer enters their booking
+// ID (confirmation number) + the email they booked with; the email must
+// match the booker email on the booking, otherwise nothing is returned.
+// Returns trip + assigned driver name/phone only — no payment details,
+// no price breakdown. This is the customer-facing surface where the
+// assigned driver appears after assignment.
+exports.getCustomerBooking = async (bookingId, email) => {
+	try {
+		if (!bookingId || !email) return { success: false, message: "Booking ID and email are required." };
+		const booking = await Booking.findById(bookingId).exec();
+		if (!booking) return { success: false, message: "Booking not found." };
+		const bookerEmail = booking.contact_details && booking.contact_details.booker && booking.contact_details.booker.email;
+		if (!bookerEmail || String(bookerEmail).trim().toLowerCase() !== String(email).trim().toLowerCase()) {
+			return { success: false, message: "Booking not found." };
+		}
+		const trip = (booking.trip_details && booking.trip_details[0]) || {};
+		return {
+			success: true,
+			booking: {
+				booking_id: String(booking._id),
+				date: trip.date || null,
+				start_time: trip.start_time || "",
+				pickup_location: trip.pickup_location || "",
+				dropoff_location: trip.dropoff_location || "",
+				vehicle_name: (booking.vehicle_details && booking.vehicle_details.vehicle_name) || "",
+				booking_status: booking.booking_status || "pending",
+				driver_status: booking.driver_status || null,
+				driver_name: (booking.driver_details && booking.driver_details.driver_name) || "",
+				driver_phone: (booking.driver_details && booking.driver_details.driver_phone) || "",
+			},
+		};
+	} catch (error) {
+		console.log("getCustomerBooking error:", error);
+		return { success: false, message: error.message || "Internal server error" };
 	}
 };
 

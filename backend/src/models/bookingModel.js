@@ -168,6 +168,23 @@ const bookingSchema = new mongoose.Schema({
       required: false,
     },
     driver_name: String,
+    // Phase 2 snapshot of the driver's phone at assignment time, so the
+    // customer-facing booking view can show it even if the driver record
+    // is later edited or deleted.
+    driver_phone: String,
+  },
+  // Phase 2 driver trip progress, separate from booking_status so the
+  // admin pipeline (pending/confirmed/dispatched/completed/cancelled) is
+  // untouched. Set to "assigned" when a driver is assigned, cleared on
+  // unassign. Moves forward only: assigned -> on_the_way -> arrived ->
+  // completed. No new booking_status values were needed: completing a
+  // trip also sets booking_status to "completed", and going on the way
+  // sets it to "dispatched" — both pre-existing values, so no migration
+  // is required for existing bookings.
+  driver_status: {
+    type: String,
+    enum: ["assigned", "on_the_way", "arrived", "completed"],
+    required: false,
   },
   // Real enum (Phase 1 fix): previously a free string, so any typo was
   // silently accepted and broke dashboard counts. Existing non-enum

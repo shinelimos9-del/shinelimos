@@ -12,6 +12,12 @@ router.post("/bookings/request-payment", bookingController.request_payment);
 // Get all bookings
 router.get("/bookings",admin_auth, bookingController.get_allBookings);
 
+// Customer booking lookup (Phase 2): booking ID + booker email must
+// match. Public by design, but it returns trip + driver name/phone
+// only — no prices, no payment data. Must sit before any /bookings/:id
+// style route that could swallow it; it is a distinct path segment.
+router.get("/bookings/customer/:id", bookingController.get_customer_booking);
+
 // Get today's bookings
 router.get("/bookings/today",admin_auth, bookingController.get_todayBookings);
 

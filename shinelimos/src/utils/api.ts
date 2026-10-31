@@ -148,7 +148,42 @@ export const exportBookingsCsv = async (params?: { from?: string; to?: string; v
   window.URL.revokeObjectURL(url);
 };
 
-// Drivers (Phase 1: admin-managed, no driver login)
+// Drivers (Phase 1: admin-managed; Phase 2: driver portal login below)
+export const driverLogin = async (email: string, password: string) => {
+  const response = await axios.post(`${ADMIN_BASE_URL}/api/driver/login`, { email, password });
+  return response.data;
+};
+
+const driverApi = axios.create({
+  baseURL: API_BASE_URL,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+driverApi.interceptors.request.use(
+  (config) => {
+    const token = sessionStorage.getItem('driverToken') || localStorage.getItem('driverToken');
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+export const getDriverTrips = async () => {
+  const response = await driverApi.get('/driver/trips');
+  return response.data;
+};
+
+export const updateDriverTripStatus = async (bookingId: string, status: string) => {
+  const response = await driverApi.patch(`/driver/trips/${encodeURIComponent(bookingId)}/status`, { status });
+  return response.data;
+};
+
+// Customer booking lookup (Phase 2): booking ID + booker email must
+// match. Returns trip + assigned driver name/phone only — no prices.
+export const getCustomerBooking = async (bookingId: string, email: string) => {
+  const response = await axios.get(`${API_BASE_URL}/bookings/customer/${encodeURIComponent(bookingId)}`, { params: { email } });
+  return response.data;
+};
 export const getDrivers = async (activeOnly = false) => {
   const response = await api.get('/drivers', { params: activeOnly ? { active: 'true' } : {} });
   return response.data;

@@ -37,6 +37,9 @@ const AdminVehicles = React.lazy(() => import("./pages/admin/AdminVehicles"));
 const AdminBookings = React.lazy(() => import("./pages/admin/AdminBookings"));
 const AdminNotifications = React.lazy(() => import("./pages/admin/AdminNotifications"));
 const AdminDrivers = React.lazy(() => import("./pages/admin/AdminDrivers"));
+const DriverLogin = React.lazy(() => import("./pages/DriverLogin"));
+const DriverTrips = React.lazy(() => import("./pages/DriverTrips"));
+const MyBooking = React.lazy(() => import("./pages/MyBooking"));
 
 // Loading Fallback
 const PageLoader = () => (
@@ -47,7 +50,7 @@ const PageLoader = () => (
 
 function AppContent() {
   const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith("/admin") || location.pathname === "/forgot-password" || location.pathname === "/verify-otp" || location.pathname === "/reset-password";
+  const isAdminRoute = location.pathname.startsWith("/admin") || location.pathname.startsWith("/driver") || location.pathname === "/forgot-password" || location.pathname === "/verify-otp" || location.pathname === "/reset-password";
 
   return (
     <>
@@ -76,6 +79,13 @@ function AppContent() {
             <Route path="/cancellation-policy" element={<CancellationPolicy />} />
             <Route path="/faq" element={<Faq />} />
             
+            {/* Customer booking lookup (Phase 2) */}
+            <Route path="/my-booking" element={<MyBooking />} />
+
+            {/* Driver Portal Routes (Phase 2) */}
+            <Route path="/driver-login" element={<DriverLogin />} />
+            <Route path="/driver-trips" element={<DriverTrips />} />
+
             {/* Admin Auth Routes */}
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
