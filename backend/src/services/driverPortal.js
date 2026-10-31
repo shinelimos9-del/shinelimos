@@ -15,6 +15,7 @@ const jwt = require("jsonwebtoken");
 const Booking = require("../models/bookingModel");
 const Driver = require("../models/driverModel");
 const { sendEmail } = require("../utils/emailService");
+const { displayConfirmationCode, formatTripDateEastern } = require("../utils/confirmationCode");
 
 // Forward-only trip progress. Index order is the enforcement rule.
 const DRIVER_STATUS_ORDER = ["assigned", "on_the_way", "arrived", "completed"];
@@ -111,9 +112,78 @@ async function getMyTrip(driverId, bookingId) {
   return { success: true, trip: toDriverTrip(booking) };
 }
 
+// --- Customer status notifications (Phase 3.1) ------------------------
+// Before Phase 3.1, advanceTripStatus only saved the status: a customer
+// could only learn the driver was on the way / had arrived by opening
+// My Booking themselves, and Amjad found live that no notification ever
+// arrived. Now every forward move emails the customer. Email only, via
+// the existing sendEmail — no SMS, push, or new provider. The email
+// contains NO price, payment, or gratuity info.
+const STATUS_EMAIL_SUBJECTS = {
+  on_the_way: "Your chauffeur is on the way — Shine Limos",
+  arrived: "Your chauffeur has arrived — Shine Limos",
+  completed: "Your trip is complete — Shine Limos",
+};
+
+const STATUS_EMAIL_LINES = {
+  on_the_way: "Your chauffeur is on the way to your pickup location.",
+  arrived: "Your chauffeur has arrived at your pickup location.",
+  completed: "Your trip is complete. Thank you for traveling with Shine Limos.",
+};
+
+async function sendCustomerStatusEmail(booking, driver, nextStatus) {
+  const booker = (booking.contact_details && booking.contact_details.booker) || {};
+  const passenger = (booking.contact_details && booking.contact_details.passenger) || {};
+  // Same recipient pattern as the final-invoice email: booker + passenger,
+  // deduplicated. No recipients -> nothing to send, not an error.
+  const recipients = Array.from(new Set([booker.email, passenger.email].filter(Boolean)));
+  if (recipients.length === 0) {
+    console.error("driverPortal: no customer email on file for status notification");
+    return false;
+  }
+  const trip = (booking.trip_details && booking.trip_details[0]) || {};
+  const driverName = (driver && driver.name)
+    || (booking.driver_details && booking.driver_details.driver_name) || "Your chauffeur";
+  const driverPhone = (driver && driver.phone)
+    || (booking.driver_details && booking.driver_details.driver_phone) || "Not provided";
+  const code = displayConfirmationCode(booking);
+  const dateStr = formatTripDateEastern(trip.date) || "See booking";
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <h2 style="color: #111; text-align: center;">Shine Limos — Trip Update</h2>
+      <p>${STATUS_EMAIL_LINES[nextStatus]}</p>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 6px 0; font-weight: bold;">Confirmation:</td><td style="padding: 6px 0;">#${code}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Chauffeur:</td><td style="padding: 6px 0;">${driverName}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Chauffeur phone:</td><td style="padding: 6px 0;">${driverPhone}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Vehicle:</td><td style="padding: 6px 0;">${(booking.vehicle_details && booking.vehicle_details.vehicle_name) || ""}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Pickup:</td><td style="padding: 6px 0;">${trip.pickup_location || ""}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Drop-off:</td><td style="padding: 6px 0;">${trip.dropoff_location || ""}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Date:</td><td style="padding: 6px 0;">${dateStr}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Time:</td><td style="padding: 6px 0;">${trip.start_time || ""}</td></tr>
+      </table>
+      <p style="text-align: center; margin: 20px 0;"><a href="https://shinelimos.com/my-booking" style="display: inline-block; background-color: #111; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">View your trip</a></p>
+      <p style="font-size: 11px; color: #999; text-align: center;">&copy; ${new Date().getFullYear()} Shine Limos LLC. All rights reserved.</p>
+    </div>`;
+  let sentAny = false;
+  for (const email of recipients) {
+    try {
+      const result = await sendEmail({ to: email, subject: STATUS_EMAIL_SUBJECTS[nextStatus], html });
+      if (result && result.success !== false) sentAny = true;
+    } catch (error) {
+      console.error("driverPortal: customer status email failed:", error.message);
+    }
+  }
+  return sentAny;
+}
+
 // Driver advances their own trip, forward only. Completing a trip also
 // sets booking_status to "completed" (a pre-existing value); going on
 // the way sets it to "dispatched" (also pre-existing).
+// Phase 3.1: after the status save, the customer is emailed. A failed
+// send NEVER rolls back or fails the status update — it is logged and
+// reported as notification_sent: false, and the updated trip is still
+// returned with success: true.
 async function advanceTripStatus(driverId, bookingId, nextStatus) {
   if (!DRIVER_STATUS_ORDER.includes(nextStatus)) {
     return { success: false, message: `Invalid status. Expected one of: ${DRIVER_STATUS_ORDER.join(", ")}` };
@@ -132,7 +202,19 @@ async function advanceTripStatus(driverId, bookingId, nextStatus) {
   if (nextStatus === "completed") booking.booking_status = "completed";
   booking.updated_at = Date.now();
   await booking.save();
-  return { success: true, message: `Trip status updated to ${DRIVER_STATUS_LABELS[nextStatus]}.`, trip: toDriverTrip(booking) };
+  let notificationSent = false;
+  try {
+    const driver = await Driver.findById(driverId).exec();
+    notificationSent = await sendCustomerStatusEmail(booking, driver, nextStatus);
+  } catch (error) {
+    console.error("driverPortal: customer status notification failed, status update kept:", error.message);
+  }
+  return {
+    success: true,
+    message: `Trip status updated to ${DRIVER_STATUS_LABELS[nextStatus]}.`,
+    trip: toDriverTrip(booking),
+    notification_sent: notificationSent,
+  };
 }
 
 // --- Assignment email ---------------------------------------------------
@@ -208,4 +290,5 @@ module.exports = {
   getMyTrip,
   advanceTripStatus,
   sendDriverAssignmentEmail,
+  sendCustomerStatusEmail,
 };
