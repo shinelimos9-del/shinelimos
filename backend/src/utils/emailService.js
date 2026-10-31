@@ -35,7 +35,7 @@ const transporter = process.env.EMAIL_HOST
       },
     });
 
-exports.sendEmail = async ({ to, subject, html }) => {
+exports.sendEmail = async ({ to, subject, html, attachments }) => {
   try {
     const mailOptions = {
       from: `"Shine Limos" <${process.env.EMAIL_USER}>`,
@@ -43,6 +43,11 @@ exports.sendEmail = async ({ to, subject, html }) => {
       subject,
       html,
     };
+    // Phase 3 — optional Nodemailer attachments (e.g. the final-receipt
+    // PDF). Ignored when absent, so every existing caller is unchanged.
+    if (Array.isArray(attachments) && attachments.length > 0) {
+      mailOptions.attachments = attachments;
+    }
 
     const info = await transporter.sendMail(mailOptions);
     console.log("Email sent: " + info.response);

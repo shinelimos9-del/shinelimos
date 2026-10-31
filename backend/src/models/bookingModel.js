@@ -1,6 +1,20 @@
 const mongoose = require("mongoose");
+const { generateUniqueConfirmationCode } = require("../utils/confirmationCode");
 
 const bookingSchema = new mongoose.Schema({
+
+  // Phase 3 — short customer-facing confirmation code (e.g. "ZE34").
+  // The Mongo _id stays the internal key; customers only ever see this.
+  // Sparse so bookings created before Phase 3 (no code yet) don't
+  // collide on a null value; the backfill script fills those in.
+  confirmation_code: {
+    type: String,
+    unique: true,
+    sparse: true,
+    uppercase: true,
+    trim: true,
+    required: false,
+  },
 
   trip_details: [{
     date: {
@@ -247,6 +261,21 @@ const bookingSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+});
+
+// Phase 3 — every booking gets a short code at creation, no matter
+// which path created it (website quote flow, finalize, createBooking,
+// GNet farm-in). Only assigns when missing, so later saves are a no-op
+// and existing bookings are untouched until the backfill script runs.
+bookingSchema.pre("save", async function (next) {
+  try {
+    if (!this.confirmation_code) {
+      this.confirmation_code = await generateUniqueConfirmationCode(this.constructor);
+    }
+    next();
+  } catch (error) {
+    next(error);
+  }
 });
 
 const booking = mongoose.model("booking", bookingSchema);

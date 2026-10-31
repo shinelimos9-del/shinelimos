@@ -155,7 +155,7 @@ export default function BookingDetailModal({
                   className="flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white/80 px-2.5 py-1 rounded-md text-xs font-mono transition-colors border border-white/10 print:hidden"
                   title="Click to copy ID"
                 >
-                  <span>#{bookingId.slice(-8)}</span>
+                  <span>#{(booking as any).confirmation_code || bookingId.slice(-8)}</span>
                   {copiedId ? <Check size={12} className="text-green-400" /> : <Copy size={12} />}
                 </button>
               </div>
