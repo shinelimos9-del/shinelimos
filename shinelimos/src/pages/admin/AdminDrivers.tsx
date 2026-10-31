@@ -2,9 +2,12 @@ import { useState, useEffect } from "react";
 import { Plus, X, Trash2, Loader2, Edit2, User } from "lucide-react";
 import { getDrivers, addDriver, updateDriver, deleteDriver } from "../../utils/api";
 
-// Phase 1: admin-managed drivers. No driver login exists yet — the admin
-// creates drivers here and assigns them to bookings from the booking
-// detail view. Mirrors the AdminVehicles CRUD pattern.
+// Phase 1: admin-managed drivers, assigned from the booking detail view.
+// Phase 2: the admin also sets each driver's portal password here. The
+// driver then logs in at /driver-login with their email + this password
+// to see only their assigned trips (never any price). A blank password
+// on edit keeps the existing password; has_login shows whether a
+// password has ever been set for that driver.
 interface Driver {
   _id: string;
   name: string;
@@ -15,6 +18,7 @@ interface Driver {
   status: "active" | "inactive";
   notes?: string;
   photo?: string;
+  has_login?: boolean;
 }
 
 const EMPTY_FORM = {
@@ -26,6 +30,7 @@ const EMPTY_FORM = {
   status: "active" as "active" | "inactive",
   notes: "",
   photo: "",
+  password: "",
 };
 
 export default function AdminDrivers() {
@@ -74,6 +79,7 @@ export default function AdminDrivers() {
       status: driver.status || "active",
       notes: driver.notes || "",
       photo: driver.photo || "",
+      password: "",
     });
     setModalOpen(true);
   };
@@ -86,7 +92,9 @@ export default function AdminDrivers() {
     }
     try {
       setSubmitting(true);
-      const payload = { ...formData, license_expiry: formData.license_expiry || undefined };
+      // Blank password on edit = keep the existing password. On add, a
+      // blank password means the driver cannot log in yet.
+      const payload = { ...formData, license_expiry: formData.license_expiry || undefined, password: formData.password.trim() ? formData.password : undefined };
       const response = editingDriver
         ? await updateDriver(editingDriver._id, payload)
         : await addDriver(payload);
@@ -166,6 +174,9 @@ export default function AdminDrivers() {
                 <span className={`text-[11px] px-2 py-1 rounded-full border ${driver.status === "active" ? "bg-green-500/10 border-green-500/30 text-green-300" : "bg-white/5 border-white/10 text-white/60"}`}>
                   {driver.status}
                 </span>
+                <span className={`text-[11px] px-2 py-1 rounded-full border ${driver.has_login ? "bg-gold/10 border-gold/30 text-gold" : "bg-white/5 border-white/10 text-white/60"}`}>
+                  {driver.has_login ? "Login ready" : "No login password"}
+                </span>
               </div>
               <div className="mt-4 text-sm text-white/70 space-y-1">
                 <div>License: {driver.license_number}</div>
@@ -223,6 +234,11 @@ export default function AdminDrivers() {
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-white/60 mb-1">Driver portal password {editingDriver ? "(leave blank to keep existing)" : "(required for driver login)"}</label>
+                <input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} autoComplete="new-password" className="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2.5 text-white" />
+                <p className="text-[11px] text-white/40 mt-1">The driver logs in at /driver-login with their email and this password. Share it with the driver privately — it is stored as a hash and cannot be shown again.</p>
               </div>
               <div>
                 <label className="block text-xs uppercase tracking-wider text-white/60 mb-1">Photo URL (optional)</label>
