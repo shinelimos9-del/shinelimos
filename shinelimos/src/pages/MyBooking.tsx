@@ -61,13 +61,13 @@ export default function MyBooking() {
         <div className="text-center mb-8">
           <div className="text-[10px] tracking-[0.4em] text-white/50 uppercase mb-2 font-semibold">Shine Limos</div>
           <h1 className="font-serif-lux text-3xl text-white">My Booking</h1>
-          <p className="text-white/50 text-sm mt-2">Enter your confirmation number and booking email to see your trip and your assigned chauffeur. Use the short confirmation number from your booking (like f41c198c) or the full booking ID.</p>
+          <p className="text-white/50 text-sm mt-2">Enter your confirmation number and booking email to see your trip and your assigned chauffeur. Use the short confirmation number from your booking (like ZE34) — older bookings also work with the full booking ID.</p>
         </div>
 
         <form onSubmit={handleLookup} className="glass-dark rounded-3xl p-6 border border-white/10 space-y-4">
           <div>
             <label className="block text-[10px] uppercase tracking-widest text-white/60 mb-2">Confirmation number</label>
-            <input value={bookingId} onChange={(e) => setBookingId(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/40" placeholder="e.g. f41c198c" />
+            <input value={bookingId} onChange={(e) => setBookingId(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-white/40" placeholder="e.g. ZE34" />
           </div>
           <div>
             <label className="block text-[10px] uppercase tracking-widest text-white/60 mb-2">Booking email</label>
