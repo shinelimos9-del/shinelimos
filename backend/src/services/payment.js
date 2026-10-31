@@ -667,7 +667,9 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
     let receiptAttachments = [];
     try {
       const { buildReceiptPdf } = require("./receiptPdf");
-      const pdfBuffer = await buildReceiptPdf({ booking, quote, paymentUrl: session.url });
+      // Phase 3.1: the PDF carries no payment link (the email has the pay
+      // button) and no vehicle photo — logo header + trip details only.
+      const pdfBuffer = await buildReceiptPdf({ booking, quote });
       receiptAttachments = [{ filename: `Reservation_${confirmationCode}.pdf`, content: pdfBuffer, contentType: "application/pdf" }];
     } catch (pdfError) {
       console.error("Final invoice PDF generation failed, sending email without attachment:", pdfError.message);
