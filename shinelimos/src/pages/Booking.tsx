@@ -508,6 +508,9 @@ export default function Booking() {
             <p className="text-sm text-white/70 mt-4 leading-relaxed font-light">
               Your reservation request has been received. Our dispatch team will review your trip details and send you a payment link shortly. Your card will not be charged at this time — cards are charged 24 hours before scheduled pickup. Free cancellation up to 24 hours before pickup for Sedans and SUVs (7 days for Sprinter Vans and Specialty vehicles).
             </p>
+            <p className="text-sm text-white/70 mt-3">
+              Once a chauffeur is assigned, you can see their name and phone number on the <a href="/my-booking" className="text-gold underline">My Booking</a> page using this confirmation number and your booking email.
+            </p>
             <div className="mt-8 grid sm:grid-cols-2 gap-4 text-left text-sm">
               <Detail label="Vehicle" value={selectedVehicle?.vehicle_name || "Not selected"} />
               <Detail label="Estimated Total" value={selectedVehicle?.estimated_price ? `$${selectedVehicle.estimated_price}` : "Calculated at confirmation"} />
