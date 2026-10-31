@@ -156,12 +156,18 @@ async function sendDriverAssignmentEmail(booking, driver) {
   const passengerPhone = (passenger.primary_phone && passenger.primary_phone.number)
     || (booker.primary_phone && booker.primary_phone.number)
     || "Not provided";
-  const dateStr = trip.date ? new Date(trip.date).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" }) : "See booking";
+  // Phase 2.2: render the date in America/New_York. Without a timeZone,
+  // a UTC server formats an evening ET trip (e.g. Nov 2, 7 PM ET) as the
+  // next day (Nov 3). The stored trip date is untouched — display only.
+  // The same dateStr feeds the subject line, so it is fixed there too.
+  const dateStr = trip.date ? new Date(trip.date).toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "America/New_York" }) : "See booking";
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
       <h2 style="color: #111; text-align: center;">Shine Limos — New Trip Assigned</h2>
       <p>Hi ${driver.name},</p>
       <p>You have been assigned a trip. Please log in to your driver portal to view it and update your status as you go.</p>
+      <p style="text-align: center; margin: 20px 0;"><a href="https://shinelimos.com/driver-login" style="display: inline-block; background-color: #111; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">Log in to your driver portal</a></p>
+      <p style="font-size: 13px; color: #666; text-align: center;">Or paste this link into your browser: https://shinelimos.com/driver-login</p>
       <table style="width: 100%; border-collapse: collapse;">
         <tr><td style="padding: 6px 0; font-weight: bold;">Pickup:</td><td style="padding: 6px 0;">${trip.pickup_location || ""}</td></tr>
         <tr><td style="padding: 6px 0; font-weight: bold;">Drop-off:</td><td style="padding: 6px 0;">${trip.dropoff_location || ""}</td></tr>
