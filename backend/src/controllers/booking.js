@@ -103,6 +103,17 @@ exports.assign_driver = async (req, res) => {
 	}
 };
 
+exports.get_customer_booking = async (req, res) => {
+	try {
+		const result = await bookingService.getCustomerBooking(req.params.id, req.query ? req.query.email : undefined);
+		if (!result.success) return res.status(404).json(result);
+		return res.status(200).json(result);
+	} catch (error) {
+		console.log("get_customer_booking controller error:", error);
+		return res.status(500).json({ success: false, message: "Internal server error" });
+	}
+};
+
 exports.delete_booking = async (req, res) => {
 	try {
 		const { id } = req.params;
