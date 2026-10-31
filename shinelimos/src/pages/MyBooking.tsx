@@ -61,7 +61,7 @@ export default function MyBooking() {
         <div className="text-center mb-8">
           <div className="text-[10px] tracking-[0.4em] text-white/50 uppercase mb-2 font-semibold">Shine Limos</div>
           <h1 className="font-serif-lux text-3xl text-white">My Booking</h1>
-          <p className="text-white/50 text-sm mt-2">Enter your confirmation number and booking email to see your trip and your assigned chauffeur.</p>
+          <p className="text-white/50 text-sm mt-2">Enter your confirmation number and booking email to see your trip and your assigned chauffeur. Use the short confirmation number from your booking (like f41c198c) or the full booking ID.</p>
         </div>
 
         <form onSubmit={handleLookup} className="glass-dark rounded-3xl p-6 border border-white/10 space-y-4">

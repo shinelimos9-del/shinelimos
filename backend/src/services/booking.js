@@ -633,7 +633,34 @@ exports.assignDriverToBooking = async (id, driverId) => {
 exports.getCustomerBooking = async (bookingId, email) => {
 	try {
 		if (!bookingId || !email) return { success: false, message: "Booking ID and email are required." };
-		const booking = await Booking.findById(bookingId).exec();
+		// Phase 2.1 — accept the short confirmation code customers actually
+		// see. The admin UI displays #{bookingId.slice(-8)} (the LAST 8 hex
+		// chars of the Mongo ObjectId), and MyBooking's placeholder shows
+		// that short code — but findById() throws "Cast to ObjectId failed"
+		// for an 8-char string. So: a leading '#' and whitespace are
+		// stripped; a full 24-char ObjectId hex keeps the findById path;
+		// an 8-char hex suffix is resolved to the booking whose _id string
+		// ends with it (aggregation over _id only, never the whole
+		// collection into memory). A suffix matching more than one booking
+		// is ambiguous and returns "Booking not found" rather than guessing.
+		const cleanId = String(bookingId).trim().replace(/^#/, "");
+		let booking = null;
+		if (/^[0-9a-fA-F]{24}$/.test(cleanId)) {
+			booking = await Booking.findById(cleanId).exec();
+		} else if (/^[0-9a-fA-F]{8}$/.test(cleanId)) {
+			const matches = await Booking.aggregate([
+				{ $match: { $expr: { $regexMatch: { input: { $toString: "$_id" }, regex: cleanId + "$", options: "i" } } } },
+				{ $project: { _id: 1 } },
+				{ $limit: 2 },
+			]).exec();
+			if (matches && matches.length === 1) {
+				booking = await Booking.findById(matches[0]._id).exec();
+			} else {
+				return { success: false, message: "Booking not found." };
+			}
+		} else {
+			return { success: false, message: "Booking not found." };
+		}
 		if (!booking) return { success: false, message: "Booking not found." };
 		const bookerEmail = booking.contact_details && booking.contact_details.booker && booking.contact_details.booker.email;
 		if (!bookerEmail || String(bookerEmail).trim().toLowerCase() !== String(email).trim().toLowerCase()) {
@@ -657,7 +684,10 @@ exports.getCustomerBooking = async (bookingId, email) => {
 		};
 	} catch (error) {
 		console.log("getCustomerBooking error:", error);
-		return { success: false, message: error.message || "Internal server error" };
+		// Never leak a CastError / server message to the client: an invalid
+		// confirmation number is simply "not found".
+		if (error && error.name === "CastError") return { success: false, message: "Booking not found." };
+		return { success: false, message: "Booking not found." };
 	}
 };
 
