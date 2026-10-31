@@ -1,8 +1,11 @@
 const mongoose = require("mongoose");
 
-// Admin-managed driver (chauffeur) record. Phase 1 only: drivers do NOT
-// log in — there is no driver user type or driver portal yet. The admin
-// creates/maintains drivers here and assigns them to bookings.
+// Admin-managed driver (chauffeur) record. Phase 1: admin creates and
+// assigns drivers. Phase 2: a driver can log in to the driver portal
+// (see services/driverPortal.js) with their email + a password the admin
+// sets on this record. The password is stored ONLY as a bcrypt hash in
+// password_hash — never in plain text — and is never returned by the API.
+// A driver account is NOT an admin account and cannot reach admin routes.
 const driverSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -35,6 +38,12 @@ const driverSchema = new mongoose.Schema({
     default: "active",
   },
   notes: {
+    type: String,
+    default: "",
+  },
+  // Phase 2: bcrypt hash of the driver-portal password set by the admin.
+  // Empty = this driver cannot log in yet.
+  password_hash: {
     type: String,
     default: "",
   },
