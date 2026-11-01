@@ -48,6 +48,7 @@ export default function SEO({ pageKey, title, description, keywords }: SEOProps)
               "https://www.instagram.com/shinelimos/",
               "https://facebook.com/ShineLimosllc",
               "https://www.tiktok.com/@shinelim0s",
+              "https://www.linkedin.com/company/110145070",
             ],
           })}
         </script>
