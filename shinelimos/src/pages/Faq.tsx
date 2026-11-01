@@ -3,6 +3,7 @@ import Reveal from "../components/Reveal";
 import SectionBackground from "../components/SectionBackground";
 import { HelpCircle, Clock, ShieldCheck, Plane, Car, CreditCard, Briefcase, Users, Star, Heart, MapPin } from "lucide-react";
 import SEO from "../components/SEO";
+import { Helmet } from "react-helmet-async";
 
 export default function Faq() {
   const faqs = [
@@ -143,8 +144,26 @@ export default function Faq() {
     }
   ];
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+
   return (
     <div className="route-fade">
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify(faqSchema)}
+        </script>
+      </Helmet>
       <SEO pageKey="faq" />
       <PageHero
         image="/images/pexels-photo-5288741.webp"
