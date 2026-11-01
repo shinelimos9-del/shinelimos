@@ -7,6 +7,7 @@ import SectionBackground from "../components/SectionBackground";
 import TiltCard from "../components/TiltCard";
 import { Check, ArrowRight, Star } from "lucide-react";
 import SEO from "../components/SEO";
+import { Helmet } from "react-helmet-async";
 
 export default function ServiceDetail() {
   const { slug } = useParams();
@@ -16,9 +17,46 @@ export default function ServiceDetail() {
 
   if (!service) return <Navigate to="/services" replace />;
 
+  // GEO Phase G2: direct-answer rate text (approved partner rate sheet, 2026-10-21)
+  // plus 20% chauffeur gratuity. Only services with verified rates get a block;
+  // party-bus and luxury-car-rental are deliberately left without one.
+  const rateAnswers: Record<string, string> = {
+    "airport-limo-service":
+      "Airport transfers start at $85 for a sedan from Reagan National Airport (DCA), $99 from Dulles International Airport (IAD), and $125 from Baltimore/Washington International Airport (BWI). Luxury SUVs start at $115 from DCA, $135 from IAD, and $159 from BWI. Executive Sprinters start at $165 from DCA, $189 from IAD, and $215 from BWI. All rates are starting rates, plus 20% chauffeur gratuity, and vary by exact pickup and drop-off location.",
+    "wedding-limo-service":
+      "Wedding transportation starts at $89 per hour for a luxury sedan, $105 per hour for a luxury SUV, $115 per hour for a Premium SUV / Escalade, and $139 per hour for a Sprinter van. All rates are starting rates, plus 20% chauffeur gratuity.",
+    "black-car-service":
+      "Hourly chauffeur service starts at $75 per hour for a luxury sedan, $89 per hour for a Mercedes E-Class, $115 per hour for a Mercedes S-Class, $95 per hour for a luxury SUV, and $105 per hour for a Premium SUV / Escalade. Hourly minimums are 3 hours for sedan and SUV services. All rates are starting rates, plus 20% chauffeur gratuity.",
+    "suv-limo-service":
+      "SUV chauffeur service starts at $95 per hour for a luxury SUV and $105 per hour for a Premium SUV / Escalade. Hourly minimum is 3 hours. All rates are starting rates, plus 20% chauffeur gratuity.",
+    "sprinter-van-rental":
+      "Sprinter van chauffeur service starts at $125 per hour for an Executive Sprinter and $139 per hour for a Premium Sprinter. Hourly minimum is 4 hours. All rates are starting rates, plus 20% chauffeur gratuity.",
+  };
+
+  const serviceSchema = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: service.title,
+    description: service.short,
+    provider: {
+      "@type": "LocalBusiness",
+      name: "Shine Limos",
+      telephone: "(202) 951-7172",
+      url: "https://shinelimos.com",
+    },
+    areaServed: ["Washington, DC", "Northern Virginia", "Maryland"],
+    url: `https://shinelimos.com/services/${service.slug}`,
+  };
+
+
   return (
     <div className="route-fade">
       <SEO pageKey={service.slug} />
+      <Helmet>
+        <script type="application/ld+json">
+          {JSON.stringify(serviceSchema)}
+        </script>
+      </Helmet>
       <PageHero image={service.hero} eyebrow="Service" title={service.title} subtitle={service.short} />
 
       {/* Intro */}
@@ -29,6 +67,14 @@ export default function ServiceDetail() {
               <SectionHeading align="left" eyebrow="Overview" title={<>About <em className="text-white not-italic">{service.title}</em></>} />
               <p className="mt-6 text-white/70 leading-relaxed text-lg">{service.intro}</p>
             </Reveal>
+            {rateAnswers[service.slug] && (
+              <Reveal delay={60}>
+                <div className="mt-10 glass rounded-2xl p-6 border border-white/10">
+                  <h3 className="font-serif-lux text-2xl text-white mb-3">Rates at a glance</h3>
+                  <p className="text-white/75 leading-relaxed">{rateAnswers[service.slug]}</p>
+                </div>
+              </Reveal>
+            )}
 
             <Reveal delay={120}>
               <div className="mt-10">
