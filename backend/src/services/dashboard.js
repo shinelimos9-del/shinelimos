@@ -7,6 +7,17 @@ const moment = require("moment");
 // equal-length period — the old hardcoded "-0.03%" / "+6.08%" placeholders
 // are gone and must not come back.
 
+// A booking counts only once it has real content: a vehicle name or a
+// booker email, and is not a draft (PR 18/19 rule). Step-1 quote rows
+// carry empty nested subdocs, so existence checks alone do not hide them.
+const COMPLETED_BOOKING_FILTER = {
+    is_draft: { $ne: true },
+    $or: [
+        { "vehicle_details.vehicle_name": { $exists: true, $ne: "" } },
+        { "contact_details.booker.email": { $exists: true, $ne: "" } },
+    ],
+};
+
 function parseDateRange(query) {
     const from = query && query.from ? moment(query.from).startOf("day").toDate() : null;
     const to = query && query.to ? moment(query.to).endOf("day").toDate() : null;
@@ -29,6 +40,10 @@ function parseDateRange(query) {
     } else if (to) {
         prevMatch = { created_at: { $lt: moment(to).startOf("day").toDate() } };
     }
+    // Dashboard counts, trends, recent bookings and reports all share
+    // this match, so drafts are excluded from every dashboard number.
+    Object.assign(match, COMPLETED_BOOKING_FILTER);
+    if (prevMatch) Object.assign(prevMatch, COMPLETED_BOOKING_FILTER);
     return { match, prevMatch, from, to };
 }
 
@@ -70,9 +85,9 @@ exports.getDashboardStats = async (query = {}) => {
         } else {
             const startOfLastMonth = now.clone().subtract(1, "month").startOf("month").toDate();
             const endOfLastMonth = now.clone().subtract(1, "month").endOf("month").toDate();
-            const lastMonthBookings = await Booking.countDocuments({ created_at: { $gte: startOfLastMonth, $lte: endOfLastMonth } });
-            const lastMonthCustomers = (await Booking.distinct("contact_details.booker.email", { created_at: { $gte: startOfLastMonth, $lte: endOfLastMonth } })).length;
-            const lastMonthEarning = await sumEstimated({ created_at: { $gte: startOfLastMonth, $lte: endOfLastMonth } });
+            const lastMonthBookings = await Booking.countDocuments({ created_at: { $gte: startOfLastMonth, $lte: endOfLastMonth }, ...COMPLETED_BOOKING_FILTER });
+            const lastMonthCustomers = (await Booking.distinct("contact_details.booker.email", { created_at: { $gte: startOfLastMonth, $lte: endOfLastMonth }, ...COMPLETED_BOOKING_FILTER })).length;
+            const lastMonthEarning = await sumEstimated({ created_at: { $gte: startOfLastMonth, $lte: endOfLastMonth }, ...COMPLETED_BOOKING_FILTER });
             bookingTrend = trendPct(totalBookings, lastMonthBookings);
             customerTrend = trendPct(totalNewCustomers, lastMonthCustomers);
             earningTrend = trendPct(totalEarning, lastMonthEarning);
