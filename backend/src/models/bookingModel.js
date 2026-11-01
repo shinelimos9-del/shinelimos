@@ -209,6 +209,14 @@ const bookingSchema = new mongoose.Schema({
     enum: ["pending", "confirmed", "dispatched", "completed", "cancelled"],
     default: "pending",
   },
+
+  // Draft = quote started (step 1: trip only) but never finalized with a
+  // vehicle + contact (step 4). Drafts are real quote sessions, but they
+  // are NOT bookings and must never appear in admin booking lists.
+  is_draft: {
+    type: Boolean,
+    default: false,
+  },
   payment_status: {
     type: String,
     enum: ["pending", "requested", "completed", "failed"],

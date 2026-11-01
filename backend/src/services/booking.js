@@ -295,7 +295,7 @@ exports.initiateBooking = async (tripData) => {
 		}));
 
 		// 2. Save initial trip details
-		const booking = new Booking({ trip_details: processedTripData });
+		const booking = new Booking({ trip_details: processedTripData, is_draft: true });
 		const savedBooking = await booking.save();
 
 		// 3. Get total passengers and luggage from all segments
@@ -373,6 +373,7 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 			contact_details: contactDetails,
 			special_requests: specialRequests,
 			booking_status: "pending",
+			is_draft: false,
 			updated_at: Date.now()
 		};
 
@@ -513,7 +514,7 @@ exports.createBooking = async (bookingData) => {
 
 exports.getAllBookings = async () => {
 	try {
-		const bookings = await Booking.find().populate("vehicle_details.vehicle_id").populate("driver_details.driver_id");
+		const bookings = await Booking.find({ is_draft: { $ne: true }, $or: [{ vehicle_details: { $exists: true } }, { contact_details: { $exists: true } }] }).populate("vehicle_details.vehicle_id").populate("driver_details.driver_id");
 		return { success: true, bookings };
 	} catch (error) {
 		console.log("getAllBookings error:", error);
@@ -527,7 +528,9 @@ exports.getTodayBookings = async () => {
 		const todayEnd = moment().endOf('day').toDate();
 		
 		const bookings = await Booking.find({
-			created_at: { $gte: todayStart, $lte: todayEnd }
+			created_at: { $gte: todayStart, $lte: todayEnd },
+			is_draft: { $ne: true },
+			$or: [{ vehicle_details: { $exists: true } }, { contact_details: { $exists: true } }]
 		}).sort({ created_at: -1 });
 
 		return { success: true, bookings };
