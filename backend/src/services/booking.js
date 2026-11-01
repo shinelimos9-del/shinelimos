@@ -514,7 +514,7 @@ exports.createBooking = async (bookingData) => {
 
 exports.getAllBookings = async () => {
 	try {
-		const bookings = await Booking.find({ is_draft: { $ne: true }, $or: [{ vehicle_details: { $exists: true } }, { contact_details: { $exists: true } }] }).populate("vehicle_details.vehicle_id").populate("driver_details.driver_id");
+		const bookings = await Booking.find({ is_draft: { $ne: true }, $or: [{ "vehicle_details.vehicle_name": { $exists: true, $ne: "" } }, { "contact_details.booker.email": { $exists: true, $ne: "" } }] }).populate("vehicle_details.vehicle_id").populate("driver_details.driver_id");
 		return { success: true, bookings };
 	} catch (error) {
 		console.log("getAllBookings error:", error);
@@ -530,7 +530,7 @@ exports.getTodayBookings = async () => {
 		const bookings = await Booking.find({
 			created_at: { $gte: todayStart, $lte: todayEnd },
 			is_draft: { $ne: true },
-			$or: [{ vehicle_details: { $exists: true } }, { contact_details: { $exists: true } }]
+			$or: [{ "vehicle_details.vehicle_name": { $exists: true, $ne: "" } }, { "contact_details.booker.email": { $exists: true, $ne: "" } }]
 		}).sort({ created_at: -1 });
 
 		return { success: true, bookings };
