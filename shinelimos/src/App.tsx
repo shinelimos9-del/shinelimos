@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 import CallNowButton from "./components/CallNowButton";
+import WhatsAppButton from "./components/WhatsAppButton";
 
 import { HelmetProvider } from "react-helmet-async";
 import React, { Suspense } from "react";
@@ -109,6 +110,7 @@ function AppContent() {
 
       {!isAdminRoute && <Footer />}
       {!isAdminRoute && <CallNowButton />}
+      {!isAdminRoute && <WhatsAppButton />}
     </>
   );
 }
