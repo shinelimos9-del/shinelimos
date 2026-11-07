@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Search, ChevronLeft, ChevronRight, Loader2, Send, CheckCircle2, Clock, X, Bell, FileText, Play, Trash2, Eye, Edit2 } from "lucide-react";
-import { getAllBookings, updateBookingStatus, notifyVehicleArrival, sendFinalInvoice, startRide, deleteBooking, getDrivers, assignDriver } from "../../utils/api";
+import { getAllBookings, updateBookingStatus, rescheduleBooking, notifyVehicleArrival, sendFinalInvoice, startRide, deleteBooking, getDrivers, assignDriver } from "../../utils/api";
 import { calculateQuote, parseHours } from "../../utils/pricingEngine";
 import BookingDetailModal from "../../components/BookingDetailModal";
 import moment from "moment";
@@ -100,6 +100,25 @@ export default function AdminBookings() {
     } catch (error) {
       console.error(error);
       alert("Error updating status");
+    }
+  };
+
+  // Admin reschedule: change the date and/or time of the SAME booking.
+  // On success the list refreshes and the open modal is updated in place
+  // with the returned booking, so the new date/time shows immediately.
+  // The backend result (including notification_sent) is returned to the
+  // modal so it can show the customer-email outcome.
+  const handleRescheduleBooking = async (id: string, date: string, startTime: string) => {
+    try {
+      const response = await rescheduleBooking(id, date, startTime);
+      if (response.success) {
+        fetchBookings();
+        if (response.booking) setSelectedDetailBooking(response.booking);
+      }
+      return response;
+    } catch (error) {
+      console.error(error);
+      return { success: false, message: "Error rescheduling booking" };
     }
   };
 
@@ -1168,6 +1187,7 @@ export default function AdminBookings() {
             handleOpenFinalModal(b);
           }}
           onUpdateStatus={(id, status) => handleUpdateStatus(id, status)}
+          onRescheduleBooking={(id, date, startTime) => handleRescheduleBooking(id, date, startTime)}
           onDeleteBooking={(id) => {
             setSelectedDetailBooking(null);
             handleDeleteBooking(id);
