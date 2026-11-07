@@ -6,7 +6,7 @@ const Admin = require("../models/adminModel");
 const moment = require("moment");
 const socketUtil = require("../../socket");
 const { sendEmail } = require("../utils/emailService");
-const { displayConfirmationCode } = require("../utils/confirmationCode");
+const { displayConfirmationCode, formatTripDateEastern } = require("../utils/confirmationCode");
 const pricingEngine = require("../utils/pricingEngine");
 
 const formatTimeWithAmPm = (timeStr) => {
@@ -576,6 +576,129 @@ exports.updateBookingStatus = async (id, status) => {
 		return { success: true, message: `Booking ${status} successfully`, booking: updated };
 	} catch (error) {
 		console.log("updateBookingStatus error:", error);
+		return { success: false, message: error.message || error };
+	}
+};
+
+// Admin reschedule: change the date and/or time of the SAME booking.
+// A customer asks to move a trip; Amjad accepts; the admin edits the
+// date/time here instead of deleting and re-creating the booking.
+// Only trip_details[0].date and trip_details[0].start_time change —
+// price, vehicle, locations, driver assignment and booking_status are
+// untouched. The assigned driver sees the new date/time automatically:
+// the driver portal/app read this same record live via toDriverTrip()
+// (driverPortal.js), so there is no separate driver-side sync.
+// Completed or cancelled bookings cannot be rescheduled.
+// Customer email (booker + passenger, deduped, no price) follows the
+// Phase 3.1 pattern: a failed send never rolls back the save.
+function isValidCalendarDate(value) {
+	if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+	const [y, m, d] = value.split("-").map(Number);
+	const parsed = new Date(value);
+	return (
+		!isNaN(parsed.getTime()) &&
+		parsed.getUTCFullYear() === y &&
+		parsed.getUTCMonth() + 1 === m &&
+		parsed.getUTCDate() === d
+	);
+}
+
+// Accepts the two formats the booking form produces: 24h "14:30" (native
+// time input) or 12h "2:30 PM" (TimePicker). Returns the stored 12h
+// form ("2:30 PM"), or null when invalid.
+function normalizeStartTime(value) {
+	if (typeof value !== "string") return null;
+	const trimmed = value.trim();
+	const match24 = trimmed.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+	if (match24) return formatTimeWithAmPm(trimmed);
+	const match12 = trimmed.match(/^(1[0-2]|0?[1-9]):([0-5]\d)\s*(AM|PM)$/i);
+	if (match12) {
+		const h = parseInt(match12[1], 10);
+		return `${h}:${match12[2]} ${match12[3].toUpperCase()}`;
+	}
+	return null;
+}
+
+async function sendRescheduleEmail(booking, oldDateStr, oldTimeStr, newDateStr, newTimeStr) {
+	const booker = (booking.contact_details && booking.contact_details.booker) || {};
+	const passenger = (booking.contact_details && booking.contact_details.passenger) || {};
+	const recipients = Array.from(new Set([booker.email, passenger.email].filter(Boolean)));
+	if (recipients.length === 0) {
+		console.error("reschedule: no customer email on file for schedule notification");
+		return false;
+	}
+	const trip = (booking.trip_details && booking.trip_details[0]) || {};
+	const code = displayConfirmationCode(booking);
+	const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+      <h2 style="color: #111; text-align: center;">Shine Limos — Your Booking Has Been Rescheduled</h2>
+      <p>Hi ${[booker.first_name, booker.last_name].filter(Boolean).join(" ") || "there"},</p>
+      <p>Your booking has been moved to a new date and time, as requested. No action is needed from you.</p>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr><td style="padding: 6px 0; font-weight: bold;">Confirmation:</td><td style="padding: 6px 0;">#${code}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Previous date &amp; time:</td><td style="padding: 6px 0;">${oldDateStr} at ${oldTimeStr}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">New date &amp; time:</td><td style="padding: 6px 0;">${newDateStr} at ${newTimeStr}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Vehicle:</td><td style="padding: 6px 0;">${(booking.vehicle_details && booking.vehicle_details.vehicle_name) || ""}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Pickup:</td><td style="padding: 6px 0;">${trip.pickup_location || ""}</td></tr>
+        <tr><td style="padding: 6px 0; font-weight: bold;">Drop-off:</td><td style="padding: 6px 0;">${trip.dropoff_location || ""}</td></tr>
+      </table>
+      <p style="text-align: center; margin: 20px 0;"><a href="https://shinelimos.com/my-booking" style="display: inline-block; background-color: #111; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">View your trip</a></p>
+      <p>If this new time does not work for you, please reply to this email or call us at (202) 951-7172.</p>
+      <p style="font-size: 11px; color: #999; text-align: center;">&copy; ${new Date().getFullYear()} Shine Limos LLC. All rights reserved.</p>
+    </div>`;
+	let sentAny = false;
+	for (const email of recipients) {
+		try {
+			const result = await sendEmail({ to: email, subject: "Your Shine Limos booking has been rescheduled", html });
+			if (result && result.success !== false) sentAny = true;
+		} catch (error) {
+			console.error("reschedule: customer notification failed:", error.message);
+		}
+	}
+	return sentAny;
+}
+
+exports.updateBookingSchedule = async (id, date, startTime) => {
+	try {
+		if (!isValidCalendarDate(date)) {
+			return { success: false, message: "Invalid date. Expected a real date in YYYY-MM-DD format." };
+		}
+		const normalizedTime = normalizeStartTime(startTime);
+		if (!normalizedTime) {
+			return { success: false, message: "Invalid start time. Expected HH:MM (24-hour) or h:MM AM/PM." };
+		}
+		const booking = await Booking.findById(id);
+		if (!booking) return { success: false, message: "Booking not found" };
+		if (booking.booking_status === "completed" || booking.booking_status === "cancelled") {
+			return { success: false, message: `A ${booking.booking_status} booking cannot be rescheduled.` };
+		}
+		const trip = (booking.trip_details && booking.trip_details[0]) || null;
+		if (!trip) return { success: false, message: "Booking has no trip details to reschedule." };
+		const oldDateStr = formatTripDateEastern(trip.date);
+		const oldTimeStr = formatTimeWithAmPm(trip.start_time);
+		// Store the date exactly as the booking form does: Mongoose casts
+		// a YYYY-MM-DD string to a Date at UTC midnight, matching creation.
+		trip.date = new Date(date);
+		trip.start_time = normalizedTime;
+		booking.updated_at = Date.now();
+		const updated = await booking.save();
+		const newDateStr = formatTripDateEastern(updated.trip_details[0].date);
+		const newTimeStr = formatTimeWithAmPm(updated.trip_details[0].start_time);
+		let notificationSent = false;
+		try {
+			notificationSent = await sendRescheduleEmail(updated, oldDateStr, oldTimeStr, newDateStr, newTimeStr);
+		} catch (emailError) {
+			console.error("reschedule: customer notification failed, schedule update kept:", emailError.message);
+		}
+		return {
+			success: true,
+			message: "Booking rescheduled successfully",
+			booking: updated,
+			notification_sent: notificationSent,
+			notification_error: notificationSent ? undefined : "Customer email could not be sent.",
+		};
+	} catch (error) {
+		console.log("updateBookingSchedule error:", error);
 		return { success: false, message: error.message || error };
 	}
 };

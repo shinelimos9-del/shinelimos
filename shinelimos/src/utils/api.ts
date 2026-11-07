@@ -236,6 +236,13 @@ export const updateBookingStatus = async (id: string, status: string) => {
   return response.data;
 };
 
+// Admin reschedule: change the date and/or time of the SAME booking.
+// date is YYYY-MM-DD; startTime is the stored 12h form ("2:30 PM").
+export const rescheduleBooking = async (id: string, date: string, startTime: string) => {
+  const response = await api.patch(`/bookings/${encodeURIComponent(id)}/schedule`, { date, start_time: startTime });
+  return response.data;
+};
+
 export const deleteBooking = async (id: string) => {
   const response = await api.delete(`/bookings/${encodeURIComponent(id)}`);
   return response.data;
