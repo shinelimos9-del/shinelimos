@@ -3,11 +3,12 @@ import {
   X, User, Mail, Phone, Building, Car, Calendar, Plane, 
   Users, Luggage, DollarSign, CheckCircle2, Bell, Play, 
   FileText, Trash2, Printer, Copy, Check, ShieldCheck, Navigation, 
-  Info
+  Info, Pencil
 } from "lucide-react";
 import moment from "moment";
 import { FLEET } from "../data";
 import { ADMIN_BASE_URL } from "../utils/api";
+import TimePicker from "./TimePicker";
 
 interface BookingDetailModalProps {
   booking: any;
@@ -16,6 +17,10 @@ interface BookingDetailModalProps {
   onStartRide?: (bookingId: string) => void;
   onOpenFinalModal?: (booking: any) => void;
   onUpdateStatus?: (bookingId: string, status: string) => void;
+  // Admin reschedule: change the date and/or time of this SAME booking.
+  // Returns the backend result ({ success, message, booking,
+  // notification_sent }); the parent refreshes the list and the modal.
+  onRescheduleBooking?: (bookingId: string, date: string, startTime: string) => Promise<any>;
   onDeleteBooking?: (bookingId: string) => void;
   startingRideId?: string | null;
   // Phase 1 driver assignment (supplied by admin pages; optional so the
@@ -31,6 +36,7 @@ export default function BookingDetailModal({
   onStartRide,
   onOpenFinalModal,
   onUpdateStatus,
+  onRescheduleBooking,
   onDeleteBooking,
   startingRideId,
   drivers,
@@ -39,6 +45,53 @@ export default function BookingDetailModal({
   const [copiedId, setCopiedId] = useState(false);
   const [assigningDriver, setAssigningDriver] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "customer" | "trip" | "pricing">("overview");
+  // Admin reschedule state (date + time only, same booking).
+  const [editingSchedule, setEditingSchedule] = useState(false);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const [savingSchedule, setSavingSchedule] = useState(false);
+  const [scheduleError, setScheduleError] = useState("");
+  const [scheduleNote, setScheduleNote] = useState("");
+
+  // A completed or cancelled trip cannot be rescheduled (enforced on the
+  // backend too — this only hides the Edit control in the UI).
+  const isReschedulable = booking.booking_status !== "completed" && booking.booking_status !== "cancelled";
+
+  const startEditingSchedule = () => {
+    const trip = (booking.trip_details && booking.trip_details[0]) || {};
+    setEditDate(trip.date ? moment(trip.date).format("YYYY-MM-DD") : "");
+    setEditTime(trip.start_time || "");
+    setScheduleError("");
+    setScheduleNote("");
+    setEditingSchedule(true);
+  };
+
+  const handleSaveSchedule = async () => {
+    if (!editDate || !editTime) {
+      setScheduleError("Please choose both a date and a time.");
+      return;
+    }
+    if (!onRescheduleBooking) return;
+    setSavingSchedule(true);
+    setScheduleError("");
+    try {
+      const result = await onRescheduleBooking(bookingId, editDate, editTime);
+      if (result && result.success) {
+        setEditingSchedule(false);
+        setScheduleNote(
+          result.notification_sent === false
+            ? "Date & time updated. The customer email could not be sent — please contact the customer directly."
+            : "Date & time updated. The customer has been emailed the new date & time."
+        );
+      } else {
+        setScheduleError((result && result.message) || "Could not update the date & time.");
+      }
+    } catch (error) {
+      setScheduleError("Could not update the date & time. Please try again.");
+    } finally {
+      setSavingSchedule(false);
+    }
+  };
 
   if (!booking) return null;
 
@@ -277,14 +330,71 @@ export default function BookingDetailModal({
                 </div>
 
                 <div className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-1">
-                  <span className="text-[11px] text-white/50 uppercase tracking-wider font-semibold block">Service Date & Time</span>
-                  <div className="font-semibold text-white truncate flex items-center gap-2">
-                    <Calendar size={16} className="text-gold" />
-                    <span>
-                      {primaryTrip.date ? moment(primaryTrip.date).format("MMM DD, YYYY") : booking.date || "N/A"}
-                      {primaryTrip.start_time ? ` @ ${primaryTrip.start_time}` : ""}
-                    </span>
-                  </div>
+                  <span className="text-[11px] text-white/50 uppercase tracking-wider font-semibold flex items-center justify-between">
+                    Service Date &amp; Time
+                    {onRescheduleBooking && isReschedulable && !editingSchedule && (
+                      <button
+                        onClick={startEditingSchedule}
+                        className="flex items-center gap-1 text-gold hover:text-white text-[11px] font-semibold normal-case tracking-normal transition-colors print:hidden"
+                        title="Change the date or time of this booking"
+                      >
+                        <Pencil size={12} /> Edit
+                      </button>
+                    )}
+                  </span>
+                  {editingSchedule ? (
+                    <div className="space-y-2 pt-1 print:hidden">
+                      <input
+                        type="date"
+                        value={editDate}
+                        onChange={(e) => setEditDate(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-sm text-white"
+                      />
+                      <TimePicker
+                        value={editTime}
+                        onChange={(v) => setEditTime(v)}
+                        className="w-full bg-black/40 border border-white/10 rounded-lg px-2.5 py-2 text-sm text-white"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleSaveSchedule}
+                          disabled={savingSchedule}
+                          className="bg-gold text-black px-3 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 disabled:opacity-50 transition-all"
+                        >
+                          {savingSchedule ? "Saving..." : "Save"}
+                        </button>
+                        <button
+                          onClick={() => { setEditingSchedule(false); setScheduleError(""); }}
+                          disabled={savingSchedule}
+                          className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/10 text-white/70 hover:text-white hover:bg-white/10 transition-all"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                      {scheduleError && (
+                        <p className="text-xs text-red-400">{scheduleError}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <div className="font-semibold text-white truncate flex items-center gap-2">
+                        <Calendar size={16} className="text-gold" />
+                        <span>
+                          {primaryTrip.date ? moment(primaryTrip.date).format("MMM DD, YYYY") : booking.date || "N/A"}
+                          {primaryTrip.start_time ? ` @ ${primaryTrip.start_time}` : ""}
+                        </span>
+                      </div>
+                      {scheduleNote && (
+                        <p className="text-[11px] text-emerald-400">{scheduleNote}</p>
+                      )}
+                      {scheduleError && (
+                        <p className="text-[11px] text-red-400">{scheduleError}</p>
+                      )}
+                      {onRescheduleBooking && !isReschedulable && (
+                        <p className="text-[11px] text-white/40">A {booking.booking_status} booking cannot be rescheduled.</p>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 <div className="bg-white/5 border border-white/10 p-4 rounded-xl space-y-1">
