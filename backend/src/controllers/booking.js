@@ -89,6 +89,21 @@ exports.update_bookingStatus = async (req, res) => {
 	}
 };
 
+exports.update_bookingSchedule = async (req, res) => {
+	try {
+		const { id } = req.params;
+		const { date, start_time } = req.body || {};
+		if (!date || !start_time) return res.status(400).json({ success: false, message: "Date and start time are required" });
+
+		const result = await bookingService.updateBookingSchedule(id, date, start_time);
+		if (!result.success) return res.status(400).json(result);
+		return res.status(200).json(result);
+	} catch (error) {
+		console.log("update_bookingSchedule controller error:", error);
+		return res.status(500).json({ success: false, message: "Internal server error" });
+	}
+};
+
 exports.assign_driver = async (req, res) => {
 	try {
 		const { id } = req.params;

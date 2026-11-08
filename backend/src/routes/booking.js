@@ -24,6 +24,10 @@ router.get("/bookings/today",admin_auth, bookingController.get_todayBookings);
 // Update booking status
 router.patch("/bookings/:id/status",admin_auth, bookingController.update_bookingStatus);
 
+// Reschedule a booking (admin only): change the date and/or time of the
+// SAME booking. Completed/cancelled bookings are rejected in the service.
+router.patch("/bookings/:id/schedule",admin_auth, bookingController.update_bookingSchedule);
+
 // Assign (or unassign, driver_id: null) a driver to a booking
 router.patch("/bookings/:id/driver", admin_auth, bookingController.assign_driver);
 
