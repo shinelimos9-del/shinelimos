@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHero, GoldButton, GoldDivider } from "../components/ui";
 import SectionBackground from "../components/SectionBackground";
@@ -96,6 +96,12 @@ interface BookingData {
 export default function Booking() {
   const [params] = useSearchParams();
   const [step, setStep] = useState(0);
+  // True when the customer arrived from the homepage quick quote
+  // (?vehicle=<id>) and the quoted vehicle preselected — the booking
+  // jumps straight to Contact Info with a trip summary on top.
+  const [cameFromQuote, setCameFromQuote] = useState(false);
+  // Guards the quote-arrival auto-advance below so it runs exactly once.
+  const autoAdvanceTried = useRef(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -233,12 +239,28 @@ export default function Booking() {
 
         setBookingId(result.booking_id);
         setAvailableVehicles(result.available_vehicles || []);
+        // Keep a vehicle preselected from the URL (?vehicle=<id>, set
+        // by the homepage quick quote's "Book this car") when it is
+        // one of the priced vehicles — exactly as if the customer had
+        // clicked its card. A FLEET slug from the old booking widget
+        // never matches an _id, so the normal flow is unaffected.
+        // When a quoted vehicle preselects, jump straight to Contact
+        // Info (step 3) — trip and vehicle are already chosen, like
+        // Blacklane/Bookinglane — instead of re-confirming them.
+        const preselected = (result.available_vehicles || []).find(
+          (v: any) => v._id === data.vehicle_id
+        );
         setData((current) => ({
           ...current,
-          vehicle_id: "",
-          vehicle_details: null,
+          vehicle_id: preselected ? preselected._id : "",
+          vehicle_details: preselected || null,
         }));
-        setStep((s: number) => Math.min(STEPS.length - 1, s + 1));
+        if (preselected) {
+          setCameFromQuote(true);
+          setStep(STEPS.length - 1);
+        } else {
+          setStep((s: number) => Math.min(STEPS.length - 1, s + 1));
+        }
       } catch (err: any) {
         setError(err?.message || "Could not connect to the booking service.");
       } finally {
@@ -257,6 +279,19 @@ export default function Booking() {
     setError(null);
     setStep((s: number) => Math.min(STEPS.length - 1, s + 1));
   };
+
+  // Quote arrivals: if the URL carries a chosen vehicle and a complete
+  // trip, run step 0 once on mount so the customer lands straight on
+  // Contact Info (Blacklane/Bookinglane-style) instead of the prefilled
+  // trip form. On any failure the form stays put with the error.
+  useEffect(() => {
+    if (autoAdvanceTried.current) return;
+    const seg = data.segments[0];
+    if (!params.get("vehicle") || !seg?.pickup || !seg?.dropoff || !seg?.date || !seg?.time) return;
+    autoAdvanceTried.current = true;
+    void next();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   const prev = () => {
     setError(null);
@@ -565,17 +600,25 @@ export default function Booking() {
 
       <SectionBackground image={BG} overlay="dark" parallax className="py-16 px-6">
         <div className="mx-auto max-w-5xl">
-          {/* Step Indicator */}
+          {/* Step Indicator — current step highlighted, completed steps
+              checked; tap an earlier step to go back, never forward
+              past the furthest step reached. */}
           <div className="flex items-center justify-between mb-10 glass-dark rounded-full p-2">
             {STEPS.map((s, i) => (
               <button
                 key={s}
+                type="button"
                 onClick={() => i < step && setStep(i)}
+                disabled={i >= step}
                 className={`flex-1 px-1 sm:px-3 py-2.5 rounded-full text-[9px] sm:text-[11px] tracking-wider sm:tracking-[0.2em] uppercase transition-all ${
-                  i === step ? "bg-gold text-black font-semibold" : i < step ? "text-gold" : "text-white/40"
+                  i === step
+                    ? "bg-gold text-black font-semibold"
+                    : i < step
+                      ? "text-gold hover:bg-white/5 cursor-pointer"
+                      : "text-white/40 cursor-not-allowed"
                 }`}
               >
-                {i + 1}. <span className="hidden sm:inline">{s}</span><span className="sm:hidden">{s.split(' ')[0]}</span>
+                {i < step ? "✓ " : `${i + 1}. `}<span className="hidden sm:inline">{s}</span><span className="sm:hidden">{s.split(' ')[0]}</span>
               </button>
             ))}
           </div>
@@ -593,6 +636,13 @@ export default function Booking() {
               update("vehicle_details", vehicle);
             }} />}
             {step === 2 && <Step3Summary data={data} vehicle={selectedVehicle} />}
+            {step === 3 && cameFromQuote && selectedVehicle && (
+              <TripSummaryBar
+                data={data}
+                vehicle={selectedVehicle}
+                onEditTrip={() => setStep(0)}
+              />
+            )}
             {step === 3 && <Step4Contact data={data} update={update} />}
 
             {error && (
@@ -641,6 +691,40 @@ export default function Booking() {
       )}
 
       <GoldDivider />
+    </div>
+  );
+}
+
+// Compact trip + vehicle summary shown at the top of Contact Info
+// when the customer arrived from the homepage quick quote — the trip
+// and vehicle are already chosen, so this is their confirmation
+// (Bookinglane-style "Edit your search").
+function TripSummaryBar({ data, vehicle, onEditTrip }: { data: BookingData; vehicle: Vehicle; onEditTrip: () => void }) {
+  const seg = data.segments[0];
+  return (
+    <div className="mb-6 rounded-2xl border border-gold/30 bg-gold/5 p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-[10px] tracking-[0.25em] text-gold uppercase font-semibold">Your trip</div>
+          <div className="text-white text-sm sm:text-base mt-1 font-medium">
+            {seg?.pickup} → {seg?.dropoff}
+          </div>
+          <div className="text-white/60 text-xs sm:text-sm mt-1">
+            {seg?.date} · {seg?.time ? formatTimeWithAmPm(seg.time) : ""} · {data.pax} passenger{data.pax > 1 ? "s" : ""}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onEditTrip}
+          className="shrink-0 text-xs text-gold hover:text-white border border-gold/40 hover:border-gold rounded-full px-4 py-1.5 transition-all"
+        >
+          Edit trip
+        </button>
+      </div>
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between gap-3">
+        <span className="text-white/70 text-sm">{vehicle.vehicle_name}</span>
+        <span className="text-gold font-semibold font-mono">${vehicle.estimated_price}</span>
+      </div>
     </div>
   );
 }
@@ -1151,6 +1235,28 @@ function Step4Contact({ data, update }: { data: BookingData; update: (k: keyof B
 
   return (
     <>
+      {/* Who is riding — Bookinglane-style tabs, wired to the same
+          isPassenger state as before; fields and payload unchanged. */}
+      <div className="flex gap-1 mb-6 p-1 rounded-full bg-white/5 border border-white/10 w-full">
+        <button
+          type="button"
+          onClick={() => update("isPassenger", true)}
+          className={`flex-1 px-3 py-2.5 rounded-full text-[11px] sm:text-xs tracking-[0.12em] uppercase font-medium transition-all ${
+            data.isPassenger ? "bg-gold text-black" : "text-white/60 hover:text-white"
+          }`}
+        >
+          Book for myself
+        </button>
+        <button
+          type="button"
+          onClick={() => update("isPassenger", false)}
+          className={`flex-1 px-3 py-2.5 rounded-full text-[11px] sm:text-xs tracking-[0.12em] uppercase font-medium transition-all ${
+            !data.isPassenger ? "bg-gold text-black" : "text-white/60 hover:text-white"
+          }`}
+        >
+          For someone else
+        </button>
+      </div>
       <div className="text-[10px] tracking-[0.25em] text-gold uppercase py-3 px-5 rounded-t-2xl border border-white/10 border-b-0 bg-white/5 font-medium">Your Information</div>
       <div className="p-5 border border-white/10 rounded-b-2xl bg-white/5 border-t-0 space-y-6">
         <div className="grid gap-5 md:grid-cols-2">
@@ -1215,26 +1321,6 @@ function Step4Contact({ data, update }: { data: BookingData; update: (k: keyof B
               </div>
             </div>
           </Field>
-        </div>
-
-        <div>
-          <span className="text-[10px] tracking-[0.25em] uppercase text-white/55 mb-2 block">Are you also the passenger?</span>
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={() => update("isPassenger", true)}
-              className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${data.isPassenger ? "bg-[#337ab7] text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}
-            >
-              ✓ Yes
-            </button>
-            <button
-              type="button"
-              onClick={() => update("isPassenger", false)}
-              className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${!data.isPassenger ? "bg-[#337ab7] text-white" : "bg-white/5 text-white/60 hover:bg-white/10"}`}
-            >
-              ✕ No
-            </button>
-          </div>
         </div>
 
         {!data.isPassenger && (
