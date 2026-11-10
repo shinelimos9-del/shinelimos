@@ -40,6 +40,24 @@ exports.create_newBooking = async (req, res) => {
 	}
 };
 
+exports.get_quote = async (req, res) => {
+	try {
+		const tripDetails = req.body ? req.body.trip_details : undefined;
+		if (!tripDetails) return res.status(400).json({ success: false, message: "trip_details are required" });
+
+		// Quote-only: same trip processing + pricing as a booking, but
+		// no Booking row is created and no email is sent. Public by
+		// design — the homepage quick quote needs prices before any
+		// contact details exist.
+		const result = await bookingService.getQuote(tripDetails);
+		if (!result.success) return res.status(400).json(result);
+		return res.status(200).json(result);
+	} catch (error) {
+		console.log("get_quote controller error:", error);
+		return res.status(500).json({ success: false, message: "Internal server error" });
+	}
+};
+
 exports.request_payment = async (req, res) => {
 	try {
 		const { booking_id } = req.body;
