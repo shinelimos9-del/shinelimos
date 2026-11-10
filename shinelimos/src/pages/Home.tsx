@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useRef, useState, useEffect } from "react";
-import { ArrowRight, Plane, Heart, Briefcase, Crown, Wine, Star, MapPin, X } from "lucide-react";
+import { ArrowRight, Plane, Heart, Briefcase, Crown, Wine, Star, MapPin } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { SectionHeading, GoldButton, GlassCard, GoldDivider } from "../components/ui";
@@ -11,7 +11,7 @@ import Parallax from "../components/Parallax";
 import SectionBackground from "../components/SectionBackground";
 import { getVehicles } from "../utils/api";
 
-const BookingWidget = React.lazy(() => import("../components/BookingWidget"));
+const QuickQuote = React.lazy(() => import("../components/QuickQuote"));
 const Carousel = React.lazy(() => import("../components/Carousel"));
 const FleetCarousel3D = React.lazy(() => import("../components/FleetCarousel3D"));
 import { SERVICES, LOCATIONS, TESTIMONIALS, COMPANY } from "../data";
@@ -83,11 +83,14 @@ gsap.registerPlugin(useGSAP);
 
 export default function Home() {
   const heroRef = useRef<HTMLElement>(null);
-  const [showBooking, setShowBooking] = useState(false);
   const [vehicles, setVehicles] = useState<any[]>([]);
 
   const fleetRef = useRef<HTMLDivElement>(null);
   const [videoLoaded, setVideoLoaded] = useState(false);
+
+  const scrollToQuote = () => {
+    document.getElementById("quick-quote")?.scrollIntoView({ behavior: "smooth" });
+  };
 
   useEffect(() => {
     // Defer video loading to let LCP text paint first
@@ -165,27 +168,6 @@ export default function Home() {
   return (
     <div className="route-fade bg-black text-white">
       <SEO pageKey="home" />
-      {/* Booking Widget Modal */}
-      {showBooking && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="relative w-full max-w-2xl bg-zinc-950 border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl shadow-white/5 max-h-[90vh] overflow-y-auto no-scrollbar">
-            <button
-              onClick={() => setShowBooking(false)}
-              className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors cursor-pointer p-2 rounded-full hover:bg-white/5"
-            >
-              <X className="h-6 w-6" />
-            </button>
-            <div className="text-center mb-6">
-              <span className="text-[10px] tracking-[0.4em] text-white/90 uppercase font-orbitron font-bold">Book Your Luxury Chauffeur</span>
-              <div className="text-2xl font-serif-lux text-white mt-1">Instant Reservation</div>
-            </div>
-            <Suspense fallback={<div className="h-40 animate-pulse bg-white/5 rounded-xl"></div>}>
-              <BookingWidget compact />
-            </Suspense>
-          </div>
-        </div>
-      )}
-
       {/* HERO */}
       <section ref={heroRef} className="relative min-h-screen flex items-center pt-20 pb-16 sm:pt-24 sm:pb-20 overflow-hidden bg-[#111111]">
         {/* Background Video */}
@@ -242,6 +224,13 @@ export default function Home() {
 
 
 
+          </div>
+
+          {/* Quick quote — inline in the hero, visible on load */}
+          <div id="quick-quote" className="w-full max-w-xl xl:w-[480px] xl:shrink-0 relative z-10 scroll-mt-28" data-home-fade>
+            <Suspense fallback={<div className="h-96 animate-pulse bg-white/5 rounded-3xl"></div>}>
+              <QuickQuote />
+            </Suspense>
           </div>
 
         </div>
@@ -570,7 +559,7 @@ export default function Home() {
                 Book in 60 seconds. Available 24/7. Trusted by ambassadors, executives and discerning travelers across the DMV.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-4">
-                <GoldButton to="/booking">Quote & Book <ArrowRight className="h-4 w-4" /></GoldButton>
+                <GoldButton onClick={scrollToQuote}>Quote & Book <ArrowRight className="h-4 w-4" /></GoldButton>
                 <GoldButton href={`tel:${COMPANY.phoneRaw}`} variant="outline">
                   Call {COMPANY.phone}
                 </GoldButton>
