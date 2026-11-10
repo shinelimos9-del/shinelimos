@@ -26,9 +26,9 @@ export default function ServiceDetail() {
     "wedding-limo-service":
       "Wedding transportation starts at $89 per hour for a luxury sedan, $105 per hour for a luxury SUV, $115 per hour for a Premium SUV / Escalade, and $139 per hour for a Sprinter van. All rates are starting rates, plus 20% chauffeur gratuity.",
     "black-car-service":
-      "Hourly chauffeur service starts at $75 per hour for a luxury sedan, $89 per hour for a Mercedes E-Class, $115 per hour for a Mercedes S-Class, $95 per hour for a luxury SUV, and $105 per hour for a Premium SUV / Escalade. Hourly minimums are 3 hours for sedan and SUV services. All rates are starting rates, plus 20% chauffeur gratuity.",
+      "Hourly chauffeur service starts at $75 per hour for a luxury sedan, $89 per hour for a Mercedes E-Class, $115 per hour for a Mercedes S-Class, $95 per hour for a luxury SUV, and $105 per hour for a Premium SUV / Escalade. Hourly minimums are 2 hours for sedan and SUV services. All rates are starting rates, plus 20% chauffeur gratuity.",
     "suv-limo-service":
-      "SUV chauffeur service starts at $95 per hour for a luxury SUV and $105 per hour for a Premium SUV / Escalade. Hourly minimum is 3 hours. All rates are starting rates, plus 20% chauffeur gratuity.",
+      "SUV chauffeur service starts at $95 per hour for a luxury SUV and $105 per hour for a Premium SUV / Escalade. Hourly minimum is 2 hours. All rates are starting rates, plus 20% chauffeur gratuity.",
     "sprinter-van-rental":
       "Sprinter van chauffeur service starts at $125 per hour for an Executive Sprinter and $139 per hour for a Premium Sprinter. Hourly minimum is 4 hours. All rates are starting rates, plus 20% chauffeur gratuity.",
   };

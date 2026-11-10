@@ -119,7 +119,7 @@ export default function Corporate() {
                   <div className="text-xs text-white/70 space-y-1 mb-4">
                     <div>Sedans from <strong>$75/hr</strong> · SUVs from <strong>$95/hr</strong></div>
                     <div>S-Class from <strong>$115/hr</strong> · Sprinters from <strong>$125/hr</strong></div>
-                    <div className="text-[10px] text-white/50">(3-hour minimum; airport transfers from $99 IAD — rates plus 20% chauffeur gratuity)</div>
+                    <div className="text-[10px] text-white/50">(2-hour minimum for cars, 4-hour minimum for Sprinters; airport transfers from $99 IAD — rates plus 20% chauffeur gratuity)</div>
                   </div>
                   <div className="text-xs text-white/80">
                     Direct Contact: <a href="tel:+12029517172" className="text-gold font-bold hover:underline">(202) 951-7172</a>
