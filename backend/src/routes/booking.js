@@ -6,6 +6,11 @@ const admin_auth = require("../../middleware/user_auth");
 // Create booking
 router.post("/bookings", bookingController.create_newBooking);
 
+// Quote-only (public): same trip processing + pricing as a booking,
+// but creates no Booking row and sends no email. Powers the homepage
+// quick quote. Must sit before any /bookings/:id style route.
+router.post("/bookings/quote", bookingController.get_quote);
+
 // Request payment
 router.post("/bookings/request-payment", bookingController.request_payment);
 
