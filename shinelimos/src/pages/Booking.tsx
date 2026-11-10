@@ -233,11 +233,21 @@ export default function Booking() {
 
         setBookingId(result.booking_id);
         setAvailableVehicles(result.available_vehicles || []);
-        setData((current) => ({
-          ...current,
-          vehicle_id: "",
-          vehicle_details: null,
-        }));
+        // Keep a vehicle preselected from the URL (?vehicle=<id>, set
+        // by the homepage quick quote's "Book this car") when it is
+        // one of the priced vehicles — exactly as if the customer had
+        // clicked its card. A FLEET slug from the old booking widget
+        // never matches an _id, so the normal flow is unaffected.
+        setData((current) => {
+          const preselected = (result.available_vehicles || []).find(
+            (v: any) => v._id === current.vehicle_id
+          );
+          return {
+            ...current,
+            vehicle_id: preselected ? preselected._id : "",
+            vehicle_details: preselected || null,
+          };
+        });
         setStep((s: number) => Math.min(STEPS.length - 1, s + 1));
       } catch (err: any) {
         setError(err?.message || "Could not connect to the booking service.");
