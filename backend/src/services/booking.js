@@ -235,125 +235,158 @@ const getRoadDistanceMapbox = async (waypoints) => {
 	}
 };
 
-exports.initiateBooking = async (tripData) => {
-	try {
-		if (!Array.isArray(tripData) || tripData.length === 0) {
-			return { success: false, message: "Trip details are required" };
+// Shared trip validation for initiateBooking and the quote-only
+// endpoint: same trip shape, same rules (trip details are required;
+// an hourly duration cannot exceed 12 hours). Returns an error
+// message string, or null when the trip data is valid.
+const validateTripData = (tripData) => {
+	if (!Array.isArray(tripData) || tripData.length === 0) {
+		return "Trip details are required";
+	}
+
+	for (const segment of tripData) {
+		const durationHours = parseDurationToHours(segment.duration);
+		if (durationHours > 12) {
+			return "Hourly duration cannot exceed 12 hours";
 		}
+	}
 
-		for (const segment of tripData) {
-			const durationHours = parseDurationToHours(segment.duration);
-			if (durationHours > 12) {
-				return { success: false, message: "Hourly duration cannot exceed 12 hours" };
-			}
-		}
+	return null;
+};
 
-		// 1. Process trip data with accurate Mapbox distance calculation
-		const processedTripData = await Promise.all(tripData.map(async (segment) => {
-			// Get coordinates for pickup
-			const pickupCoords = await getCoordsFromAddressMapbox(segment.pickup_location, segment.pickup_details);
+// Shared trip processing: geocode pickup/drop-off (+ stops) with
+// Mapbox and measure the multi-stop road distance. Read-only work on
+// the request data — it writes nothing to the database.
+const processTripSegments = async (tripData) => {
+// 1. Process trip data with accurate Mapbox distance calculation
+	return await Promise.all(tripData.map(async (segment) => {
+		// Get coordinates for pickup
+		const pickupCoords = await getCoordsFromAddressMapbox(segment.pickup_location, segment.pickup_details);
 
-			// Geocode intermediate stops if present
-			const rawStops = Array.isArray(segment.stops) ? segment.stops : [];
-			const processedStops = await Promise.all(rawStops.map(async (stop) => {
-				const stopLocation = typeof stop === 'string' ? stop : (stop.location || stop.address || "");
-				const stopDetails = typeof stop === 'object' ? (stop.details || {}) : {};
-				const stopCoords = await getCoordsFromAddressMapbox(stopLocation, stopDetails);
-				return {
-					location: stopLocation,
-					details: {
-						...stopDetails,
-						latitude: stopCoords ? stopCoords.lat : 0,
-						longitude: stopCoords ? stopCoords.lng : 0
-					},
-					coords: stopCoords
-				};
-			}));
-
-			// Get coordinates for dropoff
-			const dropoffCoords = await getCoordsFromAddressMapbox(segment.dropoff_location, segment.dropoff_details);
-
-			// Calculate multi-stop road distance
-			const waypoints = [pickupCoords, ...processedStops.map(s => s.coords), dropoffCoords].filter(Boolean);
-			const distance = await getRoadDistanceMapbox(waypoints);
-
+		// Geocode intermediate stops if present
+		const rawStops = Array.isArray(segment.stops) ? segment.stops : [];
+		const processedStops = await Promise.all(rawStops.map(async (stop) => {
+			const stopLocation = typeof stop === 'string' ? stop : (stop.location || stop.address || "");
+			const stopDetails = typeof stop === 'object' ? (stop.details || {}) : {};
+			const stopCoords = await getCoordsFromAddressMapbox(stopLocation, stopDetails);
 			return {
-				...segment,
-				pickup_details: {
-					...segment.pickup_details,
-					latitude: pickupCoords ? pickupCoords.lat : 0,
-					longitude: pickupCoords ? pickupCoords.lng : 0
+				location: stopLocation,
+				details: {
+					...stopDetails,
+					latitude: stopCoords ? stopCoords.lat : 0,
+					longitude: stopCoords ? stopCoords.lng : 0
 				},
-				stops: processedStops.map(s => ({ location: s.location, details: s.details })),
-				dropoff_details: {
-					...segment.dropoff_details,
-					latitude: dropoffCoords ? dropoffCoords.lat : 0,
-					longitude: dropoffCoords ? dropoffCoords.lng : 0
-				},
-				distance_miles: distance
+				coords: stopCoords
 			};
 		}));
+
+		// Get coordinates for dropoff
+		const dropoffCoords = await getCoordsFromAddressMapbox(segment.dropoff_location, segment.dropoff_details);
+
+		// Calculate multi-stop road distance
+		const waypoints = [pickupCoords, ...processedStops.map(s => s.coords), dropoffCoords].filter(Boolean);
+		const distance = await getRoadDistanceMapbox(waypoints);
+
+		return {
+			...segment,
+			pickup_details: {
+				...segment.pickup_details,
+				latitude: pickupCoords ? pickupCoords.lat : 0,
+				longitude: pickupCoords ? pickupCoords.lng : 0
+			},
+			stops: processedStops.map(s => ({ location: s.location, details: s.details })),
+			dropoff_details: {
+				...segment.dropoff_details,
+				latitude: dropoffCoords ? dropoffCoords.lat : 0,
+				longitude: dropoffCoords ? dropoffCoords.lng : 0
+			},
+			distance_miles: distance
+		};
+	}));
+
+	
+};
+
+// Shared vehicle pricing: filter the fleet by passenger/luggage
+// capacity and price every suitable vehicle with the Instant Quote
+// Pricing Engine (pricingEngine.calculateQuote). The quote and the
+// booking run this same code, so quote prices always match booking
+// prices exactly (same rates + 20% gratuity).
+const priceTripVehicles = async (processedTripData) => {
+// 3. Get total passengers and luggage from all segments
+	let totalPass = 0;
+	let totalLuggage = 0;
+	processedTripData.forEach(segment => {
+		totalPass = Math.max(totalPass, parseInt(segment.total_passengers || 0));
+		totalLuggage = Math.max(totalLuggage, parseInt(segment.total_luggage || 0));
+	});
+
+	// Find suitable vehicles
+	const vehicles = await Vehicle.find({});
+	const suitableVehicles = vehicles.filter(v => 
+		parseInt(v.passenger_capacity) >= totalPass &&
+		parseInt(v.luggage_capacity) >= totalLuggage
+	);
+
+	// Calculate pricing for each vehicle using Instant Quote Pricing Engine
+	const vehiclesWithPrice = await Promise.all(suitableVehicles.map(async (vehicle) => {
+		let totalPrice = 0;
+		let lastQuote = null;
+
+		for (const segment of processedTripData) {
+			const durationHours = parseDurationToHours(segment.duration);
+			const durationMinutes = parseDurationToMinutes(segment.duration);
+			const distanceMiles = segment.distance_miles || 0;
+
+			const quote = pricingEngine.calculateQuote({
+				vehicle: vehicle,
+				bookingType: segment.trip_type,
+				distanceMiles: distanceMiles,
+				durationMinutes: durationMinutes,
+				durationHours: durationHours,
+				pickupLocation: segment.pickup_location,
+				pickupTime: segment.start_time,
+				pickupDate: segment.date,
+				flightInfo: segment.flight_details,
+				occasion: segment.occasion,
+				additionalStopsCount: (Array.isArray(segment.stops) ? segment.stops.length : 0) + (processedTripData.length > 1 ? processedTripData.length - 1 : 0),
+			});
+
+			lastQuote = quote;
+			totalPrice += quote.breakdown.grandTotal;
+		}
+
+		const finalEstimatedPrice = pricingEngine.round2(totalPrice).toFixed(2);
+		console.log(`[Pricing Engine] Total Estimated Price for ${vehicle.vehicle_name}: $${finalEstimatedPrice}`);
+
+		return {
+			_id: vehicle._id,
+			vehicle_name: vehicle.vehicle_name,
+			image: vehicle.image,
+			passenger_capacity: vehicle.passenger_capacity,
+			luggage_capacity: vehicle.luggage_capacity,
+			estimated_price: finalEstimatedPrice,
+			price_breakdown: lastQuote ? lastQuote.breakdown : null
+		};
+	}));
+
+	return vehiclesWithPrice;
+};
+
+exports.initiateBooking = async (tripData) => {
+	try {
+		const validationError = validateTripData(tripData);
+		if (validationError) return { success: false, message: validationError };
+
+		// 1. Process trip data with accurate Mapbox distance calculation
+		const processedTripData = await processTripSegments(tripData);
 
 		// 2. Save initial trip details
 		const booking = new Booking({ trip_details: processedTripData, is_draft: true });
 		const savedBooking = await booking.save();
 
-		// 3. Get total passengers and luggage from all segments
-		let totalPass = 0;
-		let totalLuggage = 0;
-		processedTripData.forEach(segment => {
-			totalPass = Math.max(totalPass, parseInt(segment.total_passengers || 0));
-			totalLuggage = Math.max(totalLuggage, parseInt(segment.total_luggage || 0));
-		});
-
-		// 4. Find suitable vehicles
-		const vehicles = await Vehicle.find({});
-		const suitableVehicles = vehicles.filter(v => 
-			parseInt(v.passenger_capacity) >= totalPass &&
-			parseInt(v.luggage_capacity) >= totalLuggage
-		);
-
-		// 5. Calculate pricing for each vehicle using Instant Quote Pricing Engine
-		const vehiclesWithPrice = await Promise.all(suitableVehicles.map(async (vehicle) => {
-			let totalPrice = 0;
-			let lastQuote = null;
-
-			for (const segment of processedTripData) {
-				const durationHours = parseDurationToHours(segment.duration);
-				const durationMinutes = parseDurationToMinutes(segment.duration);
-				const distanceMiles = segment.distance_miles || 0;
-
-				const quote = pricingEngine.calculateQuote({
-					vehicle: vehicle,
-					bookingType: segment.trip_type,
-					distanceMiles: distanceMiles,
-					durationMinutes: durationMinutes,
-					durationHours: durationHours,
-					pickupLocation: segment.pickup_location,
-					pickupTime: segment.start_time,
-					pickupDate: segment.date,
-					flightInfo: segment.flight_details,
-					occasion: segment.occasion,
-					additionalStopsCount: (Array.isArray(segment.stops) ? segment.stops.length : 0) + (processedTripData.length > 1 ? processedTripData.length - 1 : 0),
-				});
-
-				lastQuote = quote;
-				totalPrice += quote.breakdown.grandTotal;
-			}
-
-			const finalEstimatedPrice = pricingEngine.round2(totalPrice).toFixed(2);
-			console.log(`[Pricing Engine] Total Estimated Price for ${vehicle.vehicle_name}: $${finalEstimatedPrice}`);
-
-			return {
-				_id: vehicle._id,
-				vehicle_name: vehicle.vehicle_name,
-				image: vehicle.image,
-				passenger_capacity: vehicle.passenger_capacity,
-				luggage_capacity: vehicle.luggage_capacity,
-				estimated_price: finalEstimatedPrice,
-				price_breakdown: lastQuote ? lastQuote.breakdown : null
-			};
-		}));
+		// 3. Price every suitable vehicle with the Instant Quote Pricing Engine
+		const vehiclesWithPrice = await priceTripVehicles(processedTripData);
 
 		return { 
 			success: true, 
@@ -362,6 +395,25 @@ exports.initiateBooking = async (tripData) => {
 		};
 	} catch (error) {
 		console.log("initiateBooking error:", error);
+		return { success: false, message: error.message || error };
+	}
+};
+
+// Quote-only: same trip processing + pricing as initiateBooking, but
+// it NEVER creates a Booking row, never notifies admin and never sends
+// an email. Powers the homepage quick quote: visitors see real
+// per-vehicle prices before starting a booking.
+exports.getQuote = async (tripData) => {
+	try {
+		const validationError = validateTripData(tripData);
+		if (validationError) return { success: false, message: validationError };
+
+		const processedTripData = await processTripSegments(tripData);
+		const vehiclesWithPrice = await priceTripVehicles(processedTripData);
+
+		return { success: true, available_vehicles: vehiclesWithPrice };
+	} catch (error) {
+		console.log("getQuote error:", error);
 		return { success: false, message: error.message || error };
 	}
 };
