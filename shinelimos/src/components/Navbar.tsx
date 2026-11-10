@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, Phone, ChevronDown } from "lucide-react";
 import Logo from "./Logo";
 import { COMPANY, SERVICES, LOCATIONS } from "../data";
@@ -9,6 +9,23 @@ export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [openSub, setOpenSub] = useState<string | null>(null);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Scroll to the inline quick-quote form in the hero. From another
+  // page, navigate home first, then poll for the element — the form
+  // is lazy-loaded, so it may not exist on the first paint.
+  const scrollToQuote = () => {
+    const tryScroll = (tries = 0) => {
+      const el = document.getElementById("quick-quote");
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        return;
+      }
+      if (tries < 20) setTimeout(() => tryScroll(tries + 1), 100);
+    };
+    if (location.pathname !== "/") navigate("/");
+    tryScroll();
+  };
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -164,12 +181,12 @@ export default function Navbar() {
             >
               <Phone className="h-4 w-4 shrink-0 fill-gold/20" />
             </a>
-            <Link
-              to="/booking"
-              className="relative flex h-[42px] items-center justify-center rounded-full bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#aa7c11] px-6 text-xs font-bold tracking-[0.15em] uppercase text-black transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(212,175,55,0.6)] pulse-gold"
+            <button
+              onClick={scrollToQuote}
+              className="relative flex h-[42px] items-center justify-center rounded-full bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#aa7c11] px-6 text-xs font-bold tracking-[0.15em] uppercase text-black transition-all duration-300 hover:scale-105 hover:shadow-[0_0_20px_rgba(212,175,55,0.6)] pulse-gold cursor-pointer"
             >
               Quote & Book
-            </Link>
+            </button>
           </div>
 
           {/* Mobile Right Controls */}
@@ -209,12 +226,15 @@ export default function Navbar() {
               <Phone className="inline h-4 w-4 mr-2 text-gold" />
               Call
             </a>
-            <Link
-              to="/booking"
-              className="rounded-xl bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#aa7c11] py-3 text-center text-sm font-bold text-black shadow-[0_0_15px_rgba(212,175,55,0.4)]"
+            <button
+              onClick={() => {
+                setOpen(false);
+                scrollToQuote();
+              }}
+              className="rounded-xl bg-gradient-to-r from-[#d4af37] via-[#f3e5ab] to-[#aa7c11] py-3 text-center text-sm font-bold text-black shadow-[0_0_15px_rgba(212,175,55,0.4)] cursor-pointer"
             >
               Quote & Book
-            </Link>
+            </button>
           </div>
         </div>
       </div>
