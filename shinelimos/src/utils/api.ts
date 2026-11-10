@@ -36,6 +36,15 @@ export const initiateBooking = async (tripDetails: any) => {
   return response.data;
 };
 
+// Quote-only: same trip processing + pricing as initiateBooking, but
+// creates no Booking row and sends no email. Powers the homepage
+// quick quote — visitors see real per-vehicle prices before starting
+// a booking.
+export const getQuote = async (tripDetails: any) => {
+  const response = await api.post('/bookings/quote', { trip_details: tripDetails });
+  return response.data;
+};
+
 export const finalizeBooking = async (bookingData: any) => {
   const response = await api.post('/bookings', bookingData);
   return response.data;
