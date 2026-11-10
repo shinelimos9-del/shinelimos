@@ -154,7 +154,7 @@ export default function QuickQuote() {
   };
 
   return (
-    <div className="glass-dark rounded-3xl p-5 sm:p-7">
+    <div className="rounded-3xl border border-white/10 bg-zinc-950 p-5 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.65)]">
       <div className="text-center mb-5">
         <span className="text-[10px] tracking-[0.4em] text-white/90 uppercase font-orbitron font-bold">
           Instant Quote
@@ -178,7 +178,7 @@ export default function QuickQuote() {
         ))}
       </div>
 
-      <form onSubmit={submit} className="grid gap-4 md:grid-cols-2">
+      <form onSubmit={submit} className="grid gap-4 grid-cols-1">
         <Field icon={<MapPin />} label="Pickup Location">
           <AddressSearch
             value={pickup}
@@ -187,6 +187,7 @@ export default function QuickQuote() {
               setPickupDetails(details);
             }}
             placeholder="Enter pickup address"
+            hint={false}
             className="field"
           />
         </Field>
@@ -198,6 +199,7 @@ export default function QuickQuote() {
               setDropoffDetails(details);
             }}
             placeholder="Enter drop-off address"
+            hint={false}
             className="field"
           />
         </Field>
@@ -240,7 +242,7 @@ export default function QuickQuote() {
           />
         </Field>
 
-        <div className="md:col-span-2 flex justify-center pt-1">
+        <div className="flex justify-center pt-1">
           <GoldButton type="submit" className={loading ? "opacity-70 pointer-events-none" : ""}>
             {loading ? (
               <>

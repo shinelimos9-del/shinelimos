@@ -86,18 +86,28 @@ export default function Home() {
   const [vehicles, setVehicles] = useState<any[]>([]);
 
   const fleetRef = useRef<HTMLDivElement>(null);
-  const [videoLoaded, setVideoLoaded] = useState(false);
+  const bandVideoRef = useRef<HTMLElement>(null);
+  const [bandVideoVisible, setBandVideoVisible] = useState(false);
 
   const scrollToQuote = () => {
     document.getElementById("quick-quote")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Load the experience-band video only when it nears the viewport.
   useEffect(() => {
-    // Defer video loading to let LCP text paint first
-    const timer = setTimeout(() => {
-      setVideoLoaded(true);
-    }, 200);
-    return () => clearTimeout(timer);
+    const el = bandVideoRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setBandVideoVisible(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: "600px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -133,7 +143,6 @@ export default function Home() {
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
 
       const fadeEls = el.querySelectorAll("[data-home-fade]");
-      const videoEl = el.querySelector("[data-home-video]");
       const sidebarEl = el.querySelectorAll("[data-home-sidebar]");
 
       if (fadeEls.length > 0) {
@@ -141,15 +150,6 @@ export default function Home() {
           fadeEls,
           { opacity: 0, y: 30 },
           { opacity: 1, y: 0, duration: 1.1, stagger: 0.12, force3D: true, lazy: false }
-        );
-      }
-
-      if (videoEl) {
-        tl.fromTo(
-          videoEl,
-          { scale: 1.08, filter: "blur(6px)" },
-          { scale: 1, filter: "blur(0px)", duration: 1.6, force3D: true, lazy: false },
-          0
         );
       }
 
@@ -170,37 +170,31 @@ export default function Home() {
       <SEO pageKey="home" />
       {/* HERO */}
       <section ref={heroRef} className="relative min-h-screen flex items-center pt-20 pb-16 sm:pt-24 sm:pb-20 overflow-hidden bg-[#111111]">
-        {/* Background Video */}
+        {/* Background — a still night frame from the hero video, with a
+            strong dark gradient so text and form contrast stay constant. */}
         <div className="absolute inset-0 z-0 bg-[#111111]">
-          {videoLoaded && (
-            <video
-              autoPlay
-              loop
-              muted
-              playsInline
-              preload="auto"
-              poster="/video/hero-poster.jpg"
-              data-home-video
-              className="absolute inset-0 w-full h-full object-cover scale-105"
-            >
-              <source src="/video/hero-720.mp4" type="video/mp4" media="(max-width: 768px)" />
-              <source src="/video/hero-1080.mp4" type="video/mp4" />
-            </video>
-          )}
-          <div className="absolute inset-0 bg-black/40" />
+          <img
+            src="/video/hero-still-night.jpg"
+            alt="Black Cadillac Escalade driving through the city at night"
+            width="1920"
+            height="1080"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-black/75" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-[#111111]" />
         </div>
 
 
         <div className="relative mx-auto max-w-7xl px-6 w-full flex flex-col xl:flex-row items-center gap-12 mt-12 xl:mt-0 z-10">
           {/* Left Content */}
-          <div className="flex-1 text-left relative z-10 ml-0 xl:ml-24">
+          <div className="flex-1 text-left relative z-10 ml-0 xl:ml-24 order-2 xl:order-1">
 
             <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.15] tracking-wide uppercase" data-home-fade style={{ fontFamily: "'Orbitron', sans-serif" }}>
-              PREMIUM <span className="text-[#ff1100]">CHAUFFEUR</span> SERVICE
+              PREMIUM <span className="text-[#d4af37]">CHAUFFEUR</span> SERVICE
             </h1>
 
             <div className="mt-4 space-y-1.5" data-home-fade>
-              <p className="text-[#ff1100] text-sm sm:text-base md:text-lg font-semibold tracking-widest uppercase">
+              <p className="text-[#d4af37] text-sm sm:text-base md:text-lg font-semibold tracking-widest uppercase">
                 Washington DC • Virginia • Maryland
               </p>
               <p className="text-white/90 text-xs sm:text-sm md:text-base font-medium tracking-wide">
@@ -208,26 +202,10 @@ export default function Home() {
               </p>
             </div>
 
-            <p className="mt-6 text-white/80 text-sm sm:text-base max-w-xl font-light leading-relaxed tracking-wider" data-home-fade>
-              Travel with confidence in a luxury vehicle driven by a professional chauffeur. Shine Limos delivers dependable, first-class transportation with attention to detail, comfort, and service you can trust.
-            </p>
-
-            <div className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs sm:text-sm text-white/90 font-medium border-t border-white/10 pt-4 max-w-2xl" data-home-fade>
-              <span className="flex items-center gap-1.5"><span className="text-[#ff1100] font-bold">✓</span> $1 Million Commercial Insurance</span>
-              <span className="text-white/30 hidden sm:inline">|</span>
-              <span className="flex items-center gap-1.5"><span className="text-[#ff1100] font-bold">✓</span> Professionally Trained Chauffeurs</span>
-              <span className="text-white/30 hidden sm:inline">|</span>
-              <span className="flex items-center gap-1.5"><span className="text-[#ff1100] font-bold">✓</span> Luxury Fleet</span>
-              <span className="text-white/30 hidden sm:inline">|</span>
-              <span className="flex items-center gap-1.5"><span className="text-[#ff1100] font-bold">✓</span> DMV Licensed Vehicles</span>
-            </div>
-
-
-
           </div>
 
           {/* Quick quote — inline in the hero, visible on load */}
-          <div id="quick-quote" className="w-full max-w-xl xl:w-[480px] xl:shrink-0 relative z-10 scroll-mt-28" data-home-fade>
+          <div id="quick-quote" className="w-full max-w-xl xl:w-[480px] xl:shrink-0 relative z-10 scroll-mt-28 order-1 xl:order-2" data-home-fade>
             <Suspense fallback={<div className="h-96 animate-pulse bg-white/5 rounded-3xl"></div>}>
               <QuickQuote />
             </Suspense>
@@ -236,6 +214,16 @@ export default function Home() {
         </div>
 
 
+      </section>
+
+      {/* TRUST STRIP — quiet, below the hero */}
+      <section className="border-b border-white/5 bg-black py-4 px-6">
+        <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs sm:text-sm text-white/70 font-medium">
+          <span className="flex items-center gap-1.5"><span className="text-[#d4af37] font-bold">✓</span> $1 Million Commercial Insurance</span>
+          <span className="flex items-center gap-1.5"><span className="text-[#d4af37] font-bold">✓</span> Professionally Trained Chauffeurs</span>
+          <span className="flex items-center gap-1.5"><span className="text-[#d4af37] font-bold">✓</span> Luxury Fleet</span>
+          <span className="flex items-center gap-1.5"><span className="text-[#d4af37] font-bold">✓</span> DMV Licensed Vehicles</span>
+        </div>
       </section>
 
       {/* MARQUEE BRANDS */}
@@ -538,6 +526,39 @@ export default function Home() {
           </div>
         </div>
       </SectionBackground>
+
+      {/* THE SHINE EXPERIENCE — video band (the hero video, moved down
+          the page so it adds atmosphere without fighting the booking form) */}
+      <section ref={bandVideoRef} className="relative py-28 md:py-36 px-6 overflow-hidden bg-[#111111]">
+        {bandVideoVisible && (
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="auto"
+            poster="/video/hero-still-night.jpg"
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="/video/hero-720.mp4" type="video/mp4" media="(max-width: 768px)" />
+            <source src="/video/hero-1080.mp4" type="video/mp4" />
+          </video>
+        )}
+        <div className="absolute inset-0 bg-black/55" />
+        <div className="relative mx-auto max-w-3xl text-center">
+          <Reveal>
+            <div className="text-[11px] tracking-[0.5em] text-[#d4af37] uppercase mb-5">
+              ✦ The Shine Experience ✦
+            </div>
+            <h2 className="font-serif-lux text-4xl md:text-5xl text-white leading-tight">
+              Sit back. We&rsquo;ll drive.
+            </h2>
+            <p className="mt-5 text-white/70 max-w-xl mx-auto leading-relaxed">
+              A quiet cabin, a professional chauffeur, and the city moving past your window.
+            </p>
+          </Reveal>
+        </div>
+      </section>
 
       <GoldDivider />
 

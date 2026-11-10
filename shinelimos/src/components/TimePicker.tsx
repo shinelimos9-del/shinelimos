@@ -111,7 +111,7 @@ export default function TimePicker({ value, onChange, className }: { value: stri
         className={`${className} cursor-pointer flex items-center select-none`} 
         onClick={() => setOpen(!open)}
       >
-        {displayVal || <span className="text-white/30">Select Time (e.g. 10:00 AM)</span>}
+        {displayVal || <span className="text-white/30">Select time</span>}
       </div>
 
       {open && (
