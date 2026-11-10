@@ -40,7 +40,7 @@ const DURATION_OPTIONS = [
 // the chosen vehicle preselected.
 export default function QuickQuote() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<"one-way" | "round-trip" | "hourly">("one-way");
+  const [tab, setTab] = useState<"one-way" | "hourly">("one-way");
   const [pickup, setPickup] = useState("");
   const [pickupDetails, setPickupDetails] = useState<any>(null);
   const [dropoff, setDropoff] = useState("");
@@ -69,7 +69,7 @@ export default function QuickQuote() {
       // prices exactly.
       const tripDetails = [
         {
-          trip_type: tab === "hourly" ? "Hourly" : tab === "round-trip" ? "Round Trip" : "One Way",
+          trip_type: tab === "hourly" ? "Hourly" : "One Way",
           occasion: "Business",
           total_passengers: String(pax),
           total_luggage: "0",
@@ -164,7 +164,7 @@ export default function QuickQuote() {
 
       {/* Tabs */}
       <div className="flex gap-1 mb-5 p-1 rounded-full bg-white/5 border border-white/10 w-full overflow-x-auto no-scrollbar">
-        {(["one-way", "round-trip", "hourly"] as const).map((t) => (
+        {(["one-way", "hourly"] as const).map((t) => (
           <button
             key={t}
             type="button"
@@ -173,7 +173,7 @@ export default function QuickQuote() {
               tab === t ? "bg-gold text-black" : "text-white/60 hover:text-white"
             }`}
           >
-            {t === "one-way" ? "One Way" : t === "round-trip" ? "Round Trip" : "Hourly"}
+            {t === "one-way" ? "One Way" : "Hourly"}
           </button>
         ))}
       </div>
