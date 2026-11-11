@@ -4,6 +4,7 @@ import { PageHero, GoldButton, GoldDivider } from "../components/ui";
 import SectionBackground from "../components/SectionBackground";
 import TimePicker, { formatTimeWithAmPm } from "../components/TimePicker";
 import { initiateBooking, finalizeBooking, requestPayment, ADMIN_BASE_URL } from "../utils/api";
+import { getVehicleTierKey } from "../utils/pricingEngine";
 import AddressSearch from "../components/AddressSearch";
 
 const BG = "/images/pexels-photo-8605325.webp";
@@ -12,6 +13,16 @@ import SEO from "../components/SEO";
 import { COMPANY } from "../data";
 
 const STEPS = ["Trip Itinerary", "Vehicle Selection", "Summary", "Contact Info"];
+
+// "2 hours" -> 2, "" -> 0.
+const parseDurationHours = (d: string) => {
+  const m = String(d || "").match(/(\d+)/);
+  return m ? parseInt(m[1], 10) : 0;
+};
+
+// Same tier detection as the pricing engine: a Sprinter (or bus/coach)
+// hourly booking starts at 4 hours, cars at 2.
+const isSprinterVehicle = (v: any) => !!v && getVehicleTierKey(v) === "sprinter";
 
 interface LocationDetails {
   flat_no: string;
@@ -193,6 +204,21 @@ export default function Booking() {
     setError(null);
     setData((prev) => ({ ...prev, [k]: v } as BookingData));
   };
+
+  // Picking a vehicle: when the customer picks a Sprinter for an
+  // hourly trip, a shorter duration they entered first moves up to
+  // 4 hours automatically — the picker then starts at 4.
+  const selectVehicle = (vehicle: Vehicle) => {
+    const segments =
+      data.type === "hourly" && isSprinterVehicle(vehicle)
+        ? data.segments.map((s) => {
+            const h = parseDurationHours(s.duration);
+            return h > 0 && h < 4 ? { ...s, duration: "4 hours" } : s;
+          })
+        : data.segments;
+    setError(null);
+    setData((prev) => ({ ...prev, vehicle_id: vehicle._id, vehicle_details: vehicle, segments } as BookingData));
+  };
   
   const next = async () => {
     if (step === 0) {
@@ -200,10 +226,11 @@ export default function Booking() {
         setError("Please select a Trip Type.");
         return;
       }
+      const isHourly = data.type === "hourly";
       for (let i = 0; i < data.segments.length; i++) {
         const seg = data.segments[i];
-        if (!seg.date || !seg.time || !seg.pickup || !seg.dropoff) {
-          setError(`Please fill in Date, Start Time, Pick-up, and Drop-off for Segment ${i + 1}.`);
+        if (!seg.date || !seg.time || !seg.pickup || (!isHourly && !seg.dropoff)) {
+          setError(`Please fill in Date, Start Time, Pick-up${isHourly ? "" : ", and Drop-off"} for Segment ${i + 1}.`);
           return;
         }
       }
@@ -287,7 +314,8 @@ export default function Booking() {
   useEffect(() => {
     if (autoAdvanceTried.current) return;
     const seg = data.segments[0];
-    if (!params.get("vehicle") || !seg?.pickup || !seg?.dropoff || !seg?.date || !seg?.time) return;
+    const isHourlyArrival = (params.get("type") || "") === "hourly";
+    if (!params.get("vehicle") || !seg?.pickup || (!isHourlyArrival && !seg?.dropoff) || !seg?.date || !seg?.time) return;
     autoAdvanceTried.current = true;
     void next();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -497,7 +525,7 @@ export default function Booking() {
                 <div class="row"><div class="label">Date:</div><div class="val">${seg.date}</div></div>
                 <div class="row"><div class="label">Time:</div><div class="val">${formatTimeWithAmPm(seg.time)}</div></div>
                 <div class="row"><div class="label">Pickup Location:</div><div class="val">${formatAddr(seg.pickup, seg.pickup_details)}</div></div>
-                <div class="row"><div class="label">Drop-off Location:</div><div class="val">${formatAddr(seg.dropoff, seg.dropoff_details)}</div></div>
+                ${seg.dropoff ? `<div class="row"><div class="label">Drop-off Location:</div><div class="val">${formatAddr(seg.dropoff, seg.dropoff_details)}</div></div>` : ''}
                 ${seg.duration ? `<div class="row"><div class="label">Duration:</div><div class="val">${seg.duration}</div></div>` : ''}
                 ${seg.comments ? `<div class="row"><div class="label">Comments:</div><div class="val">${seg.comments}</div></div>` : ''}
               </div>
@@ -552,7 +580,7 @@ export default function Booking() {
               <Detail label="Passengers" value={`${data.pax}`} />
               <Detail label="Luggage" value={data.bags > 0 ? `${data.bags} ${data.bagSize ? `(${data.bagSize})` : ""}` : "None"} />
               <Detail label="Pickup" value={`${data.segments[0]?.pickup_details?.flat_no ? 'Unit/Apt ' + data.segments[0].pickup_details.flat_no + ', ' : ''}${data.segments[0]?.pickup}`} />
-              <Detail label="Drop-off" value={`${data.segments[0]?.dropoff_details?.flat_no ? 'Unit/Apt ' + data.segments[0].dropoff_details.flat_no + ', ' : ''}${data.segments[0]?.dropoff}`} />
+              {data.segments[0]?.dropoff && <Detail label="Drop-off" value={`${data.segments[0]?.dropoff_details?.flat_no ? 'Unit/Apt ' + data.segments[0].dropoff_details.flat_no + ', ' : ''}${data.segments[0]?.dropoff}`} />}
               <Detail label="Date" value={data.segments[0]?.date} />
               <Detail label="Time" value={formatTimeWithAmPm(data.segments[0]?.time)} />
             </div>
@@ -631,10 +659,7 @@ export default function Booking() {
                 onOpenFlightInfo={(id) => setActiveFlightSegmentId(id)} 
               />
             )}
-            {step === 1 && <Step2 data={data} availableVehicles={availableVehicles} onSelectVehicle={(vehicle: Vehicle) => {
-              update("vehicle_id", vehicle._id);
-              update("vehicle_details", vehicle);
-            }} />}
+            {step === 1 && <Step2 data={data} availableVehicles={availableVehicles} onSelectVehicle={selectVehicle} />}
             {step === 2 && <Step3Summary data={data} vehicle={selectedVehicle} />}
             {step === 3 && cameFromQuote && selectedVehicle && (
               <TripSummaryBar
@@ -707,10 +732,10 @@ function TripSummaryBar({ data, vehicle, onEditTrip }: { data: BookingData; vehi
         <div>
           <div className="text-[10px] tracking-[0.25em] text-gold uppercase font-semibold">Your trip</div>
           <div className="text-white text-sm sm:text-base mt-1 font-medium">
-            {seg?.pickup} → {seg?.dropoff}
+            {seg?.pickup}{seg?.dropoff ? ` → ${seg.dropoff}` : ""}
           </div>
           <div className="text-white/60 text-xs sm:text-sm mt-1">
-            {seg?.date} · {seg?.time ? formatTimeWithAmPm(seg.time) : ""} · {data.pax} passenger{data.pax > 1 ? "s" : ""}
+            {seg?.date} · {seg?.time ? formatTimeWithAmPm(seg.time) : ""} · {data.pax} passenger{data.pax > 1 ? "s" : ""}{seg?.duration ? ` · ${seg.duration}` : ""}
           </div>
         </div>
         <button
@@ -743,6 +768,8 @@ function inputCls() {
 }
 
 function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: (k: keyof BookingData, v: any) => void; onOpenFlightInfo: (id: number) => void }) {
+  // Hourly + Sprinter selected: the duration picker starts at 4 hours.
+  const sprinterSelected = data.type === "hourly" && isSprinterVehicle(data.vehicle_details);
   const addSegment = () => {
     update("segments", [
       ...data.segments,
@@ -890,10 +917,16 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
                 <Field icon={Clock} label="Duration">
                   <div className="flex gap-2">
                     <select className={inputCls()} value={seg.duration} onChange={(e) => updateSegment(seg.id, "duration", e.target.value)}>
-                      <option className="bg-[#1a1a1a]" value="">— Not Selected —</option>
-                      <option className="bg-[#1a1a1a]" value="1 hour">1 Hour</option>
-                      <option className="bg-[#1a1a1a]" value="2 hours">2 Hours</option>
-                      <option className="bg-[#1a1a1a]" value="3 hours">3 Hours</option>
+                      <option className="bg-[#1a1a1a]" value="">{sprinterSelected ? "— Not Selected (4-hour minimum) —" : data.type === "hourly" ? "— Not Selected (2-hour minimum) —" : "— Not Selected —"}</option>
+                      {data.type !== "hourly" && (
+                        <option className="bg-[#1a1a1a]" value="1 hour">1 Hour</option>
+                      )}
+                      {!sprinterSelected && (
+                        <option className="bg-[#1a1a1a]" value="2 hours">2 Hours</option>
+                      )}
+                      {!sprinterSelected && (
+                        <option className="bg-[#1a1a1a]" value="3 hours">3 Hours</option>
+                      )}
                       <option className="bg-[#1a1a1a]" value="4 hours">4 Hours</option>
                       <option className="bg-[#1a1a1a]" value="5 hours">5 Hours</option>
                       <option className="bg-[#1a1a1a]" value="6 hours">6 Hours</option>
@@ -974,6 +1007,7 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
                   </button>
                 </div>
                 
+                {data.type !== "hourly" && (
                 <div className="flex items-start gap-4">
                   <div className="w-9 h-9 mt-5 shrink-0 rounded-full bg-gold/10 text-gold flex items-center justify-center font-bold text-sm border border-gold/30">
                     {index + 1}{String.fromCharCode(66 + (seg.stops?.length || 0))}
@@ -989,6 +1023,7 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
                     </Field>
                   </div>
                 </div>
+                )}
               </div>
 
               <div className="pt-2">
@@ -1002,9 +1037,11 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
           <button onClick={addSegment} className="flex items-center justify-center gap-2 border border-white/20 hover:border-gold/50 hover:bg-gold/10 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all">
             <Plus className="w-4 h-4" /> Add Segment
           </button>
+          {data.type !== "hourly" && (
           <button onClick={addReverseRoute} className="flex items-center justify-center gap-2 border border-white/20 hover:border-gold/50 hover:bg-gold/10 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-all">
             <ArrowLeft className="w-4 h-4" /> Add Reverse Route
           </button>
+          )}
         </div>
       </div>
 
@@ -1193,7 +1230,7 @@ function Step3Summary({ data, vehicle }: any) {
               {(seg.stops || []).map((stop: any, sIdx: number) => (
                 <Detail key={stop.id || sIdx} label={`Stop ${sIdx + 1}`} value={formatAddress(stop.address || stop.location, stop.details || {})} />
               ))}
-              <Detail label="Drop-off" value={formatAddress(seg.dropoff, seg.dropoff_details)} />
+              {seg.dropoff && <Detail label="Drop-off" value={formatAddress(seg.dropoff, seg.dropoff_details)} />}
               {seg.duration && <Detail label="Duration" value={seg.duration} />}
               {seg.flight_info?.airline_flight_no && <Detail label="Flight #" value={seg.flight_info.airline_flight_no} />}
               {seg.flight_info?.meet_and_greet && <Detail label="Meet & Greet" value="Included" />}

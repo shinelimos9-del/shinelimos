@@ -37,7 +37,7 @@ const VEHICLE_RATES = {
     perMinute: 1.50,
     minimumFare: 250.00,
     hourlyRate: 150.00,
-    minimumHours: 3,
+    minimumHours: 4,
     airportFee: 25.00,
     waitingRatePerMin: 2.00,
     additionalStopRate: 30.00,

@@ -4,6 +4,7 @@ import { GoldButton } from "./ui";
 import TimePicker from "./TimePicker";
 import AddressSearch from "./AddressSearch";
 import { getQuote, ADMIN_BASE_URL } from "../utils/api";
+import { getVehicleTierKey } from "../utils/pricingEngine";
 import { COMPANY } from "../data";
 import { useNavigate } from "react-router-dom";
 
@@ -18,7 +19,6 @@ interface QuoteVehicle {
 
 const DURATION_OPTIONS = [
   "",
-  "1 hour",
   "2 hours",
   "3 hours",
   "4 hours",
@@ -57,8 +57,12 @@ export default function QuickQuote() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!pickup.trim() || !dropoff.trim() || !date || !time) {
-      setError("Please enter a pickup, drop-off, date and time to see your prices.");
+    if (!pickup.trim() || !date || !time || (tab !== "hourly" && !dropoff.trim())) {
+      setError(
+        tab === "hourly"
+          ? "Please enter a pickup, date and time to see your prices."
+          : "Please enter a pickup, drop-off, date and time to see your prices."
+      );
       return;
     }
     setError(null);
@@ -191,18 +195,24 @@ export default function QuickQuote() {
             className="field"
           />
         </Field>
-        <Field icon={<MapPin />} label="Drop-off Location">
-          <AddressSearch
-            value={dropoff}
-            onChange={(addr, details) => {
-              setDropoff(addr);
-              setDropoffDetails(details);
-            }}
-            placeholder="Enter drop-off address"
-            hint={false}
-            className="field"
-          />
-        </Field>
+        {tab === "hourly" ? (
+          <p className="text-xs text-white/50 -mt-2">
+            You do not need a destination for hourly bookings — the chauffeur stays with you.
+          </p>
+        ) : (
+          <Field icon={<MapPin />} label="Drop-off Location">
+            <AddressSearch
+              value={dropoff}
+              onChange={(addr, details) => {
+                setDropoff(addr);
+                setDropoffDetails(details);
+              }}
+              placeholder="Enter drop-off address"
+              hint={false}
+              className="field"
+            />
+          </Field>
+        )}
         <Field icon={<Calendar />} label="Date">
           <input
             type="date"
@@ -220,7 +230,7 @@ export default function QuickQuote() {
           <Field icon={<Clock />} label="Duration">
             <select value={duration} onChange={(e) => setDuration(e.target.value)} className="field">
               <option value="" className="bg-black">
-                — Not Selected (minimum hours) —
+                — Select duration (2-hour minimum) —
               </option>
               {DURATION_OPTIONS.filter(Boolean).map((d) => (
                 <option key={d} value={d} className="bg-black">
@@ -294,6 +304,9 @@ export default function QuickQuote() {
                     <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
                   </div>
                   <h4 className="font-serif-lux text-lg text-white mt-1">{v.vehicle_name}</h4>
+                  {tab === "hourly" && getVehicleTierKey(v) === "sprinter" && (
+                    <p className="text-[11px] text-gold mt-1">4-hour minimum — priced from 4 hours</p>
+                  )}
                   <div className="text-xs text-white/70 mt-2 flex items-center gap-4 border-t border-white/5 pt-2">
                     <span className="flex items-center gap-1.5">
                       <Users className="h-3.5 w-3.5 text-gold shrink-0" />
