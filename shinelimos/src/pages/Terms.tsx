@@ -51,17 +51,10 @@ export default function Terms() {
       title: "Cancellations & Refunds",
       subsections: [
         {
-          heading: "Sedan & SUV Reservations",
+          heading: "All Reservations",
           bullets: [
             "Cancel more than 24 hours before pickup: Full refund.",
             "Cancel within 24 hours of pickup: No refund."
-          ]
-        },
-        {
-          heading: "Sprinter Vans, Stretch Limousines & Party Buses",
-          bullets: [
-            "Cancel more than 7 days before service: Full refund.",
-            "Cancel within 7 days of service: No refund unless otherwise stated."
           ]
         }
       ],
