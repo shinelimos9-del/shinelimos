@@ -237,15 +237,13 @@ const getRoadDistanceMapbox = async (waypoints) => {
 
 // Shared trip validation for initiateBooking and the quote-only
 // endpoint: same trip shape, same rules (trip details are required;
-// an hourly duration cannot exceed 12 hours, and hourly trips have
-// a 2-hour minimum — a 1-hour hourly request is rejected, not
-// silently billed at the floor). Returns an error message string,
-// or null when the trip data is valid.
-// Note: the Sprinter 4-hour minimum is NOT checked here — no
-// vehicle is known on this path yet (vehicles are priced after
-// validation). It is enforced by the pricing engine floor
-// (billed hours) and, where the vehicle is known, by
-// finalizeBooking / createBooking below.
+// an hourly duration cannot exceed 12 hours, and hourly trips start
+// at 2 hours — a 1-hour hourly request is rejected, not silently
+// billed at the floor). Returns an error message string, or null
+// when the trip data is valid.
+// Note: no per-vehicle check here — no vehicle is known on this
+// path yet (vehicles are priced after validation). The engine bills
+// every hourly tier at the 2-hour floor.
 const validateTripData = (tripData) => {
 	if (!Array.isArray(tripData) || tripData.length === 0) {
 		return "Trip details are required";
@@ -259,7 +257,7 @@ const validateTripData = (tripData) => {
 		const tripType = String(segment.trip_type || "").toLowerCase();
 		const isHourly = tripType === "hourly" || tripType === "as-directed" || tripType === "as directed";
 		if (isHourly && durationHours > 0 && durationHours < 2) {
-			return "Hourly bookings require a minimum of 2 hours";
+			return "Hourly bookings start at 2 hours";
 		}
 	}
 
@@ -433,24 +431,6 @@ exports.getQuote = async (tripData) => {
 
 exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, specialRequests) => {
 	try {
-		// A Sprinter hourly booking needs 4 hours. The vehicle is known
-		// on this path (unlike the quote/initiate path, which prices
-		// before a vehicle is chosen), so reject a sub-4h Sprinter
-		// hourly booking here instead of finalizing it short.
-		const existingBooking = await Booking.findById(bookingId);
-		if (!existingBooking) return { success: false, message: "Booking not found" };
-		const chosenVehicle = vehicleDetails || existingBooking.vehicle_details;
-		if (chosenVehicle && pricingEngine.getVehicleTierKey(chosenVehicle) === "sprinter") {
-			for (const segment of existingBooking.trip_details || []) {
-				const tripType = String(segment.trip_type || "").toLowerCase();
-				const isHourly = tripType === "hourly" || tripType === "as-directed" || tripType === "as directed";
-				const durationHours = parseDurationToHours(segment.duration);
-				if (isHourly && durationHours > 0 && durationHours < 4) {
-					return { success: false, message: "Sprinter bookings require a minimum of 4 hours" };
-				}
-			}
-		}
-
 		const updateData = {
 			vehicle_details: vehicleDetails,
 			contact_details: contactDetails,
@@ -577,11 +557,6 @@ exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, spec
 
 exports.createBooking = async (bookingData) => {
 	try {
-		// The full-booking path carries the vehicle, so a Sprinter
-		// hourly booking can be checked for its 4-hour minimum here.
-		const isSprinterBooking = bookingData?.vehicle_details
-			? pricingEngine.getVehicleTierKey(bookingData.vehicle_details) === "sprinter"
-			: false;
 		if (Array.isArray(bookingData?.trip_details)) {
 			for (const segment of bookingData.trip_details) {
 				const durationHours = parseDurationToHours(segment.duration);
@@ -591,10 +566,7 @@ exports.createBooking = async (bookingData) => {
 				const tripType = String(segment.trip_type || "").toLowerCase();
 				const isHourly = tripType === "hourly" || tripType === "as-directed" || tripType === "as directed";
 				if (isHourly && durationHours > 0 && durationHours < 2) {
-					return { success: false, message: "Hourly bookings require a minimum of 2 hours" };
-				}
-				if (isHourly && isSprinterBooking && durationHours > 0 && durationHours < 4) {
-					return { success: false, message: "Sprinter bookings require a minimum of 4 hours" };
+					return { success: false, message: "Hourly bookings start at 2 hours" };
 				}
 			}
 		}

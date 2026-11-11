@@ -4,7 +4,6 @@ import { GoldButton } from "./ui";
 import TimePicker from "./TimePicker";
 import AddressSearch from "./AddressSearch";
 import { getQuote, ADMIN_BASE_URL } from "../utils/api";
-import { getVehicleTierKey } from "../utils/pricingEngine";
 import { COMPANY } from "../data";
 import { useNavigate } from "react-router-dom";
 
@@ -47,7 +46,7 @@ export default function QuickQuote() {
   const [dropoffDetails, setDropoffDetails] = useState<any>(null);
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
-  const [duration, setDuration] = useState("");
+  const [duration, setDuration] = useState("2 hours");
   const [pax, setPax] = useState(2);
   const [vehicles, setVehicles] = useState<QuoteVehicle[]>([]);
   const [quoted, setQuoted] = useState(false);
@@ -151,6 +150,7 @@ export default function QuickQuote() {
       dropoff_lng: dropoffDetails?.lng || "",
       date,
       time,
+      duration: tab === "hourly" ? duration : "",
       pax: String(pax),
       vehicle: vehicle._id,
     });
@@ -230,7 +230,7 @@ export default function QuickQuote() {
           <Field icon={<Clock />} label="Duration">
             <select value={duration} onChange={(e) => setDuration(e.target.value)} className="field">
               <option value="" className="bg-black">
-                — Select duration (2-hour minimum) —
+                — Select duration —
               </option>
               {DURATION_OPTIONS.filter(Boolean).map((d) => (
                 <option key={d} value={d} className="bg-black">
@@ -304,9 +304,6 @@ export default function QuickQuote() {
                     <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
                   </div>
                   <h4 className="font-serif-lux text-lg text-white mt-1">{v.vehicle_name}</h4>
-                  {tab === "hourly" && getVehicleTierKey(v) === "sprinter" && (
-                    <p className="text-[11px] text-gold mt-1">4-hour minimum — priced from 4 hours</p>
-                  )}
                   <div className="text-xs text-white/70 mt-2 flex items-center gap-4 border-t border-white/5 pt-2">
                     <span className="flex items-center gap-1.5">
                       <Users className="h-3.5 w-3.5 text-gold shrink-0" />
