@@ -551,7 +551,7 @@ export default function Booking() {
             <h2 className="font-serif-lux text-2xl sm:text-3xl gradient-gold-text">Thank you for your reservation request!</h2>
             <p className="text-white/70 mt-3 font-mono text-sm">Confirmation #{bookingId || 'PENDING'}</p>
             <p className="text-sm text-white/70 mt-4 leading-relaxed font-light">
-              Your reservation request has been received. Our dispatch team will review your trip details and send you a payment link shortly. Your card will not be charged at this time — cards are charged 24 hours before scheduled pickup. Free cancellation up to 24 hours before pickup for Sedans and SUVs (7 days for Sprinter Vans and Specialty vehicles).
+              Your reservation request has been received. Our dispatch team will review your trip details and send you a payment link shortly. Your card will not be charged at this time — cards are charged 24 hours before scheduled pickup. Free cancellation up to 24 hours before pickup.
             </p>
             <p className="text-sm text-white/70 mt-3">
               Once a chauffeur is assigned, you can see their name and phone number on the <a href="/my-booking" className="text-gold underline">My Booking</a> page using this confirmation number and your booking email.

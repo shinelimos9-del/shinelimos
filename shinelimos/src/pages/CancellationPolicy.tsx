@@ -4,7 +4,6 @@ import SectionBackground from "../components/SectionBackground";
 import { 
   ShieldAlert, 
   Car, 
-  Bus, 
   CreditCard, 
   AlertTriangle, 
   Mail, 
@@ -16,13 +15,8 @@ export default function CancellationPolicy() {
   const policies = [
     {
       icon: Car,
-      title: "Luxury Sedan & Luxury SUV",
+      title: "All Vehicles",
       description: "Free cancellation up to 24 hours before the scheduled pickup. Cancellations made within 24 hours or no-shows will be charged 100% of the reservation total."
-    },
-    {
-      icon: Bus,
-      title: "Mercedes Sprinter, Mini Coach & Motor Coach",
-      description: "Free cancellation up to 7 days before the scheduled pickup. Cancellations made within 7 days or no-shows will be charged 100% of the reservation total."
     },
     {
       icon: CreditCard,
