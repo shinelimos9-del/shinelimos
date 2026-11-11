@@ -14,6 +14,8 @@ interface QuoteVehicle {
   passenger_capacity: number;
   luggage_capacity: number;
   estimated_price: string;
+  price_breakdown?: any;
+  loyalty_discount?: number;
 }
 
 const DURATION_OPTIONS = [
@@ -48,6 +50,9 @@ export default function QuickQuote() {
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState("2 hours");
   const [pax, setPax] = useState(2);
+  const [loyaltyCode, setLoyaltyCode] = useState("");
+  const [loyaltyEmail, setLoyaltyEmail] = useState("");
+  const [loyaltyNote, setLoyaltyNote] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<QuoteVehicle[]>([]);
   const [quoted, setQuoted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -110,14 +115,19 @@ export default function QuickQuote() {
         },
       ];
 
-      const result = await getQuote(tripDetails);
+      // Loyalty: the code only discounts when the email has a prior
+      // completed booking with us; anything else quotes at full price
+      // with a note. The discount is re-validated at booking either way.
+      const result = await getQuote(tripDetails, { code: loyaltyCode, email: loyaltyEmail });
       if (!result.success) {
         setError(result.message || "Could not calculate a price — check the addresses and try again.");
         setVehicles([]);
         setQuoted(false);
+        setLoyaltyNote(null);
         return;
       }
       setVehicles(result.available_vehicles || []);
+      setLoyaltyNote(result.loyalty?.note || null);
       setQuoted(true);
       requestAnimationFrame(() => {
         resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -133,7 +143,9 @@ export default function QuickQuote() {
 
   const bookVehicle = (vehicle: QuoteVehicle) => {
     // Same URL params the booking widget builds, plus the chosen
-    // vehicle by its id so /booking preselects it.
+    // vehicle by its id so /booking preselects it. A loyalty code the
+    // customer entered rides along too, so /booking can re-validate it
+    // at finalize with the booker email.
     const q = new URLSearchParams({
       type: tab,
       pickup: pickup,
@@ -154,6 +166,10 @@ export default function QuickQuote() {
       pax: String(pax),
       vehicle: vehicle._id,
     });
+    if (loyaltyCode.trim()) {
+      q.set("loyalty", loyaltyCode.trim());
+      if (loyaltyEmail.trim()) q.set("loyalty_email", loyaltyEmail.trim());
+    }
     navigate(`/booking?${q.toString()}`);
   };
 
@@ -252,6 +268,30 @@ export default function QuickQuote() {
           />
         </Field>
 
+        {/* Returning-client loyalty: optional. The code only discounts
+            when the email has a prior completed booking with us. */}
+        <Field icon={<Users />} label="Loyalty code (optional)">
+          <input
+            type="text"
+            value={loyaltyCode}
+            onChange={(e) => setLoyaltyCode(e.target.value)}
+            placeholder="e.g. SHINE10 — 10% off for returning customers"
+            className="field"
+            autoComplete="off"
+          />
+        </Field>
+        {loyaltyCode.trim() && (
+          <Field icon={<Users />} label="Email you booked with">
+            <input
+              type="email"
+              value={loyaltyEmail}
+              onChange={(e) => setLoyaltyEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="field"
+            />
+          </Field>
+        )}
+
         <div className="flex justify-center pt-1">
           <GoldButton type="submit" className={loading ? "opacity-70 pointer-events-none" : ""}>
             {loading ? (
@@ -284,6 +324,9 @@ export default function QuickQuote() {
           <div className="text-center text-[10px] tracking-[0.3em] text-gold uppercase font-semibold mb-3">
             Your vehicles &amp; prices
           </div>
+          {loyaltyNote && (
+            <p className="text-center text-xs text-emerald-300 mb-3">{loyaltyNote}</p>
+          )}
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
             {vehicles.map((v) => (
               <div
@@ -301,9 +344,21 @@ export default function QuickQuote() {
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-[10px] tracking-[0.25em] text-gold uppercase font-semibold">Vehicle</span>
-                    <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
+                    <span className="text-sm font-semibold text-gold font-mono">
+                      {v.price_breakdown?.discount > 0 && (
+                        <span className="text-white/40 line-through mr-2 font-normal">
+                          ${Number(v.price_breakdown.calculatedGrandTotal || 0).toFixed(2)}
+                        </span>
+                      )}
+                      ${v.estimated_price}
+                    </span>
                   </div>
                   <h4 className="font-serif-lux text-lg text-white mt-1">{v.vehicle_name}</h4>
+                  {v.price_breakdown?.discount > 0 && (
+                    <p className="text-xs text-emerald-300 mt-1">
+                      Returning-client discount (10%): -${Number(v.price_breakdown.discount).toFixed(2)}
+                    </p>
+                  )}
                   <div className="text-xs text-white/70 mt-2 flex items-center gap-4 border-t border-white/5 pt-2">
                     <span className="flex items-center gap-1.5">
                       <Users className="h-3.5 w-3.5 text-gold shrink-0" />

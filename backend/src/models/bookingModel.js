@@ -232,6 +232,21 @@ const bookingSchema = new mongoose.Schema({
     required: false,
   },
 
+  // Returning-client loyalty discount (Phase 0, Nov 2026). Set at
+  // finalizeBooking only, after server-side validation (code SHINE10 +
+  // booker email has a prior completed booking). discount_amount is the
+  // dollars taken off the grand total; the final invoice re-applies it
+  // automatically so the discount survives the admin finalize step.
+  loyalty_discount: {
+    code: String,
+    discount_amount: Number,
+    percent: {
+      type: Number,
+      default: 10,
+    },
+    applied_at: Date,
+  },
+
   // Live Vehicle Tracking & Extras
   vehicle_arrived: { type: Boolean, default: false },
   arrival_time: { type: Date },

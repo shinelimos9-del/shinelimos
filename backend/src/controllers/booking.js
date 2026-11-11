@@ -6,7 +6,10 @@ exports.create_newBooking = async (req, res) => {
 
 		// 1. Step 1: Only trip_details are provided
 		if (payload.trip_details && !payload.vehicle_details && !payload.contact_details) {
-			const result = await bookingService.initiateBooking(payload.trip_details);
+			const result = await bookingService.initiateBooking(payload.trip_details, {
+				code: payload.loyalty_code,
+				email: payload.email,
+			});
 			if (!result.success) return res.status(400).json(result);
 			return res.status(201).json(result);
 		}
@@ -17,7 +20,8 @@ exports.create_newBooking = async (req, res) => {
 				payload.booking_id, 
 				payload.vehicle_details, 
 				payload.contact_details,
-				payload.special_requests
+				payload.special_requests,
+				payload.loyalty_code
 			);
 			if (!result.success) return res.status(400).json(result);
 			return res.status(200).json(result);
@@ -48,8 +52,13 @@ exports.get_quote = async (req, res) => {
 		// Quote-only: same trip processing + pricing as a booking, but
 		// no Booking row is created and no email is sent. Public by
 		// design — the homepage quick quote needs prices before any
-		// contact details exist.
-		const result = await bookingService.getQuote(tripDetails);
+		// contact details exist. An optional loyalty_code + email are
+		// accepted: the code only discounts when the email has a prior
+		// completed booking; anything else quotes at full price.
+		const result = await bookingService.getQuote(tripDetails, {
+			code: req.body ? req.body.loyalty_code : undefined,
+			email: req.body ? req.body.email : undefined,
+		});
 		if (!result.success) return res.status(400).json(result);
 		return res.status(200).json(result);
 	} catch (error) {

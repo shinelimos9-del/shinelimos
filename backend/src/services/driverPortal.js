@@ -16,6 +16,7 @@ const Booking = require("../models/bookingModel");
 const Driver = require("../models/driverModel");
 const { sendEmail } = require("../utils/emailService");
 const { displayConfirmationCode, formatTripDateEastern } = require("../utils/confirmationCode");
+const { LOYALTY_CODE, LOYALTY_PERCENT } = require("./loyalty");
 
 // Forward-only trip progress. Index order is the enforcement rule.
 const DRIVER_STATUS_ORDER = ["assigned", "on_the_way", "arrived", "completed"];
@@ -162,6 +163,11 @@ async function sendCustomerStatusEmail(booking, driver, nextStatus) {
         <tr><td style="padding: 6px 0; font-weight: bold;">Date:</td><td style="padding: 6px 0;">${dateStr}</td></tr>
         <tr><td style="padding: 6px 0; font-weight: bold;">Time:</td><td style="padding: 6px 0;">${trip.start_time || ""}</td></tr>
       </table>
+      ${nextStatus === "completed" ? `
+      <div style="background-color: #fffbeb; border: 1px solid #d4af37; border-radius: 8px; padding: 16px; margin: 20px 0; text-align: center;">
+        <p style="margin: 0 0 6px; font-size: 15px; font-weight: bold; color: #111;">You&apos;re now a returning Shine Limos customer</p>
+        <p style="margin: 0; font-size: 13px; color: #555;">Use loyalty code <strong style="font-size: 16px; letter-spacing: 1px;">${LOYALTY_CODE}</strong> on your next booking for ${LOYALTY_PERCENT}% off your whole trip. Enter the code with the email you booked with.</p>
+      </div>` : ""}
       <p style="text-align: center; margin: 20px 0;"><a href="https://shinelimos.com/my-booking" style="display: inline-block; background-color: #111; color: #ffffff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: bold;">View your trip</a></p>
       <p style="font-size: 11px; color: #999; text-align: center;">&copy; ${new Date().getFullYear()} Shine Limos LLC. All rights reserved.</p>
     </div>`;

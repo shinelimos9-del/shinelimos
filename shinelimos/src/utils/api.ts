@@ -31,17 +31,19 @@ api.interceptors.request.use(
   }
 );
 
-export const initiateBooking = async (tripDetails: any) => {
-  const response = await api.post('/bookings', { trip_details: tripDetails });
+export const initiateBooking = async (tripDetails: any, loyalty?: { code?: string; email?: string }) => {
+  const response = await api.post('/bookings', { trip_details: tripDetails, loyalty_code: loyalty?.code, email: loyalty?.email });
   return response.data;
 };
 
 // Quote-only: same trip processing + pricing as initiateBooking, but
 // creates no Booking row and sends no email. Powers the homepage
 // quick quote — visitors see real per-vehicle prices before starting
-// a booking.
-export const getQuote = async (tripDetails: any) => {
-  const response = await api.post('/bookings/quote', { trip_details: tripDetails });
+// a booking. An optional loyalty code + the email the customer booked
+// with can be passed: the code only discounts when the email has a
+// prior completed booking.
+export const getQuote = async (tripDetails: any, loyalty?: { code?: string; email?: string }) => {
+  const response = await api.post('/bookings/quote', { trip_details: tripDetails, loyalty_code: loyalty?.code, email: loyalty?.email });
   return response.data;
 };
 
