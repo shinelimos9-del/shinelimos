@@ -3,7 +3,6 @@ import Background from "./components/Background";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
-import CallNowButton from "./components/CallNowButton";
 import WhatsAppButton from "./components/WhatsAppButton";
 
 import { HelmetProvider } from "react-helmet-async";
@@ -109,7 +108,6 @@ function AppContent() {
       </main>
 
       {!isAdminRoute && <Footer />}
-      {!isAdminRoute && <CallNowButton />}
       {!isAdminRoute && <WhatsAppButton />}
     </>
   );
