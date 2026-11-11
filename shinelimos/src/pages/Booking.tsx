@@ -63,6 +63,7 @@ interface Vehicle {
   passenger_capacity: number;
   luggage_capacity: number;
   estimated_price: string;
+  price_breakdown?: any;
 }
 
 interface BookingData {
@@ -92,6 +93,7 @@ interface BookingData {
   passengerSecondaryPhoneType: string;
   notes: string;
   marketingConsent: boolean;
+  loyaltyCode: string;
 }
 
 export default function Booking() {
@@ -107,6 +109,12 @@ export default function Booking() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [bookingId, setBookingId] = useState<string | null>(null);
+  // Returning-client loyalty (Phase 0): the server's note about the
+  // code, and the booking record finalizeBooking returns — the
+  // confirmation screen shows its price, so a discount the server
+  // validated is what the customer sees.
+  const [loyaltyNote, setLoyaltyNote] = useState<string | null>(null);
+  const [finalizedBooking, setFinalizedBooking] = useState<any>(null);
   const [availableVehicles, setAvailableVehicles] = useState<Vehicle[]>([]);
   const [activeFlightSegmentId, setActiveFlightSegmentId] = useState<number | null>(null);
   const [paymentRequested, setPaymentRequested] = useState(false);
@@ -177,6 +185,7 @@ export default function Booking() {
     passengerSecondaryPhoneType: "Home",
     notes: "",
     marketingConsent: false,
+    loyaltyCode: params.get("loyalty") || "",
   };
 
   const [data, setData] = useState<BookingData>(initialData);
@@ -240,7 +249,12 @@ export default function Booking() {
           flight_details: s.flight_info || { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false },
         }));
 
-        const result = await initiateBooking(tripDetails);
+        // Loyalty: a code carried from the homepage quick quote is
+        // validated here with the email it was quoted with; without
+        // an email the code cannot qualify yet and pricing stays at
+        // full price — it is re-validated at finalize with the
+        // booker email either way.
+        const result = await initiateBooking(tripDetails, { code: data.loyaltyCode, email: params.get("loyalty_email") || "" });
         if (!result.success) {
           setError(result.message || "Unable to fetch vehicles.");
           return;
@@ -248,6 +262,7 @@ export default function Booking() {
 
         setBookingId(result.booking_id);
         setAvailableVehicles(result.available_vehicles || []);
+        setLoyaltyNote(result.loyalty?.note || null);
         // Keep a vehicle preselected from the URL (?vehicle=<id>, set
         // by the homepage quick quote's "Book this car") when it is
         // one of the priced vehicles — exactly as if the customer had
@@ -406,6 +421,7 @@ export default function Booking() {
         vehicle_details: data.vehicle_details,
         contact_details,
         special_requests: data.notes,
+        loyalty_code: data.loyaltyCode,
       });
 
       if (!result.success) {
@@ -413,6 +429,7 @@ export default function Booking() {
         return;
       }
 
+      setFinalizedBooking(result.booking || null);
       setDone(true);
     } catch (err: any) {
       setError(err?.message || "Booking confirmation failed.");
@@ -516,7 +533,8 @@ export default function Booking() {
 
           <div class="section">
             <h2>Estimated Price</h2>
-            <div class="row"><div class="label">Vehicle Estimate:</div><div class="val" style="font-weight:bold; color:#d4af37; font-size:18px;">$${selectedVehicle?.estimated_price || "0.00"}</div></div>
+            <div class="row"><div class="label">Vehicle Estimate:</div><div class="val" style="font-weight:bold; color:#d4af37; font-size:18px;">$${(finalizedBooking?.vehicle_details?.estimated_price ?? selectedVehicle?.estimated_price) || "0.00"}</div></div>
+            ${finalizedBooking?.loyalty_discount?.discount_amount > 0 ? `<div class="row"><div class="label">Returning-client discount (10%):</div><div class="val">-$${Number(finalizedBooking.loyalty_discount.discount_amount).toFixed(2)}</div></div>` : ''}
             <p style="font-size:12px; color:#888; margin-top:10px;">All-inclusive estimate: Your final quote includes tolls, gratuity, and fuel surcharges. Airport pickups include 60 minutes of complimentary wait time; all other pickups include 15 minutes. No charge will be made until 24 hours before pickup.</p>
           </div>
 
@@ -558,7 +576,10 @@ export default function Booking() {
             </p>
             <div className="mt-8 grid sm:grid-cols-2 gap-4 text-left text-sm">
               <Detail label="Vehicle" value={selectedVehicle?.vehicle_name || "Not selected"} />
-              <Detail label="Estimated Total" value={selectedVehicle?.estimated_price ? `$${selectedVehicle.estimated_price}` : "Calculated at confirmation"} />
+              <Detail label="Estimated Total" value={finalizedBooking?.vehicle_details?.estimated_price ? `$${finalizedBooking.vehicle_details.estimated_price}` : selectedVehicle?.estimated_price ? `$${selectedVehicle.estimated_price}` : "Calculated at confirmation"} />
+              {finalizedBooking?.loyalty_discount?.discount_amount > 0 && (
+                <Detail label="Returning-client discount (10%)" value={`-$${Number(finalizedBooking.loyalty_discount.discount_amount).toFixed(2)}`} />
+              )}
               <Detail label="Passengers" value={`${data.pax}`} />
               <Detail label="Luggage" value={data.bags > 0 ? `${data.bags} ${data.bagSize ? `(${data.bagSize})` : ""}` : "None"} />
               <Detail label="Pickup" value={`${data.segments[0]?.pickup_details?.flat_no ? 'Unit/Apt ' + data.segments[0].pickup_details.flat_no + ', ' : ''}${data.segments[0]?.pickup}`} />
@@ -641,7 +662,7 @@ export default function Booking() {
                 onOpenFlightInfo={(id) => setActiveFlightSegmentId(id)} 
               />
             )}
-            {step === 1 && <Step2 data={data} availableVehicles={availableVehicles} onSelectVehicle={selectVehicle} />}
+            {step === 1 && <Step2 data={data} availableVehicles={availableVehicles} onSelectVehicle={selectVehicle} loyaltyNote={loyaltyNote} />}
             {step === 2 && <Step3Summary data={data} vehicle={selectedVehicle} />}
             {step === 3 && cameFromQuote && selectedVehicle && (
               <TripSummaryBar
@@ -1081,11 +1102,12 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
   );
 }
 
-function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData; availableVehicles: Vehicle[]; onSelectVehicle: (vehicle: Vehicle) => void }) {
+function Step2({ data, availableVehicles, onSelectVehicle, loyaltyNote }: { data: BookingData; availableVehicles: Vehicle[]; onSelectVehicle: (vehicle: Vehicle) => void; loyaltyNote?: string | null }) {
   return (
     <>
       <h3 className="font-serif-lux text-3xl gradient-gold-text">Select Your Vehicle</h3>
       <p className="text-white/55 mt-1 text-sm">Available vehicles that fit your itinerary.</p>
+      {loyaltyNote && <p className="text-emerald-300 text-sm mt-2">{loyaltyNote}</p>}
       
       <div className="mt-6 grid gap-6 grid-cols-1 md:grid-cols-2">
         {availableVehicles.map((v) => {
@@ -1120,9 +1142,12 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
                 <div className="mt-4">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] tracking-[0.25em] text-gold uppercase font-semibold">Vehicle</span>
-                    <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
+                    <span className="text-sm font-semibold text-gold font-mono">{v.price_breakdown?.discount > 0 && (<span className="text-white/40 line-through mr-2 font-normal">${Number(v.price_breakdown.calculatedGrandTotal || 0).toFixed(2)}</span>)}${v.estimated_price}</span>
                   </div>
                   <h4 className="font-serif-lux text-xl text-white mt-1 group-hover:text-gold transition-colors">{v.vehicle_name}</h4>
+                  {v.price_breakdown?.discount > 0 && (
+                    <p className="text-xs text-emerald-300 mt-1">Returning-client discount (10%): -${Number(v.price_breakdown.discount).toFixed(2)}</p>
+                  )}
                   
                   <div className="text-xs text-white/70 mt-3 flex items-center gap-4 border-t border-white/5 pt-3">
                     <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-gold shrink-0" />Fits {v.passenger_capacity} Passengers</span>
@@ -1229,6 +1254,9 @@ function Step3Summary({ data, vehicle }: any) {
         <Detail label="Luggage" value={data.bags > 0 ? `${data.bags} ${data.bagSize ? `(${data.bagSize})` : ""}` : "None"} />
         <Detail label="Occasion" value={data.occasion || "Not specified"} />
         <Detail label="Estimated Total" value={vehicle?.estimated_price ? `$${vehicle.estimated_price}` : "Calculated at booking"} />
+        {vehicle?.price_breakdown?.discount > 0 && (
+          <Detail label="Returning-client discount (10%)" value={`-$${Number(vehicle.price_breakdown.discount).toFixed(2)}`} />
+        )}
       </div>
       <p className="mt-3 text-xs text-white/50 leading-relaxed font-light px-1">
         All-inclusive estimate: Your final quote includes tolls, gratuity, and fuel surcharges. Airport pickups include 60 minutes of complimentary wait time; all other pickups include 15 minutes. No charge will be made until 24 hours before pickup.
@@ -1287,6 +1315,13 @@ function Step4Contact({ data, update }: { data: BookingData; update: (k: keyof B
           </Field>
           <Field icon={Mail} label="Email Address *">
             <input type="email" className={inputCls()} value={data.email} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("email", e.target.value)} placeholder="you@example.com" />
+          </Field>
+          {/* Returning-client loyalty: optional. The code only
+              discounts when this email has a prior completed
+              booking with us; it is re-validated on the server
+              when you confirm. */}
+          <Field icon={Mail} label="Loyalty code (optional)">
+            <input className={inputCls()} value={data.loyaltyCode} onChange={(e: React.ChangeEvent<HTMLInputElement>) => update("loyaltyCode", e.target.value)} placeholder="e.g. SHINE10 — 10% off for returning customers" autoComplete="off" />
           </Field>
           
           <Field icon={Phone} label="Primary Phone Number *">
