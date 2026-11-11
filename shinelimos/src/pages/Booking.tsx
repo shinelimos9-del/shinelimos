@@ -4,7 +4,6 @@ import { PageHero, GoldButton, GoldDivider } from "../components/ui";
 import SectionBackground from "../components/SectionBackground";
 import TimePicker, { formatTimeWithAmPm } from "../components/TimePicker";
 import { initiateBooking, finalizeBooking, requestPayment, ADMIN_BASE_URL } from "../utils/api";
-import { getVehicleTierKey } from "../utils/pricingEngine";
 import AddressSearch from "../components/AddressSearch";
 
 const BG = "/images/pexels-photo-8605325.webp";
@@ -14,15 +13,6 @@ import { COMPANY } from "../data";
 
 const STEPS = ["Trip Itinerary", "Vehicle Selection", "Summary", "Contact Info"];
 
-// "2 hours" -> 2, "" -> 0.
-const parseDurationHours = (d: string) => {
-  const m = String(d || "").match(/(\d+)/);
-  return m ? parseInt(m[1], 10) : 0;
-};
-
-// Same tier detection as the pricing engine: a Sprinter (or bus/coach)
-// hourly booking starts at 4 hours, cars at 2.
-const isSprinterVehicle = (v: any) => !!v && getVehicleTierKey(v) === "sprinter";
 
 interface LocationDetails {
   flat_no: string;
@@ -138,7 +128,7 @@ export default function Booking() {
         id: 1,
         date: params.get("date") || "",
         time: params.get("time") || "",
-        duration: "",
+        duration: params.get("duration") || ((params.get("type") || "") === "hourly" ? "2 hours" : ""),
         pickup: params.get("pickup") || "",
         pickup_details: { 
           flat_no: "", 
@@ -205,19 +195,11 @@ export default function Booking() {
     setData((prev) => ({ ...prev, [k]: v } as BookingData));
   };
 
-  // Picking a vehicle: when the customer picks a Sprinter for an
-  // hourly trip, a shorter duration they entered first moves up to
-  // 4 hours automatically — the picker then starts at 4.
+  // Picking a vehicle just selects it — hourly duration is already
+  // pre-selected at 2 hours and applies to every vehicle.
   const selectVehicle = (vehicle: Vehicle) => {
-    const segments =
-      data.type === "hourly" && isSprinterVehicle(vehicle)
-        ? data.segments.map((s) => {
-            const h = parseDurationHours(s.duration);
-            return h > 0 && h < 4 ? { ...s, duration: "4 hours" } : s;
-          })
-        : data.segments;
     setError(null);
-    setData((prev) => ({ ...prev, vehicle_id: vehicle._id, vehicle_details: vehicle, segments } as BookingData));
+    setData((prev) => ({ ...prev, vehicle_id: vehicle._id, vehicle_details: vehicle } as BookingData));
   };
   
   const next = async () => {
@@ -768,8 +750,6 @@ function inputCls() {
 }
 
 function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: (k: keyof BookingData, v: any) => void; onOpenFlightInfo: (id: number) => void }) {
-  // Hourly + Sprinter selected: the duration picker starts at 4 hours.
-  const sprinterSelected = data.type === "hourly" && isSprinterVehicle(data.vehicle_details);
   const addSegment = () => {
     update("segments", [
       ...data.segments,
@@ -777,7 +757,7 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
         id: Date.now(), 
         date: "", 
         time: "", 
-        duration: "", 
+        duration: data.type === "hourly" ? "2 hours" : "", 
         pickup: "", 
         pickup_details: { flat_no: "", area: "", landmark: "", postal_code: "", city: "", state: "" },
         dropoff: "", 
@@ -917,16 +897,12 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
                 <Field icon={Clock} label="Duration">
                   <div className="flex gap-2">
                     <select className={inputCls()} value={seg.duration} onChange={(e) => updateSegment(seg.id, "duration", e.target.value)}>
-                      <option className="bg-[#1a1a1a]" value="">{sprinterSelected ? "— Not Selected (4-hour minimum) —" : data.type === "hourly" ? "— Not Selected (2-hour minimum) —" : "— Not Selected —"}</option>
+                      <option className="bg-[#1a1a1a]" value="">— Select duration —</option>
                       {data.type !== "hourly" && (
                         <option className="bg-[#1a1a1a]" value="1 hour">1 Hour</option>
                       )}
-                      {!sprinterSelected && (
-                        <option className="bg-[#1a1a1a]" value="2 hours">2 Hours</option>
-                      )}
-                      {!sprinterSelected && (
-                        <option className="bg-[#1a1a1a]" value="3 hours">3 Hours</option>
-                      )}
+                      <option className="bg-[#1a1a1a]" value="2 hours">2 Hours</option>
+                      <option className="bg-[#1a1a1a]" value="3 hours">3 Hours</option>
                       <option className="bg-[#1a1a1a]" value="4 hours">4 Hours</option>
                       <option className="bg-[#1a1a1a]" value="5 hours">5 Hours</option>
                       <option className="bg-[#1a1a1a]" value="6 hours">6 Hours</option>
@@ -1049,7 +1025,13 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
       <div className="p-5 border border-white/10 rounded-b-2xl bg-white/5 border-t-0">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <Field icon={Car} label="Trip Type *">
-            <select className={inputCls()} value={data.type} onChange={(e) => update("type", e.target.value)}>
+            <select className={inputCls()} value={data.type} onChange={(e) => {
+              const v = e.target.value;
+              update("type", v);
+              if (v === "hourly") {
+                update("segments", data.segments.map((s: Segment) => (s.duration ? s : { ...s, duration: "2 hours" })));
+              }
+            }}>
               <option className="bg-[#1a1a1a]" value="">— Trip Type —</option>
               <option className="bg-[#1a1a1a]" value="one-way">One Way</option>
               <option className="bg-[#1a1a1a]" value="round-trip">Round Trip</option>
