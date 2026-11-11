@@ -549,7 +549,9 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
 
     // Validate discount if provided
     let validatedDiscount = 0;
+    let explicitDiscountProvided = false;
     if (extraOptions.discount !== undefined && extraOptions.discount !== null && extraOptions.discount !== '') {
+      explicitDiscountProvided = true;
       const rawDiscount = extraOptions.discount;
       const parsedDiscount = Number(rawDiscount);
       if (isNaN(parsedDiscount) || !isFinite(parsedDiscount)) {
@@ -564,6 +566,17 @@ exports.sendFinalInvoicePaymentLink = async (bookingId, extraOptions = {}) => {
         return { success: false, message: "Discount amount cannot exceed 2 decimal places" };
       }
       validatedDiscount = pricingEngine.round2(parsedDiscount);
+    }
+
+    // Returning-client loyalty (Phase 0): if the booking was finalized
+    // with a validated loyalty discount and the admin did NOT type an
+    // explicit discount in the finalize form, the stored loyalty
+    // amount applies automatically — the discount survives the
+    // finalize step and shows on the invoice email + receipt PDF. An
+    // explicit discount (including 0, i.e. "remove it") always wins,
+    // so the loyalty amount is never stacked on top of a manual one.
+    if (!explicitDiscountProvided && booking.loyalty_discount && booking.loyalty_discount.discount_amount > 0) {
+      validatedDiscount = pricingEngine.round2(booking.loyalty_discount.discount_amount);
     }
 
     const quote = pricingEngine.calculateQuote({

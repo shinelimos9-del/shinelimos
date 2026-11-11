@@ -8,6 +8,7 @@ const socketUtil = require("../../socket");
 const { sendEmail } = require("../utils/emailService");
 const { displayConfirmationCode, formatTripDateEastern } = require("../utils/confirmationCode");
 const pricingEngine = require("../utils/pricingEngine");
+const loyalty = require("./loyalty");
 
 const formatTimeWithAmPm = (timeStr) => {
 	if (!timeStr) return "";
@@ -323,7 +324,16 @@ const processTripSegments = async (tripData) => {
 // Pricing Engine (pricingEngine.calculateQuote). The quote and the
 // booking run this same code, so quote prices always match booking
 // prices exactly (same rates + 20% gratuity).
-const priceTripVehicles = async (processedTripData) => {
+//
+// loyalty is the validated result from loyalty.validateLoyalty
+// ({ applied, code }) — optional. When applied, every vehicle gets
+// 10% off its calculated grand total: the discount is computed once on
+// the summed whole-trip total (not per segment, so rounding stays
+// exact) and written into the returned price_breakdown as `discount`,
+// with grandTotal reduced. The pre-discount total stays visible as
+// calculatedGrandTotal/originalGrandTotal, so the UI, the receipt and
+// the final invoice can all show the discount as its own line.
+const priceTripVehicles = async (processedTripData, loyaltyValidation) => {
 // 3. Get total passengers and luggage from all segments
 	let totalPass = 0;
 	let totalLuggage = 0;
@@ -338,6 +348,8 @@ const priceTripVehicles = async (processedTripData) => {
 		parseInt(v.passenger_capacity) >= totalPass &&
 		parseInt(v.luggage_capacity) >= totalLuggage
 	);
+
+	const loyaltyApplied = Boolean(loyaltyValidation && loyaltyValidation.applied);
 
 	// Calculate pricing for each vehicle using Instant Quote Pricing Engine
 	const vehiclesWithPrice = await Promise.all(suitableVehicles.map(async (vehicle) => {
@@ -367,8 +379,23 @@ const priceTripVehicles = async (processedTripData) => {
 			totalPrice += quote.breakdown.grandTotal;
 		}
 
-		const finalEstimatedPrice = pricingEngine.round2(totalPrice).toFixed(2);
-		console.log(`[Pricing Engine] Total Estimated Price for ${vehicle.vehicle_name}: $${finalEstimatedPrice}`);
+		totalPrice = pricingEngine.round2(totalPrice);
+		const discountAmount = loyaltyApplied ? loyalty.discountFor(totalPrice) : 0;
+		const finalEstimatedPrice = pricingEngine.round2(totalPrice - discountAmount).toFixed(2);
+		console.log(`[Pricing Engine] Total Estimated Price for ${vehicle.vehicle_name}: $${finalEstimatedPrice}${loyaltyApplied ? ` (loyalty discount -$${discountAmount.toFixed(2)})` : ""}`);
+
+		// The breakdown carries the whole-trip totals: the engine's
+		// per-segment breakdown is the last segment only, so the
+		// discount, the pre-discount total and the reduced total are
+		// patched in here (exact for single-segment trips, which is
+		// every real quote/booking flow).
+		const breakdown = lastQuote ? {
+			...lastQuote.breakdown,
+			calculatedGrandTotal: totalPrice,
+			originalGrandTotal: totalPrice,
+			discount: discountAmount,
+			grandTotal: pricingEngine.round2(totalPrice - discountAmount),
+		} : null;
 
 		return {
 			_id: vehicle._id,
@@ -377,17 +404,27 @@ const priceTripVehicles = async (processedTripData) => {
 			passenger_capacity: vehicle.passenger_capacity,
 			luggage_capacity: vehicle.luggage_capacity,
 			estimated_price: finalEstimatedPrice,
-			price_breakdown: lastQuote ? lastQuote.breakdown : null
+			price_breakdown: breakdown,
+			loyalty_discount: discountAmount,
 		};
 	}));
 
 	return vehiclesWithPrice;
 };
 
-exports.initiateBooking = async (tripData) => {
+exports.initiateBooking = async (tripData, loyaltyInput) => {
 	try {
 		const validationError = validateTripData(tripData);
 		if (validationError) return { success: false, message: validationError };
+
+		// Loyalty is validated here when a code + email are supplied
+		// (homepage quick-quote arrival); without an email the code
+		// cannot qualify yet and pricing stays at full price — the
+		// discount is re-validated at finalize with the booker email.
+		const loyaltyValidation = await loyalty.validateLoyalty(
+			loyaltyInput && loyaltyInput.code,
+			loyaltyInput && loyaltyInput.email
+		);
 
 		// 1. Process trip data with accurate Mapbox distance calculation
 		const processedTripData = await processTripSegments(tripData);
@@ -397,12 +434,13 @@ exports.initiateBooking = async (tripData) => {
 		const savedBooking = await booking.save();
 
 		// 3. Price every suitable vehicle with the Instant Quote Pricing Engine
-		const vehiclesWithPrice = await priceTripVehicles(processedTripData);
+		const vehiclesWithPrice = await priceTripVehicles(processedTripData, loyaltyValidation);
 
 		return { 
 			success: true, 
 			booking_id: savedBooking._id, 
-			available_vehicles: vehiclesWithPrice 
+			available_vehicles: vehiclesWithPrice,
+			loyalty: { ...loyaltyValidation, note: loyalty.loyaltyNote(loyaltyValidation) },
 		};
 	} catch (error) {
 		console.log("initiateBooking error:", error);
@@ -414,31 +452,100 @@ exports.initiateBooking = async (tripData) => {
 // it NEVER creates a Booking row, never notifies admin and never sends
 // an email. Powers the homepage quick quote: visitors see real
 // per-vehicle prices before starting a booking.
-exports.getQuote = async (tripData) => {
+// loyaltyInput is { code, email } — both optional. A code without the
+// booking email cannot be validated, so the quote stays at full price
+// with a note; the discount is only shown once the code + email check
+// out, and it is re-validated at finalize either way.
+exports.getQuote = async (tripData, loyaltyInput) => {
 	try {
 		const validationError = validateTripData(tripData);
 		if (validationError) return { success: false, message: validationError };
 
-		const processedTripData = await processTripSegments(tripData);
-		const vehiclesWithPrice = await priceTripVehicles(processedTripData);
+		const loyaltyValidation = await loyalty.validateLoyalty(
+			loyaltyInput && loyaltyInput.code,
+			loyaltyInput && loyaltyInput.email
+		);
 
-		return { success: true, available_vehicles: vehiclesWithPrice };
+		const processedTripData = await processTripSegments(tripData);
+		const vehiclesWithPrice = await priceTripVehicles(processedTripData, loyaltyValidation);
+
+		return {
+			success: true,
+			available_vehicles: vehiclesWithPrice,
+			loyalty: { ...loyaltyValidation, note: loyalty.loyaltyNote(loyaltyValidation) },
+		};
 	} catch (error) {
 		console.log("getQuote error:", error);
 		return { success: false, message: error.message || error };
 	}
 };
 
-exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, specialRequests) => {
+exports.finalizeBooking = async (bookingId, vehicleDetails, contactDetails, specialRequests, loyaltyCode) => {
 	try {
+		// Load the draft first: the price is recomputed server-side from
+		// the STORED trip details + the chosen vehicle, never trusted
+		// from the client. A loyalty code is only honoured when the
+		// code matches AND the booker email has a prior completed
+		// booking (the current booking excluded, so a booking can never
+		// qualify off itself). An invalid code or a first-time email
+		// simply books at full price — the booking is never blocked.
+		const draftBooking = await Booking.findById(bookingId);
+		if (!draftBooking) return { success: false, message: "Booking not found" };
+
+		const bookerEmail = (contactDetails && contactDetails.booker && contactDetails.booker.email) || "";
+		const loyaltyValidation = await loyalty.validateLoyalty(loyaltyCode, bookerEmail, bookingId);
+
+		let finalVehicleDetails = vehicleDetails;
+		let finalPriceBreakdown = null;
+		let loyaltyDiscountRecord = null;
+
+		try {
+			const vehicleId = vehicleDetails && vehicleDetails.vehicle_id;
+			if (vehicleId) {
+				const dbVehicle = await Vehicle.findById(vehicleId);
+				if (dbVehicle && draftBooking.trip_details && draftBooking.trip_details.length > 0) {
+					const repriced = await priceTripVehicles(draftBooking.trip_details, loyaltyValidation);
+					const match = repriced.find((v) => String(v._id) === String(vehicleId));
+					if (match) {
+						finalVehicleDetails = {
+							vehicle_id: dbVehicle._id,
+							vehicle_name: dbVehicle.vehicle_name,
+							image: dbVehicle.image,
+							estimated_price: Number(match.estimated_price),
+						};
+						finalPriceBreakdown = match.price_breakdown;
+						if (loyaltyValidation.applied && match.loyalty_discount > 0) {
+							loyaltyDiscountRecord = {
+								code: loyaltyValidation.code,
+								discount_amount: match.loyalty_discount,
+								percent: loyalty.LOYALTY_PERCENT,
+								applied_at: new Date(),
+							};
+						}
+					} else {
+						console.log(`[LOYALTY] finalize: vehicle ${vehicleId} not in repriced list, keeping client price without discount`);
+					}
+				}
+			}
+		} catch (repriceError) {
+			// Never fail a booking on the re-price: fall back to the
+			// client-supplied details at full price and log it.
+			console.log(`[LOYALTY] finalize: server re-price failed (${repriceError.message}), keeping client price without discount`);
+			finalVehicleDetails = vehicleDetails;
+			finalPriceBreakdown = null;
+			loyaltyDiscountRecord = null;
+		}
+
 		const updateData = {
-			vehicle_details: vehicleDetails,
+			vehicle_details: finalVehicleDetails,
 			contact_details: contactDetails,
 			special_requests: specialRequests,
 			booking_status: "pending",
 			is_draft: false,
 			updated_at: Date.now()
 		};
+		if (finalPriceBreakdown) updateData.price_breakdown = finalPriceBreakdown;
+		if (loyaltyDiscountRecord) updateData.loyalty_discount = loyaltyDiscountRecord;
 
 		// If booker is also the passenger, sync booker info to passenger info if not provided
 		if (contactDetails.booker && contactDetails.booker.is_passenger) {
