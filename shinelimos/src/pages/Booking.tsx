@@ -770,6 +770,18 @@ function inputCls() {
   return "w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-gold/60 focus:bg-gold/5 transition-all";
 }
 
+// Airport pickup/drop-off detection for the inline flight-number field.
+// AddressSearch details carry no POI category, so match on the address text:
+// the three DMV airport codes, "Dulles", or the word "airport" (covers the
+// full Mapbox POI names, e.g. "Washington Dulles International Airport").
+// The field is optional, so showing it for an "Airport Rd" address is harmless.
+function isAirportAddress(address: string): boolean {
+  if (!address) return false;
+  const a = address.toLowerCase();
+  if (/\b(iad|dca|bwi)\b/.test(a)) return true;
+  return a.includes("dulles") || a.includes("airport");
+}
+
 function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: (k: keyof BookingData, v: any) => void; onOpenFlightInfo: (id: number) => void }) {
   const addSegment = () => {
     update("segments", [
@@ -1023,6 +1035,39 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
                 )}
               </div>
 
+              {(isAirportAddress(seg.pickup) || isAirportAddress(seg.dropoff)) && (
+                <div className="rounded-2xl border border-gold/30 bg-gold/5 p-4">
+                  <Field icon={Plane} label="Flight number (optional)">
+                    <input
+                      type="text"
+                      className={inputCls()}
+                      placeholder="e.g. LH 202, BA2490"
+                      value={seg.flight_info?.airline_flight_no || ""}
+                      onChange={(e) => {
+                        const arriving = isAirportAddress(seg.pickup);
+                        updateSegment(seg.id, "flight_info", {
+                          ...(seg.flight_info || { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false }),
+                          airline_flight_no: e.target.value,
+                          arrival: arriving,
+                          departure: !arriving,
+                        });
+                      }}
+                    />
+                  </Field>
+                  <p className="text-[11px] text-white/50 mt-2">
+                    {isAirportAddress(seg.pickup)
+                      ? "Add your arriving flight number so we can track delays and meet you when you land."
+                      : "Add your departing flight number so we can plan your pickup around it."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => onOpenFlightInfo(seg.id)}
+                    className="mt-2 text-xs text-gold hover:text-white underline underline-offset-2 transition-colors"
+                  >
+                    More flight options (international / domestic, meet &amp; greet)
+                  </button>
+                </div>
+              )}
               <div className="pt-2">
                 <input className={inputCls()} value={seg.comments} onChange={(e) => updateSegment(seg.id, "comments", e.target.value)} placeholder="Comments (Optional)" />
               </div>
