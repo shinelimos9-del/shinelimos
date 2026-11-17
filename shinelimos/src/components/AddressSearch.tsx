@@ -97,6 +97,7 @@ export default function AddressSearch({ value, onChange, placeholder, className,
 
       const details = {
         full_address: feature.place_name || feature.text,
+        name: feature.text || "",
         city: placeContext,
         state: regionContext,
         postal_code: postcodeContext,
@@ -125,6 +126,7 @@ export default function AddressSearch({ value, onChange, placeholder, className,
       const feature = response.data.features[0];
       const details = {
         full_address: feature.properties.full_address || feature.properties.name,
+        name: feature.properties.name || "",
         city: feature.properties.context?.place?.name || "",
         state: feature.properties.context?.region?.region_code || "",
         postal_code: feature.properties.context?.postcode?.name || "",
@@ -139,6 +141,7 @@ export default function AddressSearch({ value, onChange, placeholder, className,
       // Fallback: use suggestion name
       const fallbackDetails = {
         full_address: suggestion.full_address || suggestion.name,
+        name: suggestion.name || "",
         city: "",
         state: "",
         postal_code: ""
@@ -154,6 +157,7 @@ export default function AddressSearch({ value, onChange, placeholder, className,
     if (query && query !== value) {
       onChange(query, {
         full_address: query,
+        name: query,
         city: "",
         state: "",
         postal_code: ""
