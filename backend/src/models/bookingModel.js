@@ -46,9 +46,16 @@ const bookingSchema = new mongoose.Schema({
         longitude: Number,
       }
     }],
+    // Hourly / as-directed trips have no destination — the booking
+    // form sends no drop-off for them, so requiring one here rejected
+    // every hourly booking at the draft save (400). One-way and
+    // round-trip segments still require a drop-off.
     dropoff_location: {
       type: String,
-      required: true,
+      required: function () {
+        const t = String(this.trip_type || "").toLowerCase();
+        return t !== "hourly" && t !== "as-directed" && t !== "as directed";
+      },
     },
     dropoff_details: {
       flat_no: String,

@@ -286,7 +286,7 @@ export default function Booking() {
           setStep((s: number) => Math.min(STEPS.length - 1, s + 1));
         }
       } catch (err: any) {
-        setError(err?.message || "Could not connect to the booking service.");
+        setError(err?.response?.data?.message || err?.message || "Could not connect to the booking service.");
       } finally {
         setLoading(false);
       }
@@ -432,7 +432,7 @@ export default function Booking() {
       setFinalizedBooking(result.booking || null);
       setDone(true);
     } catch (err: any) {
-      setError(err?.message || "Booking confirmation failed.");
+      setError(err?.response?.data?.message || err?.message || "Booking confirmation failed.");
     } finally {
       setLoading(false);
     }
@@ -451,7 +451,7 @@ export default function Booking() {
         setError(result.message || "Failed to send payment request.");
       }
     } catch (err: any) {
-      setError(err?.message || "Could not connect to the payment service.");
+      setError(err?.response?.data?.message || err?.message || "Could not connect to the payment service.");
     } finally {
       setRequestingPayment(false);
     }
