@@ -50,6 +50,8 @@ interface Segment {
   stops?: StopLocation[];
   dropoff: string;
   dropoff_details: LocationDetails;
+  pickup_is_airport?: boolean;
+  dropoff_is_airport?: boolean;
   comments: string;
   total_passengers: string;
   total_luggage: string;
@@ -671,7 +673,7 @@ export default function Booking() {
                 onEditTrip={() => setStep(0)}
               />
             )}
-            {step === 3 && <Step4Contact data={data} update={update} />}
+            {step === 3 && <Step4Contact data={data} update={update} onOpenFlightInfo={(id) => setActiveFlightSegmentId(id)} />}
 
             {error && (
               <div className="mt-8 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
@@ -782,6 +784,41 @@ function isAirportAddress(address: string): boolean {
   return a.includes("dulles") || a.includes("airport");
 }
 
+// DMV airport terminal coordinates (IAD, DCA, BWI). A pickup/drop-off whose
+// Mapbox coordinates fall near a terminal counts as an airport address even
+// when the resolved address text is only a street address (e.g. selecting the
+// "Dulles International Airport" suggestion stores "1 Saarinen Circle").
+const AIRPORT_COORDS = [
+  { lat: 38.9531, lng: -77.456 },
+  { lat: 38.8512, lng: -77.0402 },
+  { lat: 39.1754, lng: -76.6684 },
+];
+
+function isNearAirport(lat?: number, lng?: number): boolean {
+  if (typeof lat !== "number" || typeof lng !== "number") return false;
+  return AIRPORT_COORDS.some((c) => Math.abs(lat - c.lat) < 0.03 && Math.abs(lng - c.lng) < 0.03);
+}
+
+// Airport check for a Mapbox selection: the POI name (e.g. "Dulles
+// International Airport") or the selection's coordinates.
+function isAirportSelection(details: any): boolean {
+  if (!details) return false;
+  if (typeof details.name === "string" && isAirportAddress(details.name)) return true;
+  return isNearAirport(details.lat, details.lng);
+}
+
+// Full airport check for one end of a segment: the flag set when the address
+// was selected, the address text itself, or the stored coordinates (covers
+// addresses pre-filled from the quote form, which carry lat/lng but no flag).
+function isAirportEnd(seg: any, end: "pickup" | "dropoff"): boolean {
+  const flag = end === "pickup" ? seg.pickup_is_airport : seg.dropoff_is_airport;
+  if (flag) return true;
+  const address = end === "pickup" ? seg.pickup : seg.dropoff;
+  if (isAirportAddress(address)) return true;
+  const details = end === "pickup" ? seg.pickup_details : seg.dropoff_details;
+  return isNearAirport(details?.lat, details?.lng);
+}
+
 function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: (k: keyof BookingData, v: any) => void; onOpenFlightInfo: (id: number) => void }) {
   const addSegment = () => {
     update("segments", [
@@ -838,9 +875,12 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
     update("segments", data.segments.map((s: Segment) => {
       if (s.id === id) {
         const detailsKey = type === 'pickup' ? 'pickup_details' : 'dropoff_details';
+        const flagKey = type === 'pickup' ? 'pickup_is_airport' : 'dropoff_is_airport';
+        const isAirport = isAirportAddress(address) || isAirportSelection(details);
         return {
           ...s,
           [type]: address,
+          [flagKey]: isAirport,
           [detailsKey]: {
             ...s[detailsKey],
             city: details?.city || "",
@@ -1035,7 +1075,7 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
                 )}
               </div>
 
-              {(isAirportAddress(seg.pickup) || isAirportAddress(seg.dropoff)) && (
+              {(isAirportEnd(seg, "pickup") || isAirportEnd(seg, "dropoff")) && (
                 <div className="rounded-2xl border border-gold/30 bg-gold/5 p-4">
                   <Field icon={Plane} label="Flight number (optional)">
                     <input
@@ -1044,7 +1084,7 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
                       placeholder="e.g. LH 202, BA2490"
                       value={seg.flight_info?.airline_flight_no || ""}
                       onChange={(e) => {
-                        const arriving = isAirportAddress(seg.pickup);
+                        const arriving = isAirportEnd(seg, "pickup");
                         updateSegment(seg.id, "flight_info", {
                           ...(seg.flight_info || { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false }),
                           airline_flight_no: e.target.value,
@@ -1055,7 +1095,7 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
                     />
                   </Field>
                   <p className="text-[11px] text-white/50 mt-2">
-                    {isAirportAddress(seg.pickup)
+                    {isAirportEnd(seg, "pickup")
                       ? "Add your arriving flight number so we can track delays and meet you when you land."
                       : "Add your departing flight number so we can plan your pickup around it."}
                   </p>
@@ -1318,7 +1358,7 @@ function formatPhoneNumber(value: string) {
   return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
 }
 
-function Step4Contact({ data, update }: { data: BookingData; update: (k: keyof BookingData, v: any) => void }) {
+function Step4Contact({ data, update, onOpenFlightInfo }: { data: BookingData; update: (k: keyof BookingData, v: any) => void; onOpenFlightInfo: (id: number) => void }) {
   const handlePhoneChange = (key: keyof BookingData, value: string) => {
     // Only allow digits to be processed
     const digits = value.replace(/\D/g, "").slice(0, 10);
@@ -1327,6 +1367,42 @@ function Step4Contact({ data, update }: { data: BookingData; update: (k: keyof B
 
   return (
     <>
+      {/* Flight number — also asked here, because quick-quote arrivals land
+          directly on this step and never see the trip step. Same booking
+          field as the trip step; one block per airport leg. */}
+      {data.segments.filter((seg: Segment) => isAirportEnd(seg, "pickup") || isAirportEnd(seg, "dropoff")).map((seg: Segment) => {
+        const arriving = isAirportEnd(seg, "pickup");
+        return (
+          <div key={seg.id} className="rounded-2xl border border-gold/30 bg-gold/5 p-4 mb-6">
+            {data.segments.length > 1 && (
+              <p className="text-[11px] text-white/50 mb-2">{seg.pickup} → {seg.dropoff}</p>
+            )}
+            <Field icon={Plane} label="Flight number (optional)">
+              <input
+                type="text"
+                className={inputCls()}
+                placeholder="e.g. LH 202, BA2490"
+                value={seg.flight_info?.airline_flight_no || ""}
+                onChange={(e) => {
+                  update("segments", data.segments.map((s: Segment) => s.id === seg.id ? { ...s, flight_info: { ...(s.flight_info || { international: false, domestic: false, departure: false, arrival: false, airline_flight_no: "", meet_and_greet: false }), airline_flight_no: e.target.value, arrival: arriving, departure: !arriving } } : s));
+                }}
+              />
+            </Field>
+            <p className="text-[11px] text-white/50 mt-2">
+              {arriving
+                ? "Add your arriving flight number so we can track delays and meet you when you land."
+                : "Add your departing flight number so we can plan your pickup around it."}
+            </p>
+            <button
+              type="button"
+              onClick={() => onOpenFlightInfo(seg.id)}
+              className="mt-2 text-xs text-gold hover:text-white underline underline-offset-2 transition-colors"
+            >
+              More flight options (international / domestic, meet &amp; greet)
+            </button>
+          </div>
+        );
+      })}
       {/* Who is riding — Bookinglane-style tabs, wired to the same
           isPassenger state as before; fields and payload unchanged. */}
       <div className="flex gap-1 mb-6 p-1 rounded-full bg-white/5 border border-white/10 w-full">
