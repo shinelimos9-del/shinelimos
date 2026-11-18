@@ -431,6 +431,15 @@ export default function Booking() {
 
       setFinalizedBooking(result.booking || null);
       setDone(true);
+
+      // Google Ads "Booking Request" conversion: fires once when the booking
+      // request is finalized (confirmation screen). Draft creation at step 1
+      // must never count: abandoned sessions are not leads.
+      if (typeof window !== "undefined" && typeof window.gtag === "function") {
+        window.gtag("event", "conversion", {
+          send_to: "AW-17781178463/zyehCJbJwLodEN-A3Z5C",
+        });
+      }
     } catch (err: any) {
       setError(err?.response?.data?.message || err?.message || "Booking confirmation failed.");
     } finally {
