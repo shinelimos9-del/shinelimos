@@ -126,9 +126,9 @@ export const SEO_CONFIG: Record<string, SEOData> = {
     keywords: "fairfax transportation, fairfax shuttle, fairfax to dulles airport, george mason university transportation"
   },
   "dulles-airport": {
-    title: "Dulles Airport (IAD) Limo & Car Service | Shine Limos",
-    description: "Premium limo and black car transfers to and from Dulles International Airport (IAD). Flight tracking, meet & greet, 24/7 dispatch.",
-    keywords: "dulles airport limo, iad car service, dulles black car, airport transfer dulles"
+    title: "Dulles Airport Limo & Car Service (IAD) | Shine Limos — Limo from Dulles Airport",
+    description: "Limo from Dulles Airport (IAD) — flight tracking, meet & greet, 60 minutes free waiting, fixed rates from $99 + 20% gratuity. Herndon-based chauffeurs serving DC, Tysons, Reston, Alexandria & Arlington 24/7.",
+    keywords: "dulles airport limo, iad car service, dulles black car, airport transfer dulles, limo from dulles airport, dulles airport car service"
   },
   "reagan-airport": {
     title: "Reagan National Airport (DCA) Limo Service | Shine Limos",

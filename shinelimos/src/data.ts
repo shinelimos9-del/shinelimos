@@ -378,6 +378,9 @@ export type Location = {
   landmarks: string[];
   seoTitle: string;
   seoDesc: string;
+  guideSections?: { heading: string; paragraphs: string[] }[];
+  infoTables?: { title: string; note?: string; headers: string[]; rows: string[][] }[];
+  faqs?: { q: string; a: string }[];
 };
 
 export const LOCATIONS: Location[] = [
@@ -477,17 +480,120 @@ export const LOCATIONS: Location[] = [
     region: "Limo & Car Service",
     hero: "/location car/car.jpg.jpeg",
     intro:
-      "Washington Dulles International Airport (IAD) is our most active transfer hub. With real-time flight tracking, meet & greet service, and complimentary wait time, we ensure your arrival and departure are seamless, every single time.",
+      "Washington Dulles International Airport (IAD) is Shine Limos' home airport \u2014 and our busiest. We are based in Herndon, a short drive from the terminal, so our chauffeurs know Dulles the way only a neighbor can: which level, which door, and how the AeroTrain and the airport's mobile lounges bring arriving passengers back to the Main Terminal. When you book a Dulles limo with Shine, your chauffeur tracks your flight in real time, adjusts automatically if you are delayed, and meets you where you actually come out.",
     highlights: [
       "Real-time flight tracking & automatic adjustments",
-      "Meet & greet in arrivals terminal",
+      "Meet & greet in arrivals terminal \u2014 $20",
       "Complimentary 60 minutes waiting time",
-      "Fixed rates — no surprises, plus a 20% chauffeur gratuity"
+      "Fixed rates \u2014 no surprises, plus a 20% chauffeur gratuity",
+      "24/7 dispatch \u2014 early departures & late international arrivals",
     ],
-    landmarks: ["IAD Terminal A", "IAD Terminal B", "IAD Terminal C", "Dulles Toll Road", "Route 28 Corridor"],
-    seoTitle: "Dulles Airport Limo & Black Car Service | ShineLimos",
+    landmarks: ["Main Terminal", "Concourse A", "Concourse B", "Concourse C", "Concourse D", "International Arrivals Building", "AeroTrain", "Dulles Toll Road (VA-267)", "Route 28 (Sully Road)", "Reston Town Center", "Tysons Corner", "Herndon", "Steven F. Udvar-Hazy Center"],
+    seoTitle: "Dulles Airport Limo & Car Service (IAD) | Shine Limos \u2014 Limo from Dulles Airport",
     seoDesc:
-      "Premium limo and black car transfers to and from Dulles International Airport (IAD). Flight tracking, meet & greet, 24/7 dispatch."
+      "Limo from Dulles Airport (IAD) \u2014 flight tracking, meet & greet, 60 minutes free waiting, fixed rates from $99 + 20% gratuity. Herndon-based chauffeurs serving DC, Tysons, Reston, Alexandria & Arlington 24/7.",
+    guideSections: [
+      {
+        heading: "One terminal, four concourses",
+        paragraphs: [
+          "Dulles has a single Main Terminal \u2014 Eero Saarinen's landmark building with the sweeping curved roof \u2014 and four midfield concourses: A, B, C, and D. Ticketing and check-in are on the upper (Departures) level of the Main Terminal; baggage claim is on the lower (Arrivals) level. A small set of Z gates sits in the Main Terminal itself. Concourses A and B share one midfield building and serve most non-United airlines; Concourses C and D share the second midfield building and are United Airlines' hub, including most United Express flights.",
+          "The AeroTrain, the airport's underground automated people mover, runs between the Main Terminal and Concourses A, B, and C \u2014 trains arrive every couple of minutes and the ride between stations takes under two minutes. Concourse D has no AeroTrain station: you reach it on foot through Concourse C, or by one of the airport's mobile lounges, the distinctive raised shuttle vehicles Dulles has used since it opened. Mobile lounges also run between the Main Terminal and Concourse D, and carry arriving international passengers to customs.",
+          "No matter which concourse your flight uses, you exit through the Main Terminal. That is the one fact that makes Dulles pickups simple: every arriving passenger \u2014 domestic or international \u2014 comes out of the same building.",
+        ],
+      },
+      {
+        heading: "Where you meet your chauffeur",
+        paragraphs: [
+          "Arriving \u2014 meet & greet (inside): your chauffeur waits for you inside the Main Terminal at the Baggage Claim Level, holding a name sign, and helps with your luggage. For international arrivals, your chauffeur meets you just outside the customs exit. Meet & greet is available for $20.",
+          "Arriving \u2014 curbside: if you prefer curbside pickup, collect your bags, go up the ramp from the Baggage Claim Level to the Arrivals Level, and meet your chauffeur at the Arrival Door you agree on \u2014 the Arrivals Level doors are numbered 1\u20137. The Arrivals Level is for active loading and unloading only; waiting is not permitted, and the airport provides a Cell Phone Lot for drivers waiting for a passenger's call.",
+          "Departing: your chauffeur drops you curbside at the Departures (upper) level, at the doors for your airline's check-in area. Shine Limos has no office or counter inside the airport \u2014 your chauffeur meets you at the terminal as described above, and dispatch coordinates every pickup by phone.",
+          "Also good to know: the Silver Line Metrorail station at Dulles connects directly to the Main Terminal via a covered walkway. If your plans change and you need a car at the last minute, call dispatch at (202) 951-7172 \u2014 we serve Dulles 24 hours a day.",
+        ],
+      },
+      {
+        heading: "International arrivals and customs",
+        paragraphs: [
+          "International passengers arriving at Dulles clear U.S. Customs and Border Protection in the International Arrivals Building, attached to the west end of the Main Terminal. Most international flights are brought there, often by mobile lounge, where passengers clear immigration, collect checked bags, and pass through customs. United passengers connecting onward to a domestic flight are processed at a separate federal inspection facility in Concourse C instead. Travelers arriving from airports with U.S. preclearance (for example, Dublin or Abu Dhabi) clear customs before boarding and exit like domestic arrivals. Customs lines can be long when several long-haul flights land together \u2014 one reason we include a full 60 minutes of complimentary waiting on airport pickups.",
+        ],
+      },
+      {
+        heading: "What every Dulles transfer includes",
+        paragraphs: [
+          "Every Dulles airport transfer includes 60 minutes of complimentary waiting time and a fixed rate quoted before you book \u2014 your rate plus a 20% chauffeur gratuity, with no surprises. Meet & greet service \u2014 your chauffeur inside the terminal holding a name sign \u2014 is available for $20. Dispatch runs 24 hours a day, 7 days a week, so early departures and late international arrivals are covered the same as midday runs.",
+          "Booking is simple: get a quote on shinelimos.com, call (202) 951-7172, or email booking@shinelimos.com, and dispatch sends a payment link. Your card is charged 24 hours before pickup, and you can cancel free of charge up to 24 hours before pickup. Whether you are landing from abroad at the International Arrivals Building or heading out on an early departure, a professional chauffeur will be there.",
+        ],
+      },
+    ],
+    infoTables: [
+      {
+        title: "Routes & drive times from Dulles Airport",
+        note: "Typical drive times outside rush hour. Weekday rush hour (roughly 6:30\u20139:30 AM inbound, 3:30\u20137:00 PM outbound) can add 20\u201340 minutes, especially on the Dulles Toll Road and I-66. Your fare is fixed when you book \u2014 traffic does not change what you pay.",
+        headers: ["Destination", "Distance", "Typical drive", "Usual route"],
+        rows: [
+          ["Downtown Washington, DC", "About 26 miles", "40\u201360 min (rush hour: up to 90 min)", "Dulles Access Road \u2192 Dulles Toll Road (VA-267) \u2192 I-66 East"],
+          ["Arlington (Rosslyn / Ballston)", "About 21\u201325 miles", "30\u201345 min", "Dulles Access Road \u2192 VA-267 \u2192 I-66 East"],
+          ["Alexandria (Old Town)", "About 26\u201329 miles", "45\u201360 min", "VA-267 \u2192 I-495 South \u2192 I-395"],
+          ["Tysons Corner", "About 14 miles", "20\u201330 min", "Dulles Toll Road (VA-267) East to Route 123"],
+          ["Reston Town Center", "About 6 miles", "10\u201320 min", "Dulles Toll Road / Dulles Access Road"],
+          ["Herndon", "About 5 miles", "10\u201315 min", "Route 28 (Sully Road) or Dulles Access Road"],
+        ],
+      },
+      {
+        title: "One-way airport transfers from IAD \u2014 from rates",
+        note: "Fixed rates, quoted before you book. All rates below are shown plus a 20% chauffeur gratuity. Prices shown on the website at booking include the gratuity and a 3% card fee (base \u00d7 1.20 \u00d7 1.03). Free cancellation up to 24 hours before pickup; your card is charged 24 hours before pickup. Mercedes S-Class airport transfers are available; your quote shows the fare before you book. Tolls are added on top of your quoted fare.",
+        headers: ["Vehicle", "From rate", "Plus 20% gratuity", "All-in website price (from)"],
+        rows: [
+          ["Executive Sedan", "from $99", "$118.80", "$122.36"],
+          ["Luxury SUV", "from $135", "$162.00", "$166.86"],
+          ["Executive Sprinter", "from $189", "$226.80", "$233.60"],
+        ],
+      },
+      {
+        title: "Hourly charters \u2014 start at 2 hours",
+        note: "Ideal for multi-stop days, roadshows, and waiting between meetings. All-in hourly prices include the 20% chauffeur gratuity and the 3% card fee.",
+        headers: ["Vehicle", "Hourly rate", "2 hours, all-in"],
+        rows: [
+          ["Executive Sedan", "$75/hr", "$185.40"],
+          ["Luxury SUV", "$95/hr", "$234.84"],
+          ["Mercedes S-Class", "$115/hr", "$284.28"],
+          ["Executive Sprinter", "$139/hr", "$343.61"],
+        ],
+      },
+    ],
+    faqs: [
+      {
+        q: "Where do I meet my chauffeur at Dulles Airport?",
+        a: "Your chauffeur meets you inside the Main Terminal at the Baggage Claim Level, holding a name sign \u2014 no matter which concourse your flight arrived at, you exit through the Main Terminal. If you prefer curbside pickup, go up the ramp from baggage claim to the Arrivals Level and meet at the Arrival Door (numbered 1\u20137) you agree on with dispatch. International arrivals are met just outside the customs exit.",
+      },
+      {
+        q: "What if my flight is delayed?",
+        a: "Your chauffeur tracks your flight in real time and adjusts automatically \u2014 a delayed landing does not leave you stranded, and you are not charged extra because your flight ran late. Just make sure your flight number is on the booking.",
+      },
+      {
+        q: "How much waiting time is included?",
+        a: "60 minutes of complimentary waiting time on airport pickups, counted from your flight's actual arrival. That covers baggage claim and, for international arrivals, customs and immigration. After the complimentary hour, waiting time is $1 per minute.",
+      },
+      {
+        q: "I am arriving on an international flight. What should I expect?",
+        a: "You will clear U.S. Customs and Border Protection in the International Arrivals Building, attached to the Main Terminal \u2014 most international passengers are brought there by mobile lounge. Allow extra time: customs lines vary with how many long-haul flights land together. Your chauffeur monitors your flight and waits the full complimentary 60 minutes; meet & greet meets you just outside the customs exit.",
+      },
+      {
+        q: "How far in advance should I book?",
+        a: "As soon as your flights are set \u2014 especially around holidays, early-morning departures, and major DC events. Same-day bookings are welcome with at least 1 hour's advance notice; call dispatch at (202) 951-7172 and we will confirm on the spot.",
+      },
+      {
+        q: "How much luggage can I bring?",
+        a: "Tell us how many passengers and bags you have when you book and we will match the vehicle: sedans for light travel, SUVs for families, and the Sprinter for groups with a lot of luggage. If you have oversized items \u2014 golf clubs, skis, large cases \u2014 mention them when booking so dispatch sends the right vehicle.",
+      },
+      {
+        q: "Do you provide child car seats?",
+        a: "Yes \u2014 a child car seat is available for $20. Mention it when you book so dispatch sends a vehicle with the seat fitted.",
+      },
+      {
+        q: "Can I cancel or change my booking?",
+        a: "Yes. Cancellation is free up to 24 hours before pickup, and your card is not charged until 24 hours before pickup. To change the date, time, or destination, call (202) 951-7172 or email booking@shinelimos.com and dispatch will adjust your booking.",
+      },
+    ],
   },
   {
     slug: "reagan-airport",
