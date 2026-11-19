@@ -19,6 +19,22 @@ export default function LocationDetail() {
   return (
     <div className="route-fade">
       <SEO pageKey={loc.slug} />
+      {loc.faqs && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "FAQPage",
+              mainEntity: loc.faqs.map((faq) => ({
+                "@type": "Question",
+                name: faq.q,
+                acceptedAnswer: { "@type": "Answer", text: faq.a },
+              })),
+            }),
+          }}
+        />
+      )}
       <PageHero
         image={loc.hero}
         eyebrow="Location"
@@ -63,6 +79,76 @@ export default function LocationDetail() {
                 </div>
               </div>
             </Reveal>
+
+            {loc.guideSections && (
+              <>
+                {loc.guideSections.map((section) => (
+                  <Reveal key={section.heading} delay={120}>
+                    <div className="mt-10">
+                      <h3 className="font-serif-lux text-2xl text-white mb-4">{section.heading}</h3>
+                      {section.paragraphs.map((p, i) => (
+                        <p key={i} className="mt-4 text-white/70 leading-relaxed">
+                          {p}
+                        </p>
+                      ))}
+                    </div>
+                  </Reveal>
+                ))}
+              </>
+            )}
+
+            {loc.infoTables && (
+              <>
+                {loc.infoTables.map((table) => (
+                  <Reveal key={table.title} delay={120}>
+                    <div className="mt-10">
+                      <h3 className="font-serif-lux text-2xl text-white mb-4">{table.title}</h3>
+                      {table.note && (
+                        <p className="text-white/70 leading-relaxed text-sm mb-4">{table.note}</p>
+                      )}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left text-sm">
+                          <thead>
+                            <tr className="border-b border-white/15">
+                              {table.headers.map((h) => (
+                                <th key={h} className="py-2 pr-4 font-semibold text-white whitespace-nowrap">
+                                  {h}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {table.rows.map((row, i) => (
+                              <tr key={i} className="border-b border-white/10">
+                                {row.map((cell, j) => (
+                                  <td key={j} className="py-2 pr-4 text-white/70 align-top">
+                                    {cell}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </>
+            )}
+
+            {loc.faqs && (
+              <Reveal delay={120}>
+                <div className="mt-10">
+                  <h3 className="font-serif-lux text-2xl text-white mb-5">{loc.city} FAQs</h3>
+                  {loc.faqs.map((faq) => (
+                    <div key={faq.q} className="mt-5">
+                      <h4 className="font-semibold text-white">{faq.q}</h4>
+                      <p className="mt-1.5 text-white/70 leading-relaxed text-sm">{faq.a}</p>
+                    </div>
+                  ))}
+                </div>
+              </Reveal>
+            )}
           </div>
 
           <aside className="lg:sticky lg:top-32 self-start">
