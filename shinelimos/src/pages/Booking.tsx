@@ -190,19 +190,6 @@ export default function Booking() {
 
   const [data, setData] = useState<BookingData>(initialData);
 
-  // Nationwide routing: a trip starting outside DC/VA/MD (or arriving
-  // with ?nationwide=1 from the homepage quick quote) never presents
-  // instant prices as final — dispatch confirms the vehicle and fixed
-  // fare before any payment is taken. The pickup state comes from
-  // Mapbox ("US-VA" / "VA" / "Virginia"), so normalize it; an empty
-  // state (hand-typed address) keeps today's behavior.
-  const DMV_STATES = ["DC", "DISTRICT OF COLUMBIA", "VA", "VIRGINIA", "MD", "MARYLAND"];
-  const normState = (s: string) => (s || "").toUpperCase().replace(/^US-/, "").trim();
-  const pickupState = normState(data.segments[0]?.pickup_details?.state || "");
-  const isNationwideTrip =
-    params.get("nationwide") === "1" ||
-    (pickupState !== "" && !DMV_STATES.includes(pickupState));
-
   useEffect(() => {
     document.title = "Book Your Chauffeur | ShineLimos LLC";
   }, []);
@@ -593,11 +580,6 @@ export default function Booking() {
             <p className="text-sm text-white/70 mt-4 leading-relaxed font-light">
               Your reservation request has been received. Our dispatch team will review your trip details and send you a payment link shortly. Your card will not be charged at this time — cards are charged 24 hours before scheduled pickup. Free cancellation up to 24 hours before pickup.
             </p>
-            {isNationwideTrip && (
-              <p className="text-sm text-gold/90 mt-3">
-                You&rsquo;re booking outside our home service area — dispatch will confirm your vehicle and fixed fare before sending your payment link.
-              </p>
-            )}
             <p className="text-sm text-white/70 mt-3">
               Once a chauffeur is assigned, you can see their name and phone number on the <a href="/my-booking" className="text-gold underline">My Booking</a> page using this confirmation number and your booking email.
             </p>
@@ -682,11 +664,6 @@ export default function Booking() {
           </div>
 
           <div className="glass-dark rounded-3xl p-6 md:p-10 min-h-[520px]">
-            {isNationwideTrip && step > 0 && (
-              <div className="mb-6 p-4 rounded-xl bg-gold/10 border border-gold/30 text-sm text-white/85">
-                You&rsquo;re booking outside our home service area (Washington, DC / Virginia / Maryland). Prices shown are estimates — our dispatch team will confirm your vehicle and fixed fare before any payment is taken.
-              </div>
-            )}
             {step === 0 && (
               <Step1 
                 data={data} 
@@ -694,8 +671,8 @@ export default function Booking() {
                 onOpenFlightInfo={(id) => setActiveFlightSegmentId(id)} 
               />
             )}
-            {step === 1 && <Step2 data={data} availableVehicles={availableVehicles} onSelectVehicle={selectVehicle} loyaltyNote={loyaltyNote} nationwide={isNationwideTrip} />}
-            {step === 2 && <Step3Summary data={data} vehicle={selectedVehicle} nationwide={isNationwideTrip} />}
+            {step === 1 && <Step2 data={data} availableVehicles={availableVehicles} onSelectVehicle={selectVehicle} loyaltyNote={loyaltyNote} />}
+            {step === 2 && <Step3Summary data={data} vehicle={selectedVehicle} />}
             {step === 3 && cameFromQuote && selectedVehicle && (
               <TripSummaryBar
                 data={data}
@@ -1179,12 +1156,11 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
   );
 }
 
-function Step2({ data, availableVehicles, onSelectVehicle, loyaltyNote, nationwide }: { data: BookingData; availableVehicles: Vehicle[]; onSelectVehicle: (vehicle: Vehicle) => void; loyaltyNote?: string | null; nationwide?: boolean }) {
+function Step2({ data, availableVehicles, onSelectVehicle, loyaltyNote }: { data: BookingData; availableVehicles: Vehicle[]; onSelectVehicle: (vehicle: Vehicle) => void; loyaltyNote?: string | null }) {
   return (
     <>
       <h3 className="font-serif-lux text-3xl gradient-gold-text">Select Your Vehicle</h3>
       <p className="text-white/55 mt-1 text-sm">Available vehicles that fit your itinerary.</p>
-      {nationwide && <p className="text-gold/90 text-sm mt-2">Prices are estimates for trips outside our home service area — dispatch confirms your fixed fare before any payment is taken.</p>}
       {loyaltyNote && <p className="text-emerald-300 text-sm mt-2">{loyaltyNote}</p>}
       
       <div className="mt-6 grid gap-6 grid-cols-1 md:grid-cols-2">
@@ -1284,7 +1260,7 @@ function Step2({ data, availableVehicles, onSelectVehicle, loyaltyNote, nationwi
   );
 }
 
-function Step3Summary({ data, vehicle, nationwide }: any) {
+function Step3Summary({ data, vehicle }: any) {
   const formatAddress = (loc: string, details: LocationDetails) => {
     if (!loc) return "";
     const prefixParts = [
@@ -1331,15 +1307,13 @@ function Step3Summary({ data, vehicle, nationwide }: any) {
         <Detail label="Passengers" value={String(data.pax)} />
         <Detail label="Luggage" value={data.bags > 0 ? `${data.bags} ${data.bagSize ? `(${data.bagSize})` : ""}` : "None"} />
         <Detail label="Occasion" value={data.occasion || "Not specified"} />
-        <Detail label={nationwide ? "Estimated Total — confirmed by dispatch" : "Estimated Total"} value={vehicle?.estimated_price ? `$${vehicle.estimated_price}` : "Calculated at booking"} />
+        <Detail label="Estimated Total" value={vehicle?.estimated_price ? `$${vehicle.estimated_price}` : "Calculated at booking"} />
         {vehicle?.price_breakdown?.discount > 0 && (
           <Detail label="Returning-client discount (10%)" value={`-$${Number(vehicle.price_breakdown.discount).toFixed(2)}`} />
         )}
       </div>
       <p className="mt-3 text-xs text-white/50 leading-relaxed font-light px-1">
-        {nationwide
-          ? "Your fare will be confirmed by dispatch and includes gratuity. Tolls are added on top of the fare. Airport pickups include 60 minutes of complimentary wait time; all other pickups include 15 minutes. No charge will be made until 24 hours before pickup."
-          : "Your fixed fare is quoted before you book and includes gratuity. Tolls are added on top of the fare. Airport pickups include 60 minutes of complimentary wait time; all other pickups include 15 minutes. No charge will be made until 24 hours before pickup."}
+        Your fixed fare is quoted before you book and includes gratuity. Tolls are added on top of the fare. Airport pickups include 60 minutes of complimentary wait time; all other pickups include 15 minutes. No charge will be made until 24 hours before pickup.
       </p>
     </>
   );
