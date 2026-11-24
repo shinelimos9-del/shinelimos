@@ -195,10 +195,13 @@ export default function Home() {
 
             <div className="mt-4 space-y-1.5" data-home-fade>
               <p className="text-[#d4af37] text-sm sm:text-base md:text-lg font-semibold tracking-widest uppercase">
-                Washington DC • Virginia • Maryland
+                Chauffeured service across the United States
               </p>
               <p className="text-white/90 text-xs sm:text-sm md:text-base font-medium tracking-wide">
                 Airport Transfers • Corporate Travel • Weddings • Hourly Charters
+              </p>
+              <p className="text-white/55 text-xs sm:text-sm font-medium tracking-wide">
+                Headquartered in the Washington, DC area.
               </p>
             </div>
 
@@ -222,7 +225,7 @@ export default function Home() {
           <span className="flex items-center gap-1.5"><span className="text-[#d4af37] font-bold">✓</span> $1 Million Commercial Insurance</span>
           <span className="flex items-center gap-1.5"><span className="text-[#d4af37] font-bold">✓</span> Professionally Trained Chauffeurs</span>
           <span className="flex items-center gap-1.5"><span className="text-[#d4af37] font-bold">✓</span> Luxury Fleet</span>
-          <span className="flex items-center gap-1.5"><span className="text-[#d4af37] font-bold">✓</span> DMV Licensed Vehicles</span>
+          <span className="flex items-center gap-1.5"><span className="text-[#d4af37] font-bold">✓</span> Fully Licensed & Insured</span>
         </div>
       </section>
 
@@ -397,7 +400,7 @@ export default function Home() {
             <div className="mt-10 space-y-6">
               {[
                 { title: "Vetted, Suited Chauffeurs", body: "Background-checked, defensive-driving certified, and trained in the protocols of diplomatic and executive travel." },
-                { title: "Flight & Traffic Intelligence", body: "Our dispatch system monitors every flight and DC-area traffic incident in real time, adjusting your pickup automatically." },
+                { title: "Flight & Traffic Intelligence", body: "Our dispatch system monitors every flight and traffic incident in real time, adjusting your pickup automatically." },
                 { title: "Transparent Pricing", body: "No surge pricing, no hidden fees — your rate plus a standard 20% chauffeur gratuity, confirmed before you book." },
                 { title: "Discretion Guaranteed", body: "NDAs available on request. Manifests, routes and passenger lists handled with absolute confidentiality." },
               ].map((f, i) => (
@@ -418,6 +421,30 @@ export default function Home() {
         </div>
       </SectionBackground>
 
+      {/* NATIONWIDE — chauffeured service across the United States.
+          The DMV stays the home base (Locations section below); the
+          cities below are the launch metros. */}
+      <SectionBackground image={BG_IMAGES.locations} overlay="dark" parallax className="py-24 px-6">
+        <div className="mx-auto max-w-5xl text-center">
+          <Reveal>
+            <SectionHeading
+              eyebrow="Nationwide Service"
+              title={<>Wherever you're going, <em className="text-white not-italic">we have a chauffeur.</em></>}
+              subtitle="Shine Limos arranges chauffeured black car service in major cities across the United States. Book online — your fixed fare is quoted before you book, and your chauffeur is confirmed by our dispatch team."
+            />
+          </Reveal>
+          <Reveal delay={150}>
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
+              {["New York", "Los Angeles", "Chicago", "Miami", "Boston", "Atlanta", "San Francisco", "Dallas"].map((city) => (
+                <span key={city} className="glass rounded-full px-5 py-2 text-sm text-white/85 tracking-wide">{city}</span>
+              ))}
+            </div>
+            <p className="mt-8 text-sm text-white/55 max-w-xl mx-auto">
+              Don&rsquo;t see your city? Book anyway — send your trip and dispatch will confirm your chauffeur and fixed fare.
+            </p>
+          </Reveal>
+        </div>
+      </SectionBackground>
       {/* LOCATIONS with 3D tilt */}
       <SectionBackground image={BG_IMAGES.locations} overlay="dark" parallax className="py-24 px-6">
         <div className="mx-auto max-w-5xl">
@@ -577,7 +604,7 @@ export default function Home() {
                 should be unforgettable.
               </h2>
               <p className="mt-6 text-white/65 max-w-xl mx-auto">
-                Book in 60 seconds. Available 24/7. Trusted by ambassadors, executives and discerning travelers across the DMV.
+                Book in 60 seconds. Available 24/7. Trusted by ambassadors, executives and discerning travelers — in Washington, DC and cities across the United States.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-4">
                 <GoldButton onClick={scrollToQuote}>Quote & Book <ArrowRight className="h-4 w-4" /></GoldButton>
