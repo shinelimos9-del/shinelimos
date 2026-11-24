@@ -6,9 +6,9 @@ export interface SEOData {
 
 export const SEO_CONFIG: Record<string, SEOData> = {
   "home": {
-    title: "Shine Limos | Premium Black Car & Chauffeur Service in Washington DC",
-    description: "Premier luxury black car, limousine, and chauffeur service in Washington DC, Northern Virginia, and Maryland. Airport transfers, corporate travel, and special events.",
-    keywords: "luxury transportation, professional chauffeur, premium car service, luxury fleet, luxury ground transportation, vip transportation, luxury travel experience"
+    title: "Shine Limos | Premium Black Car & Chauffeur Service Nationwide",
+    description: "Premium black car, limousine, and chauffeur service across the United States, headquartered in the Washington, DC area. Airport transfers, corporate travel, and special events.",
+    keywords: "luxury transportation, professional chauffeur, premium car service, luxury fleet, luxury ground transportation, vip transportation, luxury travel experience, nationwide black car service, nationwide chauffeur service"
   },
   "about": {
     title: "About Shine Limos | Premium Chauffeur Service in the DMV",
