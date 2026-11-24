@@ -55,9 +55,6 @@ export default function QuickQuote() {
   const [loyaltyNote, setLoyaltyNote] = useState<string | null>(null);
   const [vehicles, setVehicles] = useState<QuoteVehicle[]>([]);
   const [quoted, setQuoted] = useState(false);
-  // Nationwide trip: pickup outside DC/VA/MD. No instant prices —
-  // dispatch confirms the chauffeur and fixed fare instead.
-  const [nationwide, setNationwide] = useState<{ city: string; state: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
@@ -72,22 +69,6 @@ export default function QuickQuote() {
       );
       return;
     }
-    // Nationwide routing: trips starting outside DC/VA/MD never see
-    // instant DC prices — dispatch confirms the chauffeur and fixed
-    // fare instead. The pickup state comes from Mapbox (region_code
-    // "US-VA" / "VA" / "Virginia" depending on the lookup path), so
-    // normalize it; an empty state means a hand-typed address, which
-    // keeps today's behavior.
-    const pickupState = (pickupDetails?.state || "").toUpperCase().replace(/^US-/, "").trim();
-    const DMV_STATES = ["DC", "DISTRICT OF COLUMBIA", "VA", "VIRGINIA", "MD", "MARYLAND"];
-    if (pickupState && !DMV_STATES.includes(pickupState)) {
-      setNationwide({ city: pickupDetails?.city || "", state: pickupState });
-      setVehicles([]);
-      setQuoted(false);
-      setLoyaltyNote(null);
-      return;
-    }
-    setNationwide(null);
     setError(null);
     setLoading(true);
     try {
@@ -189,33 +170,6 @@ export default function QuickQuote() {
       q.set("loyalty", loyaltyCode.trim());
       if (loyaltyEmail.trim()) q.set("loyalty_email", loyaltyEmail.trim());
     }
-    navigate(`/booking?${q.toString()}`);
-  };
-
-  const continueNationwide = () => {
-    // Same trip params as a quote arrival, but no vehicle: the
-    // booking page shows the dispatch-confirmation path instead of
-    // instant prices.
-    const q = new URLSearchParams({
-      type: tab,
-      pickup: pickup,
-      pickup_zip: pickupDetails?.postal_code || "",
-      pickup_city: pickupDetails?.city || "",
-      pickup_state: pickupDetails?.state || "",
-      pickup_lat: pickupDetails?.lat || "",
-      pickup_lng: pickupDetails?.lng || "",
-      dropoff: dropoff,
-      dropoff_zip: dropoffDetails?.postal_code || "",
-      dropoff_city: dropoffDetails?.city || "",
-      dropoff_state: dropoffDetails?.state || "",
-      dropoff_lat: dropoffDetails?.lat || "",
-      dropoff_lng: dropoffDetails?.lng || "",
-      date,
-      time,
-      duration: tab === "hourly" ? duration : "",
-      pax: String(pax),
-      nationwide: "1",
-    });
     navigate(`/booking?${q.toString()}`);
   };
 
@@ -357,32 +311,6 @@ export default function QuickQuote() {
         <p className="mt-4 text-center text-sm text-red-300" role="alert">
           {error}
         </p>
-      )}
-
-      {nationwide && (
-        <div className="mt-6 rounded-2xl border border-gold/40 bg-gold/5 p-5 text-center">
-          <div className="text-[10px] tracking-[0.3em] text-gold uppercase font-semibold mb-2">
-            Nationwide Service
-          </div>
-          <p className="text-sm text-white/85 leading-relaxed">
-            We serve {nationwide.city ? `${nationwide.city}, ` : ""}{nationwide.state}. This trip is outside our home service area — send it to dispatch and we&rsquo;ll confirm your chauffeur and fixed fare shortly. No payment is taken until your fare is confirmed.
-          </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-3">
-            <button
-              type="button"
-              onClick={continueNationwide}
-              className="text-xs px-4 py-2 rounded-lg font-medium bg-gold text-black hover:scale-105 transition-all"
-            >
-              Continue to booking request
-            </button>
-            <a
-              href={`tel:${COMPANY.phoneRaw}`}
-              className="text-xs px-4 py-2 rounded-lg font-medium border border-white/20 text-white hover:border-gold transition-all"
-            >
-              Call dispatch
-            </a>
-          </div>
-        </div>
       )}
 
       {quoted && vehicles.length === 0 && !error && (
