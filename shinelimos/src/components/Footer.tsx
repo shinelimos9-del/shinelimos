@@ -17,9 +17,10 @@ export default function Footer() {
           <div className="sm:col-span-2 lg:col-span-2 space-y-5">
             <Logo />
             <p className="text-sm text-white/60 leading-relaxed max-w-md">
-              ShineLimos LLC is the Washington DC area's premier black car, limousine
-              and chauffeur service. Discreet, punctual and impeccably maintained — for
-              the people who move Washington.
+              ShineLimos LLC is a premium black car, limousine and chauffeur
+              service, headquartered in the Washington, DC area and serving
+              cities across the United States. Discreet, punctual and
+              impeccably maintained.
             </p>
             <div className="space-y-2.5 text-sm text-white/70">
               <div className="flex items-center gap-3"><Phone className="h-4 w-4 text-gold shrink-0" /><a href={`tel:${COMPANY.phoneRaw}`} className="hover:text-gold">{COMPANY.phone}</a></div>
