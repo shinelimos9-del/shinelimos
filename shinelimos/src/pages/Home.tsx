@@ -190,18 +190,18 @@ export default function Home() {
           <div className="flex-1 text-left relative z-10 ml-0 xl:ml-24 order-2 xl:order-1">
 
             <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.15] tracking-wide uppercase" data-home-fade style={{ fontFamily: "'Orbitron', sans-serif" }}>
-              PREMIUM <span className="text-[#d4af37]">CHAUFFEUR</span> SERVICE
+              ARRIVE <span className="text-[#d4af37]">SHINING.</span>
             </h1>
 
             <div className="mt-4 space-y-1.5" data-home-fade>
-              <p className="text-[#d4af37] text-sm sm:text-base md:text-lg font-semibold tracking-widest uppercase">
-                Chauffeured service across the United States
+              <p className="text-white/90 text-base sm:text-lg md:text-xl font-semibold tracking-widest uppercase">
+                Premium Chauffeur Service
               </p>
-              <p className="text-white/90 text-xs sm:text-sm md:text-base font-medium tracking-wide">
-                Airport Transfers • Corporate Travel • Weddings • Hourly Charters
+              <p className="text-[#d4af37] text-sm sm:text-base md:text-lg font-semibold tracking-widest uppercase">
+                Virginia • Washington, DC • Maryland
               </p>
               <p className="text-white/55 text-xs sm:text-sm font-medium tracking-wide">
-                Headquartered in the Washington, DC area.
+                Serving clients nationwide
               </p>
             </div>
 
