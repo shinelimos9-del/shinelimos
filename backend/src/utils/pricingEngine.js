@@ -23,7 +23,7 @@ const VEHICLE_RATES = {
     baseFare: 25.00,
     perMile: 3.25,
     perMinute: 0.75,
-    minimumFare: 110.00,
+    minimumFare: 125.00,
     hourlyRate: 115.00,
     minimumHours: 2,
     airportFee: 15.00,
