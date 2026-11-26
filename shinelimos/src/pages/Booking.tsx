@@ -458,10 +458,9 @@ export default function Booking() {
     const invBreakdown = finalizedBooking?.vehicle_details?.price_breakdown ?? selectedVehicle?.price_breakdown;
     const invMoney = (n: any) => `$${Number(n || 0).toFixed(2)}`;
     const invFareRows = invBreakdown?.grandTotal != null ? `
-            <div class="row"><div class="label">Base fare:</div><div class="val">${invMoney(invBreakdown.subtotal ?? invBreakdown.grandTotal)}</div></div>
+            <div class="row"><div class="label">Base fare:</div><div class="val">${invMoney((invBreakdown.subtotal ?? invBreakdown.grandTotal) + Number(invBreakdown.lateNightSurcharge || 0))}</div></div>
             ${Number(invBreakdown.gratuity) > 0 ? `<div class="row"><div class="label">Chauffeur gratuity (20%):</div><div class="val">${invMoney(invBreakdown.gratuity)}</div></div>` : ''}
             ${Number(invBreakdown.creditCardFee) > 0 ? `<div class="row"><div class="label">Credit card fee (3%):</div><div class="val">${invMoney(invBreakdown.creditCardFee)}</div></div>` : ''}
-            ${Number(invBreakdown.lateNightSurcharge) > 0 ? `<div class="row"><div class="label">Late-night surcharge:</div><div class="val">${invMoney(invBreakdown.lateNightSurcharge)}</div></div>` : ''}
             ${Number(invBreakdown.holidaySurcharge) > 0 ? `<div class="row"><div class="label">Holiday surcharge:</div><div class="val">${invMoney(invBreakdown.holidaySurcharge)}</div></div>` : ''}
             ${Number(invBreakdown.discount) > 0 ? `<div class="row"><div class="label">Discount:</div><div class="val">-${invMoney(invBreakdown.discount)}</div></div>` : ''}
             <div class="row"><div class="label">Total:</div><div class="val" style="font-weight:bold; color:#d4af37; font-size:18px;">${invMoney(invBreakdown.grandTotal)}</div></div>` : `<div class="row"><div class="label">Vehicle Estimate:</div><div class="val" style="font-weight:bold; color:#d4af37; font-size:18px;">$${(finalizedBooking?.vehicle_details?.estimated_price ?? selectedVehicle?.estimated_price) || "0.00"}</div></div>`;
@@ -1156,7 +1155,7 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
                     {v.price_breakdown?.subtotal != null ? (
                       <span className="text-right">
                         <span className="block text-[10px] tracking-[0.2em] text-white/50 uppercase">Base fare</span>
-                        <span className="text-sm font-semibold text-gold font-mono">${Number(v.price_breakdown.subtotal).toFixed(2)}</span>
+                        <span className="text-sm font-semibold text-gold font-mono">${(Number(v.price_breakdown.subtotal) + Number(v.price_breakdown.lateNightSurcharge || 0)).toFixed(2)}</span>
                       </span>
                     ) : (
                       <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
