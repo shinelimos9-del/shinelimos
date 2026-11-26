@@ -4,7 +4,7 @@
  */
 
 const assert = require('assert');
-const { calculateQuote, VEHICLE_RATES, getVehicleTierKey } = require('../src/utils/pricingEngine');
+const { calculateQuote, VEHICLE_RATES, getVehicleTierKey, isLateNightTime } = require('../src/utils/pricingEngine');
 
 console.log("=================================================");
 console.log("  RUNNING PRICING ENGINE AUTOMATED TEST SUITE   ");
@@ -194,7 +194,7 @@ test("Hourly Booking Minimum Hours Enforcement", () => {
   assert.strictEqual(hourlySprinter1.breakdown.subtotal, 450.00);
 });
 
-// 8. LATE NIGHT SURCHARGE (12 AM - 5 AM -> 15%)
+// 8. LATE NIGHT SURCHARGE (10 PM - 6 AM -> 15%)
 test("Late Night Surcharge (15%)", () => {
   const lateNight = calculateQuote({
     vehicle: 'suv',
@@ -209,6 +209,21 @@ test("Late Night Surcharge (15%)", () => {
   assert.strictEqual(lateNight.breakdown.isLateNight, true);
   assert.strictEqual(lateNight.breakdown.lateNightSurcharge, 23.25);
   assert.strictEqual(lateNight.breakdown.subtotalWithSurcharges, 178.25);
+});
+
+// 8b. LATE-NIGHT WINDOW BOUNDARIES (10 PM - 6 AM)
+test("Late-Night Window (10 PM - 6 AM)", () => {
+  assert.strictEqual(isLateNightTime('10:00 PM'), true);
+  assert.strictEqual(isLateNightTime('11:30 PM'), true);
+  assert.strictEqual(isLateNightTime('02:30 AM'), true);
+  assert.strictEqual(isLateNightTime('05:59 AM'), true);
+  assert.strictEqual(isLateNightTime('9:59 PM'), false);
+  assert.strictEqual(isLateNightTime('06:00 AM'), false);
+  assert.strictEqual(isLateNightTime('07:00 AM'), false);
+  assert.strictEqual(isLateNightTime('22:30'), true);
+  assert.strictEqual(isLateNightTime('21:30'), false);
+  assert.strictEqual(isLateNightTime('06:00'), false);
+  assert.strictEqual(isLateNightTime('05:59'), true);
 });
 
 // 9. HOLIDAY SURCHARGE (20%)
