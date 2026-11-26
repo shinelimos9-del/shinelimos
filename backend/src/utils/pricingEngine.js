@@ -117,7 +117,7 @@ function isAirportPickup(pickupLoc, flightInfo, occasion) {
 }
 
 /**
- * Check if pickup time falls between 12:00 AM (00:00) and 5:00 AM (05:00)
+ * Check if pickup time falls between 10:00 PM (22:00) and 6:00 AM (06:00)
  */
 function isLateNightTime(timeStr) {
   if (!timeStr) return false;
@@ -132,14 +132,14 @@ function isLateNightTime(timeStr) {
     let hour = parseInt(matches[1], 10);
     if (isAM && hour === 12) hour = 0; // 12:xx AM is 00:xx
     if (!isAM && hour !== 12) hour += 12; // PM
-    return hour >= 0 && hour < 5;
+    return hour >= 22 || hour < 6;
   }
 
   // If 24h format (e.g., "03:45")
   const matches = str.match(/(\d+):(\d+)/);
   if (matches) {
     const hour = parseInt(matches[1], 10);
-    return hour >= 0 && hour < 5;
+    return hour >= 22 || hour < 6;
   }
 
   return false;
