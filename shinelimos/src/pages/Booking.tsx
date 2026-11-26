@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { PageHero, GoldButton, GoldDivider } from "../components/ui";
+import FareBreakdown from "../components/FareBreakdown";
 import SectionBackground from "../components/SectionBackground";
 import TimePicker, { formatTimeWithAmPm } from "../components/TimePicker";
 import { initiateBooking, finalizeBooking, requestPayment, ADMIN_BASE_URL } from "../utils/api";
@@ -455,6 +456,16 @@ export default function Booking() {
   };
 
   const handleDownloadInvoice = () => {
+    const invBreakdown = finalizedBooking?.vehicle_details?.price_breakdown ?? selectedVehicle?.price_breakdown;
+    const invMoney = (n: any) => `$${Number(n || 0).toFixed(2)}`;
+    const invFareRows = invBreakdown?.grandTotal != null ? `
+            <div class="row"><div class="label">Base fare:</div><div class="val">${invMoney(invBreakdown.subtotal ?? invBreakdown.grandTotal)}</div></div>
+            ${Number(invBreakdown.gratuity) > 0 ? `<div class="row"><div class="label">Chauffeur gratuity (20%):</div><div class="val">${invMoney(invBreakdown.gratuity)}</div></div>` : ''}
+            ${Number(invBreakdown.creditCardFee) > 0 ? `<div class="row"><div class="label">Credit card fee (3%):</div><div class="val">${invMoney(invBreakdown.creditCardFee)}</div></div>` : ''}
+            ${Number(invBreakdown.lateNightSurcharge) > 0 ? `<div class="row"><div class="label">Late-night surcharge:</div><div class="val">${invMoney(invBreakdown.lateNightSurcharge)}</div></div>` : ''}
+            ${Number(invBreakdown.holidaySurcharge) > 0 ? `<div class="row"><div class="label">Holiday surcharge:</div><div class="val">${invMoney(invBreakdown.holidaySurcharge)}</div></div>` : ''}
+            ${Number(invBreakdown.discount) > 0 ? `<div class="row"><div class="label">Discount:</div><div class="val">-${invMoney(invBreakdown.discount)}</div></div>` : ''}
+            <div class="row"><div class="label">Total:</div><div class="val" style="font-weight:bold; color:#d4af37; font-size:18px;">${invMoney(invBreakdown.grandTotal)}</div></div>` : `<div class="row"><div class="label">Vehicle Estimate:</div><div class="val" style="font-weight:bold; color:#d4af37; font-size:18px;">$${(finalizedBooking?.vehicle_details?.estimated_price ?? selectedVehicle?.estimated_price) || "0.00"}</div></div>`;
     const html = `
       <html>
         <head>
@@ -530,7 +541,7 @@ export default function Booking() {
 
           <div class="section">
             <h2>Estimated Price</h2>
-            <div class="row"><div class="label">Vehicle Estimate:</div><div class="val" style="font-weight:bold; color:#d4af37; font-size:18px;">$${(finalizedBooking?.vehicle_details?.estimated_price ?? selectedVehicle?.estimated_price) || "0.00"}</div></div>
+            ${invFareRows}
             <p style="font-size:12px; color:#888; margin-top:10px;">Your fixed fare is quoted before you book and includes gratuity. Tolls are added on top of the fare. Airport pickups include 60 minutes of complimentary wait time; all other pickups include 15 minutes. No charge will be made until 24 hours before pickup.</p>
           </div>
 
@@ -579,6 +590,9 @@ export default function Booking() {
               {data.segments[0]?.dropoff && <Detail label="Drop-off" value={`${data.segments[0]?.dropoff_details?.flat_no ? 'Unit/Apt ' + data.segments[0].dropoff_details.flat_no + ', ' : ''}${data.segments[0]?.dropoff}`} />}
               <Detail label="Date" value={data.segments[0]?.date} />
               <Detail label="Time" value={formatTimeWithAmPm(data.segments[0]?.time)} />
+            </div>
+            <div className="mt-6 text-left">
+              <FareBreakdown breakdown={finalizedBooking?.vehicle_details?.price_breakdown ?? selectedVehicle?.price_breakdown} defaultOpen />
             </div>
             <div className="mt-8 flex flex-wrap justify-center gap-4">
               <button onClick={handleDownloadInvoice} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-6 py-3 rounded-full text-sm font-medium transition-all border border-white/20">
@@ -746,6 +760,7 @@ function TripSummaryBar({ data, vehicle, onEditTrip }: { data: BookingData; vehi
         <span className="text-white/70 text-sm">{vehicle.vehicle_name}</span>
         <span className="text-gold font-semibold font-mono">${vehicle.estimated_price}</span>
       </div>
+      <FareBreakdown breakdown={vehicle.price_breakdown} defaultOpen />
     </div>
   );
 }
@@ -1141,6 +1156,8 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
 }
 
 function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData; availableVehicles: Vehicle[]; onSelectVehicle: (vehicle: Vehicle) => void }) {
+  // Which vehicle's fare breakdown is open — a selected car stays open.
+  const [openBreakdown, setOpenBreakdown] = useState<string | null>(null);
   return (
     <>
       <h3 className="font-serif-lux text-3xl gradient-gold-text">Select Your Vehicle</h3>
@@ -1179,7 +1196,14 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
                 <div className="mt-4">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] tracking-[0.25em] text-gold uppercase font-semibold">Vehicle</span>
-                    <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
+                    {v.price_breakdown?.subtotal != null ? (
+                      <span className="text-right">
+                        <span className="block text-[10px] tracking-[0.2em] text-white/50 uppercase">Base fare</span>
+                        <span className="text-sm font-semibold text-gold font-mono">${Number(v.price_breakdown.subtotal).toFixed(2)}</span>
+                      </span>
+                    ) : (
+                      <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
+                    )}
                   </div>
                   <h4 className="font-serif-lux text-xl text-white mt-1 group-hover:text-gold transition-colors">{v.vehicle_name}</h4>
                   
@@ -1187,6 +1211,7 @@ function Step2({ data, availableVehicles, onSelectVehicle }: { data: BookingData
                     <span className="flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-gold shrink-0" />Fits {v.passenger_capacity} Passengers</span>
                     <span className="flex items-center gap-1.5"><Car className="h-3.5 w-3.5 text-gold shrink-0" />{v.luggage_capacity} Bags</span>
                   </div>
+                  <FareBreakdown breakdown={v.price_breakdown} open={active || openBreakdown === v._id} onToggle={() => setOpenBreakdown(openBreakdown === v._id ? null : v._id)} />
                 </div>
               </div>
 
@@ -1289,6 +1314,7 @@ function Step3Summary({ data, vehicle }: any) {
         <Detail label="Occasion" value={data.occasion || "Not specified"} />
         <Detail label="Estimated Total" value={vehicle?.estimated_price ? `$${vehicle.estimated_price}` : "Calculated at booking"} />
       </div>
+      <FareBreakdown breakdown={vehicle?.price_breakdown} defaultOpen />
       <p className="mt-3 text-xs text-white/50 leading-relaxed font-light px-1">
         Your fixed fare is quoted before you book and includes gratuity. Tolls are added on top of the fare. Airport pickups include 60 minutes of complimentary wait time; all other pickups include 15 minutes. No charge will be made until 24 hours before pickup.
       </p>
