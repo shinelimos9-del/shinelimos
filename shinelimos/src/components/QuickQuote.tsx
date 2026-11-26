@@ -309,7 +309,7 @@ export default function QuickQuote() {
                     {v.price_breakdown?.subtotal != null ? (
                       <span className="text-right">
                         <span className="block text-[10px] tracking-[0.2em] text-white/50 uppercase">Base fare</span>
-                        <span className="text-sm font-semibold text-gold font-mono">${Number(v.price_breakdown.subtotal).toFixed(2)}</span>
+                        <span className="text-sm font-semibold text-gold font-mono">${(Number(v.price_breakdown.subtotal) + Number(v.price_breakdown.lateNightSurcharge || 0)).toFixed(2)}</span>
                       </span>
                     ) : (
                       <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
