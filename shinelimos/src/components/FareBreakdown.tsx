@@ -34,11 +34,13 @@ export default function FareBreakdown({
   const money = (n: any) => `$${Number(n || 0).toFixed(2)}`;
   const num = (n: any) => Number(n || 0);
 
+  // Luxy-style: a late-night pickup costs more automatically, but the
+  // increase is folded into the base fare — it is never named as its
+  // own line. (Gratuity + card fee are computed on the surcharged
+  // subtotal by the backend, so the rows still sum to the total.)
   const rows: { label: string; value: number }[] = [
-    { label: "Base fare", value: num(breakdown.subtotal ?? breakdown.grandTotal) },
+    { label: "Base fare", value: num(breakdown.subtotal ?? breakdown.grandTotal) + num(breakdown.lateNightSurcharge) },
   ];
-  if (num(breakdown.lateNightSurcharge) > 0)
-    rows.push({ label: "Late-night surcharge", value: num(breakdown.lateNightSurcharge) });
   if (num(breakdown.holidaySurcharge) > 0)
     rows.push({ label: "Holiday surcharge", value: num(breakdown.holidaySurcharge) });
   if (num(breakdown.additionalStopsFee) > 0)
