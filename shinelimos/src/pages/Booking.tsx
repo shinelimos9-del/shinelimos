@@ -289,6 +289,18 @@ export default function Booking() {
       }
     }
 
+    // Contact Info is mandatory: do not advance to the Summary
+    // until the booker's name, email and primary phone are filled
+    // (and, when booking for someone else, the passenger's name
+    // and phone too). Same check as Confirm (submit) below.
+    if (step === 2) {
+      const contactError = validateContact();
+      if (contactError) {
+        setError(contactError);
+        return;
+      }
+    }
+
     setError(null);
     setStep((s: number) => Math.min(STEPS.length - 1, s + 1));
   };
@@ -317,38 +329,50 @@ export default function Booking() {
     return digits.length === 10;
   };
 
+  // Contact Info is mandatory (booker + passenger when booking for
+  // someone else). Returns the message to show, or null when the
+  // contact details are complete. Used by both Continue (step 2)
+  // and Confirm (submit) so the two can never drift apart.
+  // Required: first name, a valid email, a valid 10-digit US
+  // primary phone. Last name stays optional (no * in the form) and
+  // so does the secondary phone; when one is entered it must be a
+  // valid 10-digit number.
+  const validateContact = (): string | null => {
+    if (!data.firstName?.trim() || !data.email?.trim() || !data.primaryPhone?.trim()) {
+      return "Please enter your name, email, and primary phone number.";
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email.trim())) {
+      return "Please enter a valid email address.";
+    }
+    if (!isValidPhone(data.primaryPhone)) {
+      return "Please enter a valid 10-digit US primary phone number.";
+    }
+    if (data.secondaryPhone && !isValidPhone(data.secondaryPhone)) {
+      return "Please enter a valid 10-digit US secondary phone number.";
+    }
+    if (!data.isPassenger) {
+      if (!data.passengerFirstName?.trim() || !data.passengerPhone?.trim()) {
+        return "Please enter the passenger's first name and phone number.";
+      }
+      if (!isValidPhone(data.passengerPhone)) {
+        return "Please enter a valid 10-digit US passenger phone number.";
+      }
+      if (data.passengerSecondaryPhone && !isValidPhone(data.passengerSecondaryPhone)) {
+        return "Please enter a valid 10-digit US passenger secondary phone number.";
+      }
+    }
+    return null;
+  };
+
   const submit = async () => {
     if (!bookingId) {
       setError("Unable to confirm booking. Please restart the booking flow.");
       return;
     }
-    if (!data.firstName || !data.email || !data.primaryPhone) {
-      setError("Please enter your name, email, and primary phone number.");
+    const contactError = validateContact();
+    if (contactError) {
+      setError(contactError);
       return;
-    }
-
-    if (!isValidPhone(data.primaryPhone)) {
-      setError("Please enter a valid 10-digit US primary phone number.");
-      return;
-    }
-    if (data.secondaryPhone && !isValidPhone(data.secondaryPhone)) {
-      setError("Please enter a valid 10-digit US secondary phone number.");
-      return;
-    }
-
-    if (!data.isPassenger) {
-      if (!data.passengerFirstName || !data.passengerPhone) {
-        setError("Please enter the passenger's first name and phone number.");
-        return;
-      }
-      if (!isValidPhone(data.passengerPhone)) {
-        setError("Please enter a valid 10-digit US passenger phone number.");
-        return;
-      }
-      if (data.passengerSecondaryPhone && !isValidPhone(data.passengerSecondaryPhone)) {
-        setError("Please enter a valid 10-digit US passenger secondary phone number.");
-        return;
-      }
     }
 
     if (!data.vehicle_details) {
