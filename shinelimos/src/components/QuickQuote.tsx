@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { ArrowRight, Calendar, Car, Clock, Loader2, MapPin, Users } from "lucide-react";
 import { GoldButton } from "./ui";
+import FareBreakdown from "./FareBreakdown";
 import TimePicker from "./TimePicker";
 import AddressSearch from "./AddressSearch";
 import { getQuote, ADMIN_BASE_URL } from "../utils/api";
@@ -50,6 +51,8 @@ export default function QuickQuote() {
   const [duration, setDuration] = useState("2 hours");
   const [pax, setPax] = useState(2);
   const [vehicles, setVehicles] = useState<QuoteVehicle[]>([]);
+  // Which vehicle's fare breakdown is open — clicking a car toggles it.
+  const [openBreakdown, setOpenBreakdown] = useState<string | null>(null);
   const [quoted, setQuoted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -289,7 +292,8 @@ export default function QuickQuote() {
             {vehicles.map((v) => (
               <div
                 key={v._id}
-                className="text-left rounded-2xl overflow-hidden border border-white/10 bg-white/5 p-4 flex flex-col justify-between"
+                onClick={() => setOpenBreakdown(openBreakdown === v._id ? null : v._id)}
+                className="text-left rounded-2xl overflow-hidden border border-white/10 bg-white/5 p-4 flex flex-col justify-between cursor-pointer"
               >
                 <div>
                   <div className="w-full h-36 rounded-xl overflow-hidden border border-white/10 bg-black/60 flex items-center justify-center p-2">
@@ -302,7 +306,14 @@ export default function QuickQuote() {
                   </div>
                   <div className="mt-3 flex items-center justify-between">
                     <span className="text-[10px] tracking-[0.25em] text-gold uppercase font-semibold">Vehicle</span>
-                    <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
+                    {v.price_breakdown?.subtotal != null ? (
+                      <span className="text-right">
+                        <span className="block text-[10px] tracking-[0.2em] text-white/50 uppercase">Base fare</span>
+                        <span className="text-sm font-semibold text-gold font-mono">${Number(v.price_breakdown.subtotal).toFixed(2)}</span>
+                      </span>
+                    ) : (
+                      <span className="text-sm font-semibold text-gold font-mono">${v.estimated_price}</span>
+                    )}
                   </div>
                   <h4 className="font-serif-lux text-lg text-white mt-1">{v.vehicle_name}</h4>
                   <div className="text-xs text-white/70 mt-2 flex items-center gap-4 border-t border-white/5 pt-2">
@@ -315,6 +326,7 @@ export default function QuickQuote() {
                       {v.luggage_capacity} Bags
                     </span>
                   </div>
+                  <FareBreakdown breakdown={v.price_breakdown} open={openBreakdown === v._id} onToggle={() => setOpenBreakdown(openBreakdown === v._id ? null : v._id)} />
                 </div>
                 <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
                   <span className="text-xs text-white/50">
@@ -322,7 +334,7 @@ export default function QuickQuote() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => bookVehicle(v)}
+                    onClick={(e) => { e.stopPropagation(); bookVehicle(v); }}
                     className="text-xs px-4 py-1.5 rounded-lg font-medium bg-gold text-black hover:scale-105 transition-all"
                   >
                     Book this car
