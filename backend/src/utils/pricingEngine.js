@@ -11,8 +11,20 @@ const VEHICLE_RATES = {
     baseFare: 25.00,
     perMile: 3.25,
     perMinute: 0.75,
-    minimumFare: 75.00,
+    minimumFare: 95.00,
     hourlyRate: 75.00,
+    minimumHours: 2,
+    airportFee: 15.00,
+    waitingRatePerMin: 1.00,
+    additionalStopRate: 15.00,
+  },
+  sclass: {
+    name: "Mercedes-Benz S-Class",
+    baseFare: 25.00,
+    perMile: 3.25,
+    perMinute: 0.75,
+    minimumFare: 110.00,
+    hourlyRate: 115.00,
     minimumHours: 2,
     airportFee: 15.00,
     waitingRatePerMin: 1.00,
@@ -90,7 +102,10 @@ function getVehicleTierKey(vehicle) {
   if (combined.includes('suv') || combined.includes('escalade') || combined.includes('suburban') || combined.includes('navigator')) {
     return 'suv';
   }
-  if (combined.includes('sedan') || combined.includes('s-class') || combined.includes('e-class') || combined.includes('executive')) {
+  if (combined.includes('s-class')) {
+    return 'sclass';
+  }
+  if (combined.includes('sedan') || combined.includes('e-class') || combined.includes('executive')) {
     return 'sedan';
   }
 
