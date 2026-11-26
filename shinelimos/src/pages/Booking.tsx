@@ -220,6 +220,10 @@ export default function Booking() {
           setError(`Please fill in Date, Start Time, Pick-up${isHourly ? "" : ", and Drop-off"} for Segment ${i + 1}.`);
           return;
         }
+        if (seg.date < new Date().toLocaleDateString("en-CA")) {
+          setError(`Trip date cannot be in the past for Segment ${i + 1}. Please choose today or a future date.`);
+          return;
+        }
       }
 
       setError(null);
@@ -911,7 +915,7 @@ function Step1({ data, update, onOpenFlightInfo }: { data: BookingData; update: 
             <div className="p-5 space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Field icon={Calendar} label="Date *">
-                  <input type="date" className={inputCls()} value={seg.date} onChange={(e) => updateSegment(seg.id, "date", e.target.value)} style={{ colorScheme: "dark" }} />
+                  <input type="date" min={new Date().toLocaleDateString("en-CA")} className={inputCls()} value={seg.date} onChange={(e) => updateSegment(seg.id, "date", e.target.value)} style={{ colorScheme: "dark" }} />
                 </Field>
                 <Field icon={Clock} label="Start Time *">
                   <TimePicker className={inputCls()} value={seg.time} onChange={(v) => updateSegment(seg.id, "time", v)} />
