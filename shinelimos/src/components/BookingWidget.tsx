@@ -17,9 +17,15 @@ export default function BookingWidget({ compact = false }: { compact?: boolean }
   const [time, setTime] = useState("");
   const [pax, setPax] = useState(2);
   const [vehicle, setVehicle] = useState(FLEET[0].slug);
+  const [error, setError] = useState<string | null>(null);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (date && date < new Date().toLocaleDateString("en-CA")) {
+      setError("Please choose today or a future date \u2014 past dates can\u2019t be booked.");
+      return;
+    }
+    setError(null);
     
     const q = new URLSearchParams({
       type: tab,
@@ -84,7 +90,7 @@ export default function BookingWidget({ compact = false }: { compact?: boolean }
           />
         </Field>
         <Field icon={<Calendar />} label="Date">
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="field" />
+          <input type="date" min={new Date().toLocaleDateString("en-CA")} value={date} onChange={(e) => setDate(e.target.value)} required className="field" />
         </Field>
         <Field icon={<Calendar />} label="Time">
           <TimePicker value={time} onChange={(v) => setTime(v)} className="field" />
@@ -108,6 +114,10 @@ export default function BookingWidget({ compact = false }: { compact?: boolean }
           </GoldButton>
         </div>
       </form>
+
+      {error && (
+        <p className="mt-4 text-sm text-red-400 text-center">{error}</p>
+      )}
 
       <style>{`
         .field {
