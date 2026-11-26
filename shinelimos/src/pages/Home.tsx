@@ -172,7 +172,7 @@ export default function Home() {
       <section ref={heroRef} className="relative min-h-screen flex items-center pt-20 pb-16 sm:pt-24 sm:pb-20 overflow-hidden bg-[#111111]">
         {/* Background — the three-vehicle fleet photo (Escalade, S-Class,
             Sprinter), with a strong dark gradient so text and form contrast stay constant. */}
-        <div className="absolute inset-0 z-0 bg-[#111111]">
+        <div className="absolute inset-x-0 top-0 h-[480px] xl:inset-0 xl:h-auto z-0 bg-[#111111]">
           <img
             src="/images/hero-fleet-dark.jpg"
             alt="Black Cadillac Escalade, Mercedes S-Class and Mercedes Sprinter at night"
