@@ -58,16 +58,16 @@ test("Sedan Standard Trip Calculation", () => {
   assert.strictEqual(quote.breakdown.grandTotal, 117.42);
 });
 
-// 1b. S-CLASS MINIMUM FARE ($110)
-test("S-Class Minimum Fare ($110)", () => {
+// 1b. S-CLASS MINIMUM FARE ($125)
+test("S-Class Minimum Fare ($125)", () => {
   // Trip: 10 miles, 20 minutes in S-Class (same inputs as the sedan test)
   // Base: 25, Mileage: 10 * 3.25 = 32.50, Time: 20 * 0.75 = 15.00
   // Subtotal: 25 + 32.50 + 15 = 72.50
-  // Min Fare for S-Class: 110.00 -> Enforced!
-  // Subtotal with Min Fare: 110.00
-  // Gratuity 20%: 110 * 0.20 = 22.00
-  // CC Fee 3%: (110 + 22) * 0.03 = 3.96
-  // Grand Total: 110 + 22 + 3.96 = 135.96
+  // Min Fare for S-Class: 125.00 -> Enforced!
+  // Subtotal with Min Fare: 125.00
+  // Gratuity 20%: 125 * 0.20 = 25.00
+  // CC Fee 3%: (125 + 25) * 0.03 = 4.50
+  // Grand Total: 125 + 25 + 4.50 = 154.50
   const sclass = calculateQuote({
     vehicle: { vehicle_name: 'Mercedes-Benz S-Class' },
     bookingType: 'one-way',
@@ -78,10 +78,10 @@ test("S-Class Minimum Fare ($110)", () => {
   });
 
   assert.strictEqual(sclass.breakdown.rawSubtotal, 72.50);
-  assert.strictEqual(sclass.breakdown.subtotal, 110.00); // S-Class minimum fare enforced
-  assert.strictEqual(sclass.breakdown.gratuity, 22.00);
-  assert.strictEqual(sclass.breakdown.creditCardFee, 3.96);
-  assert.strictEqual(sclass.breakdown.grandTotal, 135.96);
+  assert.strictEqual(sclass.breakdown.subtotal, 125.00); // S-Class minimum fare enforced
+  assert.strictEqual(sclass.breakdown.gratuity, 25.00);
+  assert.strictEqual(sclass.breakdown.creditCardFee, 4.50);
+  assert.strictEqual(sclass.breakdown.grandTotal, 154.50);
 });
 
 // 2. SUV STANDARD TRIP

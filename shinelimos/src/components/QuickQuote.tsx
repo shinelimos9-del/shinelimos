@@ -68,6 +68,10 @@ export default function QuickQuote() {
       );
       return;
     }
+    if (date < new Date().toLocaleDateString("en-CA")) {
+      setError("Please choose today or a future date \u2014 past dates can\u2019t be booked.");
+      return;
+    }
     setError(null);
     setLoading(true);
     try {
@@ -220,6 +224,7 @@ export default function QuickQuote() {
         <Field icon={<Calendar />} label="Date">
           <input
             type="date"
+            min={new Date().toLocaleDateString("en-CA")}
             value={date}
             onChange={(e) => setDate(e.target.value)}
             required
