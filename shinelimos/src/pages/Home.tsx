@@ -170,12 +170,12 @@ export default function Home() {
       <SEO pageKey="home" />
       {/* HERO */}
       <section ref={heroRef} className="relative min-h-screen flex items-center pt-20 pb-16 sm:pt-24 sm:pb-20 overflow-hidden bg-[#111111]">
-        {/* Background — a still night frame from the hero video, with a
-            strong dark gradient so text and form contrast stay constant. */}
+        {/* Background — the three-vehicle fleet photo (Escalade, S-Class,
+            Sprinter), with a strong dark gradient so text and form contrast stay constant. */}
         <div className="absolute inset-0 z-0 bg-[#111111]">
           <img
-            src="/video/hero-still-night.jpg"
-            alt="Black Cadillac Escalade driving through the city at night"
+            src="/images/hero-fleet-dark.jpg"
+            alt="Black Cadillac Escalade, Mercedes S-Class and Mercedes Sprinter at night"
             width="1920"
             height="1080"
             className="absolute inset-0 w-full h-full object-cover"
@@ -186,8 +186,8 @@ export default function Home() {
 
 
         <div className="relative mx-auto max-w-7xl px-6 w-full flex flex-col xl:flex-row items-center gap-12 mt-12 xl:mt-0 z-10">
-          {/* Left Content */}
-          <div className="flex-1 text-left relative z-10 ml-0 xl:ml-24 order-2 xl:order-1">
+          {/* Left Content — title first, above the quote form on mobile; on desktop it stays left of the form. */}
+          <div className="flex-1 text-left relative z-10 ml-0 xl:ml-24 order-1">
 
             <h1 className="text-3xl xs:text-4xl sm:text-5xl lg:text-[3.5rem] font-bold text-white leading-[1.15] tracking-wide uppercase" data-home-fade style={{ fontFamily: "'Orbitron', sans-serif" }}>
               ARRIVE <span className="text-[#d4af37]">SHINING.</span>
@@ -208,7 +208,7 @@ export default function Home() {
           </div>
 
           {/* Quick quote — inline in the hero, visible on load */}
-          <div id="quick-quote" className="w-full max-w-xl xl:w-[480px] xl:shrink-0 relative z-10 scroll-mt-28 order-1 xl:order-2" data-home-fade>
+          <div id="quick-quote" className="w-full max-w-xl xl:w-[480px] xl:shrink-0 relative z-10 scroll-mt-28 order-2" data-home-fade>
             <Suspense fallback={<div className="h-96 animate-pulse bg-white/5 rounded-3xl"></div>}>
               <QuickQuote />
             </Suspense>
