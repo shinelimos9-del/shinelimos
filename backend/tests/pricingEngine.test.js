@@ -34,11 +34,11 @@ test("Sedan Standard Trip Calculation", () => {
   // Trip: 10 miles, 20 minutes in Sedan
   // Base: 25, Mileage: 10 * 3.25 = 32.50, Time: 20 * 0.75 = 15.00
   // Subtotal: 25 + 32.50 + 15 = 72.50
-  // Min Fare for Sedan: 75.00 -> Enforced!
-  // Subtotal with Min Fare: 75.00
-  // Gratuity 20%: 75 * 0.20 = 15.00
-  // CC Fee 3%: (75 + 15) * 0.03 = 2.70
-  // Grand Total: 75 + 15 + 2.70 = 92.70
+  // Min Fare for Sedan: 95.00 -> Enforced!
+  // Subtotal with Min Fare: 95.00
+  // Gratuity 20%: 95 * 0.20 = 19.00
+  // CC Fee 3%: (95 + 19) * 0.03 = 3.42
+  // Grand Total: 95 + 19 + 3.42 = 117.42
   const quote = calculateQuote({
     vehicle: 'sedan',
     bookingType: 'one-way',
@@ -52,10 +52,36 @@ test("Sedan Standard Trip Calculation", () => {
   assert.strictEqual(quote.breakdown.mileageCharge, 32.50);
   assert.strictEqual(quote.breakdown.timeCharge, 15.00);
   assert.strictEqual(quote.breakdown.rawSubtotal, 72.50);
-  assert.strictEqual(quote.breakdown.subtotal, 75.00); // Minimum fare enforced
-  assert.strictEqual(quote.breakdown.gratuity, 15.00);
-  assert.strictEqual(quote.breakdown.creditCardFee, 2.70);
-  assert.strictEqual(quote.breakdown.grandTotal, 92.70);
+  assert.strictEqual(quote.breakdown.subtotal, 95.00); // Minimum fare enforced
+  assert.strictEqual(quote.breakdown.gratuity, 19.00);
+  assert.strictEqual(quote.breakdown.creditCardFee, 3.42);
+  assert.strictEqual(quote.breakdown.grandTotal, 117.42);
+});
+
+// 1b. S-CLASS MINIMUM FARE ($110)
+test("S-Class Minimum Fare ($110)", () => {
+  // Trip: 10 miles, 20 minutes in S-Class (same inputs as the sedan test)
+  // Base: 25, Mileage: 10 * 3.25 = 32.50, Time: 20 * 0.75 = 15.00
+  // Subtotal: 25 + 32.50 + 15 = 72.50
+  // Min Fare for S-Class: 110.00 -> Enforced!
+  // Subtotal with Min Fare: 110.00
+  // Gratuity 20%: 110 * 0.20 = 22.00
+  // CC Fee 3%: (110 + 22) * 0.03 = 3.96
+  // Grand Total: 110 + 22 + 3.96 = 135.96
+  const sclass = calculateQuote({
+    vehicle: { vehicle_name: 'Mercedes-Benz S-Class' },
+    bookingType: 'one-way',
+    distanceMiles: 10,
+    durationMinutes: 20,
+    pickupTime: '10:00 AM',
+    pickupDate: '2026-06-15',
+  });
+
+  assert.strictEqual(sclass.breakdown.rawSubtotal, 72.50);
+  assert.strictEqual(sclass.breakdown.subtotal, 110.00); // S-Class minimum fare enforced
+  assert.strictEqual(sclass.breakdown.gratuity, 22.00);
+  assert.strictEqual(sclass.breakdown.creditCardFee, 3.96);
+  assert.strictEqual(sclass.breakdown.grandTotal, 135.96);
 });
 
 // 2. SUV STANDARD TRIP
@@ -312,10 +338,10 @@ test("Edge Cases & Robust Sanitization", () => {
     parking: undefined,
   });
 
-  // Base: 25, Mileage: 0, Time: 0 -> Raw Subtotal = 25. Min Fare = 75 enforced!
+  // Base: 25, Mileage: 0, Time: 0 -> Raw Subtotal = 25. Min Fare = 95 enforced!
   assert.strictEqual(zeroTrip.breakdown.rawSubtotal, 25.00);
-  assert.strictEqual(zeroTrip.breakdown.subtotal, 75.00);
-  assert.strictEqual(zeroTrip.breakdown.grandTotal, 92.70);
+  assert.strictEqual(zeroTrip.breakdown.subtotal, 95.00);
+  assert.strictEqual(zeroTrip.breakdown.grandTotal, 117.42);
   assert.strictEqual(isNaN(zeroTrip.breakdown.grandTotal), false);
 });
 
