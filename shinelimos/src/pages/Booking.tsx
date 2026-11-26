@@ -12,7 +12,7 @@ import { CheckCircle, ArrowRight, ArrowLeft, MapPin, Calendar, Users, Car, User,
 import SEO from "../components/SEO";
 import { COMPANY } from "../data";
 
-const STEPS = ["Trip Itinerary", "Vehicle Selection", "Summary", "Contact Info"];
+const STEPS = ["Trip Itinerary", "Vehicle Selection", "Contact Info", "Summary"];
 
 
 interface LocationDetails {
@@ -99,10 +99,10 @@ interface BookingData {
 export default function Booking() {
   const [params] = useSearchParams();
   const [step, setStep] = useState(0);
-  // True when the customer arrived from the homepage quick quote
-  // (?vehicle=<id>) and the quoted vehicle preselected — the booking
-  // jumps straight to Contact Info with a trip summary on top.
-  const [cameFromQuote, setCameFromQuote] = useState(false);
+  // The booking jumps straight to Contact Info when the customer
+  // arrived from the homepage quick quote (?vehicle=<id>) with a
+  // vehicle preselected — the trip summary now follows the form
+  // as the final step.
   // Guards the quote-arrival auto-advance below so it runs exactly once.
   const autoAdvanceTried = useRef(false);
   const [done, setDone] = useState(false);
@@ -259,7 +259,7 @@ export default function Booking() {
         // clicked its card. A FLEET slug from the old booking widget
         // never matches an _id, so the normal flow is unaffected.
         // When a quoted vehicle preselects, jump straight to Contact
-        // Info (step 3) — trip and vehicle are already chosen, like
+        // Info (step 2) — trip and vehicle are already chosen, like
         // Blacklane/Bookinglane — instead of re-confirming them.
         const preselected = (result.available_vehicles || []).find(
           (v: any) => v._id === data.vehicle_id
@@ -270,8 +270,7 @@ export default function Booking() {
           vehicle_details: preselected || null,
         }));
         if (preselected) {
-          setCameFromQuote(true);
-          setStep(STEPS.length - 1);
+          setStep(2);
         } else {
           setStep((s: number) => Math.min(STEPS.length - 1, s + 1));
         }
@@ -670,15 +669,8 @@ export default function Booking() {
               />
             )}
             {step === 1 && <Step2 data={data} availableVehicles={availableVehicles} onSelectVehicle={selectVehicle} />}
-            {step === 2 && <Step3Summary data={data} vehicle={selectedVehicle} />}
-            {step === 3 && cameFromQuote && selectedVehicle && (
-              <TripSummaryBar
-                data={data}
-                vehicle={selectedVehicle}
-                onEditTrip={() => setStep(0)}
-              />
-            )}
-            {step === 3 && <Step4Contact data={data} update={update} />}
+            {step === 2 && <Step4Contact data={data} update={update} />}
+            {step === 3 && <Step3Summary data={data} vehicle={selectedVehicle} />}
 
             {error && (
               <div className="mt-8 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm flex items-center gap-3 animate-in fade-in slide-in-from-bottom-2">
@@ -726,41 +718,6 @@ export default function Booking() {
       )}
 
       <GoldDivider />
-    </div>
-  );
-}
-
-// Compact trip + vehicle summary shown at the top of Contact Info
-// when the customer arrived from the homepage quick quote — the trip
-// and vehicle are already chosen, so this is their confirmation
-// (Bookinglane-style "Edit your search").
-function TripSummaryBar({ data, vehicle, onEditTrip }: { data: BookingData; vehicle: Vehicle; onEditTrip: () => void }) {
-  const seg = data.segments[0];
-  return (
-    <div className="mb-6 rounded-2xl border border-gold/30 bg-gold/5 p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-[10px] tracking-[0.25em] text-gold uppercase font-semibold">Your trip</div>
-          <div className="text-white text-sm sm:text-base mt-1 font-medium">
-            {seg?.pickup}{seg?.dropoff ? ` → ${seg.dropoff}` : ""}
-          </div>
-          <div className="text-white/60 text-xs sm:text-sm mt-1">
-            {seg?.date} · {seg?.time ? formatTimeWithAmPm(seg.time) : ""} · {data.pax} passenger{data.pax > 1 ? "s" : ""}{seg?.duration ? ` · ${seg.duration}` : ""}
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onEditTrip}
-          className="shrink-0 text-xs text-gold hover:text-white border border-gold/40 hover:border-gold rounded-full px-4 py-1.5 transition-all"
-        >
-          Edit trip
-        </button>
-      </div>
-      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between gap-3">
-        <span className="text-white/70 text-sm">{vehicle.vehicle_name}</span>
-        <span className="text-gold font-semibold font-mono">${vehicle.estimated_price}</span>
-      </div>
-      <FareBreakdown breakdown={vehicle.price_breakdown} defaultOpen />
     </div>
   );
 }
